@@ -315,8 +315,8 @@ $vms | %{
 				$metric = $_
 				#getStats  $_ $filters $maxsamples $showIndividualDevicesStats
 				$tmpOutput = getStats -sourceVIObject $vm -metric $metric -filters $filters -maxsamples $maxsamples -showIndividualDevicesStats $showIndividualDevicesStats -previousMonths $lastMonths # -returnObjectOnly $true
-				Write-Host $tmpOutput
-				pause
+				#Write-Host $tmpOutput
+				#pause
 				
 			}
 			#################################################################
