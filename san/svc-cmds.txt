@@ -1,0 +1,281 @@
+command                 description
+addcluster              Adds an existing cluster to the management node.
+addstoragesystem        Registers the storage system with the system.
+applysoftware           Applies a new software package to the system.
+attachnw                Attaches a specified network to a specified network group.
+backupmanagementnode    Backs up a management node.
+catxmlspec              Return an XML representation of the command set
+cfgad                   Configures the Active Directory server-based authentication for the cluster.
+cfgaos                  Sets up and queries AOS (Assist on Site) remote access service.
+cfgav                   Modifies the antivirus configuration options.
+cfgbackupfs             Defines the Tivoli Storage Manager server on which a file system should be backed up and by which nodes.
+cfgcallhome             Configures or sets the Call Home options on the current system.
+cfgcluster              Starts the post-installation steps that are required before the cluster can be configured.
+cfghsmfs                Configures the file systems to be enabled for hierarchical storage management (HSM).
+cfghsmnodes             Configures nodes to be enabled for hierarchical storage management (HSM).
+cfgidmap                Configure the cluster with ID mapping services
+cfgldap                 Configures an LDAP server or an LDAP with Kerberos server on all the nodes present in the cluster with the input values.
+cfglocalauth            Configures the Local Auth.
+cfgndmp                 Configures the NDMP server on a group of nodes of a cluster.
+cfgndmpprefetch         Configures the NDMP prefetch settings on a group of nodes of a cluster.
+cfgnis                  Configures the Network Information Service (NIS).
+cfgnt4                  Configures the Microsoft Windows NT 4.0 (NT4) server on all the nodes present in the cluster using the input values.
+cfgperfcenter           Configures Performance Center services on nodes.
+cfgrepl                 Configures asynchronous replication for nodes.
+cfgreplfs               Defines a relationship between a local file system and a target directory on a remote cluster for replication.
+cfgsfu                  Configures the cluster with Services For UNIX (SFU) user mapping services.
+cfgtsmnode              Configures the Tivoli Storage Manager node by defining the node name, node password, and by adding a Tivoli Storage Manager server stanza.
+chacl                   Change the ACL for a specified file or directory.
+chbackupfs              Modifies the list of backup nodes for a file system.
+chbanner                Modifies the banner for all the nodes of the system.
+chcfg                   Changes the configuration data for a cluster.
+chcluster               Change the cluster attributes
+chdept                  Change department.
+chdisk                  Changes a disk.
+chemail                 Changes email notification configuration.
+chemailserver           Changes email server definition.
+chemailuser             Changes the settings of an email user.
+chexport                Modifies the protocols and their settings of an existing share.
+chfs                    Changes the properties of the file system.
+chfset                  Changes a file set.
+chkauth                 Checks authentication settings of a cluster.
+chkdept                 Checks departments status.
+chkfs                   Checks and repairs a file system.
+chkpolicy               Checks a policy on the nodes of a specified cluster.
+chkquota                Checks file system user, group, and file set quotas.
+chnasuser               Modify a local authentication nas user.
+chnfsserver             Changes the NFS server stack.
+chnw                    Modifies a network configuration for a subnet.
+chnwgroup               Adds or removes nodes to or from a specified network group.
+chnwmgt                 Changes basic network configuration settings.
+chowner                 Change owner for a specified file or directory.
+chpasswordpolicy        Changes password policy applicable to the whole cluster.
+chpolicy                Changes an existing policy, adds and/or removes rule declarations.
+chpsnaptask             Changes the psnap tasks.
+chrootpwd               Changes the root password on cluster nodes at the same time.
+chservice               Changes the configuration of a protocol service.
+chsessionpolicy         Changes session policy applicable to the whole cluster.
+chsettings              Change settings applicable to the whole cluster.
+chsnapassoc             Changes the snapshot rule associated with a file set or file-system.
+chsnaprule              Changes a snapshot rule.
+chsnmpserver            Changes an existing SNMP server definition.
+chstoragesystem         Changes the details of the storage system.
+chsyslogserver          Changes an external syslog server configuration.
+chuser                  Modifies an administrative user ID for the system.
+chusergrp               Changes the attributes of a user group.
+chwcache                Modifies a caching file set.
+chwcachesource          Modifies an existing wan caching share. Administrator can add or remove clients
+cleanupauth             Clean up the authentication and id map configuration
+cleanuprepl             Deletes replication logs.
+ctlavbulk               Runs bulk scan.
+ctlwcache               Performs operations on cached filesets.
+detachnw                Detaches a network from an interface of a network group.
+dumpallmdiskbadblocks   Writes the bad block counts and locations that are on a specified MDisk to a dump file for use by fix procedures.
+dumpmdiskbadblocks      Writes the bad block counts and locations that are on a specified MDisk to a dump file for use by fix procedures.
+dumptrace               Capture in memory trace of the filesystem and restart in memory tracing.
+enablelicense           Enables the license agreement flag. After the license is enabled, user access to the GUI panels is restricted until the user accepts the license.
+help                    Displays the help screen.
+initnode                Stops or restarts the node.
+linkfset                Links a file set.
+locatenode              Enables, disables, or blinks the system locator LEDs on any SONAS node.
+lookupname              Translates a user ID or group ID into a NAS user or group name.
+lsacl                   Displays the access control list (ACL) of a file or directory.
+lsaudit                 List the audit log entries.
+lsauth                  Lists authentication settings of a cluster.
+lsav                    Displays the current antivirus configuration.
+lsbackupfs              Lists file system to the TSM server and backup node associations.
+lsbanner                Lists the banner for SONAS systems.
+lscallhome              Lists the actual Call Home configuration.
+lscallhomelog           List the call home event log entries.
+lscfg                   Displays the current configuration data for a cluster.
+lsclone                 Lists the parents of the clone file, both the source and the parent file.
+lscluster               Lists all the clusters of the system.
+lscurrentuser           Lists details of the user who is currently logged in.
+lsdept                  List the departments
+lsdisk                  Lists all the disks.
+lsemailserver           Lists the email-server definitions.
+lsemailuser             Lists all the email users.
+lsexport                Lists exports.
+lsfs                    Lists all the filesystems on a given device in a cluster.
+lsfset                  Lists file sets for a given device in a cluster.
+lshealth                Lists the overall status of the system.
+lshsm                   Lists all the hierarchical storage management (HSM)-enabled file systems in the cluster.
+lshsmlog                Lists hierarchical storage management (HSM) log messages.
+lshsmstatus             Lists the status of the hierarchical storage management (HSM)-enabled nodes in the cluster.
+lsidmap                 Display ID mappings configured on cluster
+lsjobstatus             Shows the status of currently running or already finished jobs.
+lslog                   Lists the event log entries.
+lsmgr                   Displays the node that is the file system manager for specified file systems or the node that is the cluster manager.
+lsmount                 Lists the mounted file systems that belong to the cluster and file system.
+lsnasgroup              List all the NAS groups.
+lsnasuser               List all the NAS users.
+lsndmp                  Lists NDMP data server settings of a sub-group of existing interface nodes of a preconfigured cluster.
+lsndmplog               Shows NDMP logs of existing interface nodes of a preconfigured cluster.
+lsndmpprefetch          Shows the status of prefetch on the interface nodes of the NDMP node group.
+lsndmpsession           Lists NDMP data sessions on existing interface nodes of a preconfigured cluster.
+lsnfsserver             List the active NFS server stack of a cluster.
+lsnode                  Lists all Nodes.
+lsnw                    Lists public network configurations for the current cluster.
+lsnwdns                 Lists DNS configurations for the current cluster.
+lsnwgroup               Lists network group configurations for the current cluster.
+lsnwinterface           Lists the network interfaces.
+lsnwmgt                 Lists the service IP address configuration of the management nodes.
+lsnwnatgateway          Lists NAT gateway configurations for the current cluster.
+lsnwntp                 Lists NTP configurations for the current cluster.
+lsnwsdg                 List the effective system default gateways and the explicit declarations (overwrite setting)
+lsowner                 Show owner for a specified file or directory.
+lspasswordpolicy        Lists the password policy applicable to the whole cluster.
+lsperfdata              Retrieves historical performance data as CSV output.
+lspolicy                Lists the policies and rules that belong to the cluster and file system.
+lspool                  Lists all pools.
+lsprepop                Shows the status of pre-population of files on wcache.
+lspsnap                 Lists peer snapshots.
+lspsnaptask             Lists all psnap tasks.
+lsquota                 Lists all quotas.
+lsreconciletask         Lists the tasks scheduled for reconcile.
+lsrepl                  Lists the result of asynchronous replications.
+lsreplcfg               Lists configuration of asynchronous replications.
+lsreplfs                Lists file system configured for asynchronous replication.
+lsrepltarget            Lists target of asynchronous replications.
+lsrepltask              Lists the tasks scheduled for asynchroneous replication.
+lsservice               Lists all the services of a cluster.
+lssessionpolicy         Lists the session policy applicable to the whole cluster.
+lssettings              List the settings applicable to the whole cluster.
+lssnapassoc             Lists the snapshot associations.
+lssnapnotify            Lists the snapshot event notification settings.
+lssnapops               Displays a list of queued and running snapshot operations.
+lssnaprule              Lists the snapshot rules.
+lssnapshot              Lists all snapshots.
+lssnmpserver            Lists all configured SNMP servers.
+lssoftwareupgradestatus Lists status of system upgrade to a new level of software.
+lsstoragesystem         Lists the name, IP, and identifier of the actual configured storage system.
+lssyslogserver          Lists existing syslog server definitions.
+lstask                  Lists the scheduled tasks that belong to a management node for the selected cluster.
+lstime                  Shows time.
+lstrace                 Lists active traces.
+lstsmnode               Lists TSM nodes in the cluster.
+lsupdate                List status of system upgrade to a new level of software.
+lsuser                  Lists all the command-line interface (CLI) users of the management node.
+lsusergrp               Displays a list of user groups that have been created on the cluster.
+lsvpd                   Displays VPD Information.
+lswcache                Lists all the caching filesets for a given device in a cluster.
+lswcachesource          Lists the WAN-caching sources on the home cluster.
+lswcachestate           Lists all the caching filesets for a device in a cluster.
+mkclone                 Creates a clone file of a specified archive.
+mkdept                  Creates a new department.
+mkdisk                  Creates storage system NAS volumes. Command is supported only on SONAS Gateway configuration and Storwize V7000 Unified.
+mkemailserver           Creates email server definition.
+mkemailuser             Creates an e-mail user.
+mkexport                Creates a new share using one or more protocols.
+mkfs                    Creates a file system.
+mkfset                  Creates a file set.
+mknasgroup              Create a local authentication NAS Group.
+mknasuser               Creates a nas user for local authentication server.
+mknw                    Defines a new network configuration for a subnet, and assigns multiple IP addresses and routes.
+mknwbond                Creates a bond from the specified subordinate group.
+mknwgroup               Creates a group of nodes to which a network configuration can be attached. See also the commands mknw and attachnw.
+mknwnatgateway          Creates a clustered trivial database (CTDB) network address translation (NAT) gateway.
+mkpolicy                Makes entries of the policy and rules in the database.
+mkpolicytask            Schedules a task for data placement and data movement with the aid of a GPFS policy.
+mkpsnap                 Creates the peer snapshot for a file set.
+mkpsnaptask             Creates the psnap tasks to be executed periodically.
+mkreconciletask         Schedules a reconcile task.
+mkrepltarget            Declares source cluster and target path for replication.
+mkrepltask              Schedules a task for asynchronous replication.
+mksnapassoc             Associates a snapshot rule with a file set or file system.
+mksnaprule              Creates a snapshot rule.
+mksnapshot              Creates a file system snapshot.
+mksnmpserver            Creates a new SNMP server definition.
+mksyslogserver          Creates a new external syslog server configuration.
+mktask                  Schedules a GUI or a cron task on the selected cluster that belongs to the management system.
+mkuser                  Creates an administrative user ID for the management node.
+mkusergrp               Creates a new user group.
+mkwcache                Creates a WAN cache on the client cluster.
+mkwcachenode            Configures cache features on the cluster. The administrator can later use this feature by creating a cached file set.
+mkwcachesource          Creates a new WAN-caching share.
+mountfs                 Mounts a file system.
+querybackup             Queries backup summary for the specified file pattern.
+restripefs              Re-balances or restores the replication of files in a file system.
+resumenode              Resumes a list of nodes.
+rmbackupfs              Removes file system to TSM server association.
+rmcluster               Removes a cluster from the management node.
+rmdept                  Command to remove a department
+rmdisk                  Removes storage system NAS volumes.
+rmemailserver           Removes email server definition.
+rmemailuser             Removes email user definition.
+rmexport                Removes the given share.
+rmfs                    Removes an existing file system from the cluster.
+rmfset                  Removes a file set.
+rmidmapcacheentry       Removes the ID map cache entry.
+rmjobstatus             Removes old logs and corresponding information.
+rmlock                  Releases orphan locks acquired by crashed clients.
+rmlog                   Removes all the log entries stored in the database.
+rmnasgroup              Removes a local authentication NAS group.
+rmnasuser               Removes a NAS user.
+rmndmpcfg               Removes the NDMP data server configuration from sub group of existing interface nodes of a preconfigured cluster.
+rmnw                    Deletes a network configuration.
+rmnwbond                Deletes a regular bond interface.
+rmnwdns                 Removes the name servers.
+rmnwgroup               Removes a network group.
+rmnwnatgateway          Removes the configuration of a clustered trivial database (CTDB) network address translation (NAT) gateway.
+rmnwntp                 Removes one or more external NTP server.
+rmpolicy                Removes a policy and all the rules associated with it.
+rmpolicytask            Removes a scheduled task for data placement and data movement.
+rmpsnap                 Removes a peer snapshot.
+rmpsnaptask             Removes a psnap task.
+rmreconciletask         Removes a scheduled reconcile task from a file system.
+rmreplfs                Removes the replication file system association.
+rmrepltarget            Removes a replication target created by mkrepltarget.
+rmrepltask              Removes a scheduled task from asynchronous replication.
+rmsnapassoc             Removes a snapshot rule and file set or file-system association.
+rmsnapnotify            Disables notification for an event type.
+rmsnaprule              Removes the snapshot rule.
+rmsnapshot              Removes the snapshot.
+rmsnmpserver            Removes an SNMP server definition.
+rmstoragesystem         Removes the storage system from SONAS.
+rmsyslogserver          Removes an external syslog server.
+rmtask                  Removes a scheduled task that belongs to the management node on the selected cluster.
+rmtsmnode               Removes TSM server stanza for the node.
+rmuser                  Removes an administrative user ID for SoFS.
+rmusergrp               Deletes a given user group that was created on the cluster.
+rmwcache                Removes a caching file set.
+rmwcachenode            Removes configuration of cache node/s of cache cluster.
+rmwcachesource          Removes the specified WAN-caching source on the home cluster.
+rpldisk                 Replaces a current disk with a specified disk.
+runpolicy               Applies the policy on the nodes of a specified cluster for a specified device.
+runprepop               Runs the prepop command to pre-populate the files on wcache.
+runreplrecover          Recovers inactive asynchronous replications processes.
+runtask                 Runs a scheduled task that belongs to the management node directly on the selected cluster.
+setnwdns                Sets the name servers.
+setnwntp                Sets one or more external Network Time Protocol (NTP) servers on the management node.
+setpolicy               Sets placement policy rules for a GPFS file system.
+setquota                Sets the quota settings.
+setsnapnotify           Sets snapshot notification conditions.
+settime                 Sets the time and date.
+settz                   Sets the time zone.
+showerrors              Displays the error log of a given jobcategory or jobID.
+showlog                 Displays the log of a given jobcategory.
+showreplresults         Displays replication errors and logs.
+srvdump                 Manage dump files.
+startbackup             Starts the backup process.
+startemail              Enables email notifications.
+startreconcile          Starts reconcile process.
+startrepl               Starts asynchronous replication.
+startrestore            Starts the restore process.
+starttrace              Starts tracing of network traffic.
+stopbackup              Stops a running TSM backup session.
+stopcluster             Performs controlled shutdown of a cluster or node.
+stopemail               Disables email notifications.
+stopndmpsession         Stops NDMP Data sessions on existing interface nodes of a preconfigured cluster.
+stoppolicy              Stops running policy jobs depending on the parameters specified.
+stopreconcile           Stops a reconcile session.
+stoprepl                Stops asynchronous replication.
+stoprestore             Stops a restore session.
+stoptrace               Stops a previously defined trace.
+suspendnode             Suspends a list of nodes.
+svc_snap                Gathers useful debug data from the cluster in a single operation, copying the relevant files in a single archive.
+testcallhome            Test configuration and communication of call home
+testemail               Sends a test email to all or a specified user.
+unlinkfset              Delinks a file set.
+unmountfs               Unmounts a file system.
+updatefs                Updates a file system to be used with a new version.

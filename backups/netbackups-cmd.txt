@@ -1,0 +1,1126 @@
+Version Information
+	Version:
+	How can you determine which version of NetBackup is running on your 
+	machine?
+		UNIX
+			/usr/openv/netbackup/version
+		Windows
+			C:\Program Files\VERITAS\NetBackup\version
+	Patch:
+	Determine patch revision by looking in the following directory:
+		Windows
+			install_path\VERITAS\Patch
+		UNIX
+			???
+						
+Installation Process
+	Asks for local or remote install?
+	Asks for key -- if no key, only the console installs
+	With key, select master or media server install
+	Install proceeds....
+	Asks:  Any additional keys?
+	Asks:  Launch NB Admin console now?
+	When the console starts for the first time, you can:
+		config storage devices
+		config volumes
+		config catalog backup
+		create backup policy
+		
+Upgrades
+	Before you upgrade the NetBackup software on the master server:
+		- Back up your NetBackup catalogs
+		- Verify that the catalog backup was successful
+	Upgrade systems in following order
+		- Master server
+		- Media servers, if any (NBU Enterprise only)
+		- NetBackup Remote Adminstration Console, if any
+		- NetBackup clients
+		- Any NetBackup Add-on products
+	Make certain that Netbackup release level on the server is at least
+	that on the clients. Older versions of server software can encounter
+	problems with newer clients.
+	
+Netbackup Processes
+	bpbrm  	- backup/restore manager manages client and media manager 
+		  processes and uses the error status from both to determine the 
+		  final status of backup or restore operations
+	bpbkar 	- backup/archive manager generates the backup images
+  	*bprd*	- client communicates with bprd on the master when you browse 
+  		  the database during a restore operation.
+  	*bpdbm*	- database manager that manages the configuration error and 
+  		  other databases (Netbackup Catalogs)
+  	*bpjobd*- maintains the NetBackup job catalog. Continuously communicates
+     		  and pushes Netbackup job activity to the Activity Monitor.
+	bpdm	- disk media manager manages transfer of images between client
+	          and OS disk manager on the server to which the disk attaches
+	bptm	- tape media manager used when the storage unit is media manager
+	          Manages transfer of images between client and the storage
+	          device as well as managing the media database and
+	          provides information for the media list report screen.
+	bpcd	- starts Netbackup client daemon and lets Netbackup start 
+		  programs on remote hosts bypassing /.rhosts entries.
+	bphdb	- starts the Netbackup hot-database backup program
+	bpblr	- Block Level restore program calls VfMS mapping methods. Used
+		  for restoring Netbackup for EMC FastTrax images
+	bpsched	- scheduler uses policy information from the Netbackup 
+		  configuration databases to determine when to start what 
+			  clients and which storage units to use.
+		  
+    * these three processes are running after master server install!!
+		  
+Media Manager Processes
+	ltid		- Logical tape interface, also called Device Manager. Handles
+			  device requests to mount or unmount media volumes, translates
+		  	  the requests into commands to control physical robots and
+		 	  drives. Determines the location of requested media by sending
+		  	  a request to vmd.
+	vmd		- media manager daemon normally started by ltid. Provides 
+			  support for media management and device configurations. 
+			  Manages the Volume Catalog and handles media requests.
+	txxd		- individual robotic control daemons that handle robotic drive
+		  	  requests for each type of robot.
+	txxcd		- handles robotic arm requests for TLD and TLB
+	avrd		- started by ltid and controls automatic volume assignment and 
+		  	  label scanning.
+		  
+Media States
+	Description			Reason				Method of Change
+	FULL				Capacity			bpexpdate or GUI
+	SUSPENDED			Errors				bpmedia
+	FROZEN				Format				bpmedia/bplabel
+									ALLOW_MEDIA_OVERWRITE
+									GUI erase
+
+	IMPORTED			From another cluster		bpexpdate
+	ACTIVE				Current images			bpexpdate or GUI
+	AVAILABLE			currently unassigned		
+	MPX				multiplexed images
+	DBBACKUP			Contains NetBackup 		bpduplicate/bpexpdate
+					Catalogs
+		  
+Important Commands
+	bparchive		- communicates with bprd on master server when a user 
+			       	  starts an archive
+	bpbackup		- communicates with bprd on master server when a user
+			  	  starts a backup
+	bprestore		- communicates with bprd on master server when a user
+			  	  starts a restore
+	bpdbjobs		- use this program to display the activity monitor or to
+			  	  clean up the NetBackup jobs database
+	jnbSA			- admin console on UNIX
+	jbpSA			- backup, archive, restore interface on UNIX
+	nbconsole.exe		- admin console on windows
+	nbwin.exe		- backup archive restore interface on windows
+	bpconfig		- modifies or displays global configuration settings
+	bpgetconfig		- helper program for backuptrace and restoretrace to obtain
+				  configuration information (most detailed)
+
+Managing Catalog Bakups
+	The bpbackupdb command
+		- Use to back up one or more catalogs
+		- Fails if any items cannot be backed up
+		- Use absolute pathname
+		- If you have defined two tapes/disks for catalog backups, 
+		  subsequent jobs alternate between the two destinations
+	Manual catalog backup
+		- Right click on Catalog on Master and seclect "Backup Netbackup
+		  Catalog"
+	Other important commands
+		bprecover  - recovers the catalog to a server and can enable 
+		             catalogs to be redirected to a standby server
+		bpsyncinfo - find out status of catalog backup and media 
+		             used etc
+	General practices
+		- How many copies of bpbackupdb can run simultaneously? -1-
+		- What does the dbbackup_notify script do?
+			Runs after every catalog backup.  You could add any 
+			events or activity to this script and it will execute 
+			the commands after every catalog backup
+
+Startup/Shutdown
+	bpup		- Starts NetBackup services on Windows systems
+			    (-f) force startup with no confirmation
+			    (-a) start Advanced Reporter
+			    (-c) start client
+			    (-d) start NetBackup Database
+			    (-m) start Media Manager
+			    (-n) start Netbackup Services
+			    (-s) start the server and NOT the client (Media Manager 
+			         and Advanced Reporter)
+	bpdown		- Stop NetBackup services on Windows systems
+			    (-f) force shutdown with no confirmation
+			    (-a) shutdown Advanced Reporter
+			    (-c) shutdown client
+			    (-d) shutdown NetBackup Database
+			    (-m) shutdown Media Manager
+			    (-n) shutdown Netbackup server and NOT the client
+			    (-s) shutdown the server (NetBackup and Media Manager)
+			    (-r) shutdown the robotic control daemon
+	bp.kill_all	script to stop processes gracefully and preserve system
+				resources
+	
+Volume Manager Commands
+	vmadd		- add volumes to volume database
+				-m <media ID>
+				-mt <media type>
+				-h <host>
+				-rcl <robot control location>
+				-b <backup ID of media>
+				-d <description>
+	vmchange	- change media information in the Media Manager DB
+	vmdelete	- delete volumes from the volume database
+	vmopercmd	- perform operator functions on drives
+				-down 	Sets drive to the DOWN state if not assigned
+				-up	Sets drive to UP in Automatic Volume 
+					Recognition (AVR) mode. This is the normal 
+					mode for all drives
+				-upopr	Sets the drive to UP in Operator (OPR) mode.
+					This mode is normally used only for security 
+					reasons.
+				-reset	Resets the specified drive, terminating the
+					drive assignment and taking control away 
+					from	the assigned user.
+	vmpool		- manage volume pools
+	vmcheckxxx	- report media contents of a robotic library
+	vmupdate		- Inventory the media contents of a robotic library
+			  	  and update the volume database.
+	tpconfig		- tape configuration utility
+			  
+Utilities
+	robtest		- test communication and functionality of attached robotics
+	tpreq		- request a tape volume for mounting and associate
+				  a file name with the assigned drive
+	tpunmount	- removes a tape volume from a drive and tape file from the
+				  the directory. Removes volume from drive by calling tpreq
+	tpconfig	- define robots and drives
+	tar		- tape archive
+	tpclean		- manages tape cleaning
+
+Global Attributes Properties 
+		- The Global Attributes properties apply to currently selected master 
+		  servers. The Global Attributes properties affect all operations for 
+		  all policies and clients. The default values are adequate for most 
+		  installations but can be changed. 
+
+				  
+Setting up e-mail notification
+	- Inform of success or failure of user-directed operations
+	- May eliminate the need for checking logs and reports
+	To Set up:
+	    On UNIX client:
+	    		- edit user's bp.conf file on the client (NOTE: each user
+	    		  on the client [including root} has an individual bp.conf 
+	    		  file.)
+	    		- Add USEMAIL=user@domain
+	
+	On Global Settings tab for Master
+	Administrator's E-mail Address 
+		- The Administrator's E-mail Address property specifies the 
+		  address(es) where NetBackup sends notifications of scheduled 
+		  backups, administrator-directed manual backups, or NetBackup 
+		  catalog backups. The notification of catalog backups includes the 
+		  media ID that was used. 
+		- Multiple addresses can be indicated, but need to be separated by 
+		  commas. Default: no address. 
+		- On Windows NetBackup servers, it may be necessary to configure the 
+		  install_path\NetBackup\bin\nbmail.cmd script in addition to 
+		  specifying the above address. This is necessary because on Windows 
+		  servers, NetBackup performs the notification by passing the 
+		  specified E-mail address, subject and message to the script. The 
+		  script then uses the mailing program that you specified in the 
+		  script to send E-mail to the user. See the comments in the script
+		  for configuration instructions. Default: nbmail.cmd does not send 
+		  E-mail.
+	
+	On Universal Settings tab on Master
+	Client Administrator's E-mail 
+		- The Client Administrator's E-mail property specifies the E-mail 
+		  address of the administrator on the client and is the address where 
+		  NetBackup sends status on the outcome of automatic or manual backup 
+		  operations for the client. By default, no E-mail is sent. To enter 
+		  multiple addresses or E-mail aliases, separate entries with commas. 
+	    		
+Policies
+	- Atributes | Schedules | Clients | Files
+		- Attributes
+			* Type
+			* Destination [ Policy Storage Unit | Policy Volume Pool ]
+			* Limit jobs per policy (checkbox)
+			* Job priority {higher # greater priority}
+			Options
+				+ Active
+				+ Allow frozen image clients
+				+ Follow NFS
+				+ Cross Mount Points
+				+ Collect true image restore information
+					- with move detection
+				+ Compression
+				+ Encryption
+					- Individual file restore from raw
+					- Collect disaster recover information
+				+ Block level incremental
+				+ Allow multiple data streams
+			Advanced Client (if installed)
+					- Perform block level incremental backups
+				+ Perform Snapshot backups
+					- Retain snapshots for instant recovery
+					- Perform offhost backup 
+					  [ use alternate client | Use data mover ]
+				  > Advanced Snapshot Options
+				  	- Method [ auto | VSP | VSS | vxvm ]
+				  	- Parameters
+		- Schedules
+			+ Type of backup
+				- Full
+				- Cumulative incremental
+				- Differential incremental
+				- User backup
+				- User archive
+			+ Retention period
+			+ Frequency vs. calendar
+		- Clients
+			+ Name of each client to be served by this policy
+			+ OS of client
+		- Files
+			+ Pathnames
+			+ Directives
+				- NEW_STREAM
+				- ALL_LOCAL_DRIVES
+				- SYSTEM_STATE			[only valid w/Win2K or WinXP]
+									NOTE:System_state:\ is included
+									in the ALL_LOCAL_DRIVES directive
+			+ Exclude list
+				- exclude_list.policy_name
+				  schedule
+			+ Include list
+				- include_list.policy_name
+				  schedule									  
+	
+Storage Unit commands:
+	bpstuadd 	- Create NBU storage unit group or storage unit
+	bpastudel 	- Delete NBU storage unit or storage unit group
+	bpstulist 	- Display one or all of the Netbackup storage units
+	bpsturep 	- Replace selected storage unit attributes
+	
+tpconfig - defining robots and drives
+		tpconfig ?d
+	Install_path\volmgr\database or /usr/openv/volmgr/database
+	
+Network communications
+	In terms of network communications, which services are required in order 
+	for NetBackup to operate correctly?
+		Name resolution
+		Reverse name resolution
+	Which tools (commands) can you use?
+		ping
+		nslookup
+		bpclntcmd ?ip  (will return the hostname resolving to the IP)
+		bpclntcmd ?hn  (will return the IP resolving to the hostname)
+		bpclntcmd ?sv  (displays Netbackup version # on master svr)
+		bpclntcmd -pn  (initiates query to master server and returns 
+		               information to the requesting client)
+		      Example:
+		      bpclntcmd -pn
+		      expecting response from server rabbit.friendlyanimas.com
+		      dove.friendlyanimas.com dove 123.146.167.3 57141
+		      
+		      Where
+		      - expecting response from erver rabbit.friendlyanimals.com
+		        is the master server entry from the server list on the
+		        client.
+		      - dove.friedlyanimals.com is the connection name (peername)
+		        returned by the master server. The master server obtained
+		        this name through gethostbyaddress().
+		      - dove isthe client name configured in the Netbackup policy
+		        client list.
+		      - 123.146.167.3 is the IP addr of the client connection
+		        at the master server.
+		      - 57141 is the port number of the connection on the client.
+	
+Multiple Data Streams
+	- provides a mechanism for increasing concurrency of backup operations of 
+	  client. Three places where number of streams is controlled
+			> max jobs parameter per policy
+			> Directives included in the file list of the policy
+			> Global parameter, including max jobs per client
+			
+Multiplexing 
+	? sends concurrent backups from one or several clients to a single storage
+	  device
+		Can improve backup performance when:
+			> Slow clients
+			> Multiple slow networks
+			> Many short backups
+			> Reduce impact of multiplexing by demultiplexing images
+			> set max fragment size on storage unit to a non zero value
+			> enable fast tape positioning on drives
+		Use bptm logs for tuning 
+
+Maintenance Commands
+		bpverify 	- verify backups created by NetBackup by reading 
+				  backup volume and comparing the contents to the 
+				  NetBackup catalog. It reads the first block in image
+				  verifying that the image is readable only one backup
+				  can be verified at a time.
+		bpduplicate	- allows a copy of a backup to be created and can also 
+				  promote a copy to primary in order to enable 
+				  restoring from a duplicated backup.
+		bpimport	- Import NetBackup and Backup Excec  backups that are
+				  expired or are from another NetBackup or Backup Exec
+				  server.
+Scripts
+		script path	- install_path\netbackup\bin\goodies
+		check_coverage	- check_coverage will tell what mount points are
+				  covered on a client under a specific policy
+		get_license_key	- License key utility
+		available_media	- lists all media ID assignments in current
+				  Netbackup domain
+		dbbackup_notify	- script called after all DB have been backed up
+		
+		Notify Scripts
+			Master				Media			Client
+			Session_start_notify		diskfull_notify		bpstart_notify
+			backup_exit_notify		backup_notify		bpend_notify
+			session_notify			restore_notify		
+			dbbackup_notify		
+			usereq_notify
+		
+		
+Activity Monitor
+	Jobs
+		JobID
+		Type
+		Job State
+		Status
+		Policy
+		Schedule
+		Client
+		Media Server
+		Start Time
+		Storage Unit
+		End Time
+		Attempt
+		Operation
+		Kilobytes
+		Files
+	Services
+		Server
+		Service
+		Status
+		Startup
+		Windows Exit Code
+		Binary Path Name
+	Processes
+		Name
+		Server
+		PID
+		Processor Time
+		Total Processor Time
+		Working Set
+		Elapsed Time
+	Drives
+		Drive Name
+		Type
+		Control
+		Recorded Media ID
+		External Media ID
+		Ready
+		Writable
+		Comment
+		Drive Use History
+		Server
+Reports
+	Status of Backups
+		Client			Name of client backed up
+		Date			Date backup occurred
+		Description		Message describing status
+		JobID			JobID corresponding to the backup that appears in 
+					Activity Monitor
+		Master Svr		Netbackup Server that is controlling the media 
+					used for the backup
+		Policy			Name of Policy that was used to back up the 
+					client
+		Schedule		Name of Schedule that was used to back up the client
+		Status			Completion status of the backup. If status other 
+					than 0, click the hyperlink to open the 
+					Troubleshooter.
+		Time			Time of Day the backup occurred
+
+	Client Backups
+		Backup Date		Date that the backup began.  
+ 		Backup ID		Identifier that NetBackup assigns when it 
+ 					performs the backup.  
+		Backup Time    		Time of day that the backup began.   
+		Client  		Name of the client that was backed up.  
+		Compressed  		Yes indicates that the backup was compressed.  
+		Elapsed Time		How much time the backup required to complete.  
+		Expiration Date		Date when NetBackup will expire the record of 
+					this backup.  
+		Expiration Time		Time when NetBackup will expire the record of 
+					this backup.  
+		Encrypted		Yes, if the backup is encrypted. Encryption and 
+					decryption is possible only with the NetBackup 
+					Encryption option.  
+		Extended Security	Information   This field is reserved for future 
+					use and always displays No.   
+		File Restore Raw	Individual file restore from raw. This is set by 
+					the corresponding policy attribute, if it 
+					applies.  
+		File System Only	This field is reserved for future use and always 
+					displays No.  
+		Image Dump Level	Applies to NDMP backups. 0 indicates a full 
+					backup and greater than 0 indicates an 
+					incremental backup.  
+		Image Type  		Regular: Image from a scheduled or user-directed 
+						backup.  
+					Pre-imported: Image for which phase 1 of the 
+						import process has been completed.  
+					Imported: Image that has been imported into the 
+						NetBackup database on this server.  
+		Keyword  		Keyword that the user associates with this image 
+					at the time of the backup.  
+		Kilobytes  		Number of kilobytes in the backup.  
+		Master Server  		Master server that controlled the backup.  
+		Multiplexed  		Yes indicates that the backup was multiplexed.  
+		Number of Files  	Number of files in the backup.  
+		Object Descriptor  	This field is reserved for future use and is 
+					always empty.
+  
+		Policy  		Name of the policy that was used to back up the 
+					client.   
+		Policy Type  		Type of policy (for example, Standard, 
+						MS-Windows-NT, and so on).  
+		Primary Copy  		Primary copy shows which copy (1 or 2) NetBackup 
+						uses to satisfy restore requests.  
+		Retention Period	Retention period for the backups on this volume. 
+					An asterisk after the retention period number 
+					means that the volume can have multiple retention
+					levels. When there are multiple retention levels, 
+					the number shown was the first level assigned.   
+		Schedule  		Name of the schedule that was used for the 
+					backup.  
+		Schedule Type   	Type of schedule used for the backup:  
+					- Full 
+					- Incr (differential incremental) 
+					- Cinc (cumulative incremental) 
+					- UBackup (user backup) 
+					- UArchive (user archive) 
+		True Image Restore Available  Yes indicates that NetBackup is 
+						collecting true image restore information for 
+						this policy and it is possible to perform a true 
+						image restore of the directories in the backup.  
+	Problems Report
+		Client			Name of the client that was backed up.  
+		Date			Date that the backup occurred.  
+		Description		Message describing the status.  
+		Master Server		Master server that controlled the backup.  
+		Media Server		NetBackup server that is controlling the media 
+					used for the backup.  
+		Policy			Name of the policy that was used to back up the 
+					client.  
+		Process			Process that returned the status.  
+		Schedule		Name of the schedule that was used to back up the 
+					client.  
+		Severity		Severity level of the status:  
+						info = informational only.  
+						error = an error occurred.  
+		Status			Completion status of the backup. If the status 
+					code is 0, the operation succeeded. If the status 
+					code is not 0, click the hyperlink to open the 
+					Troubleshooter.  
+		Time			Time of day that the backup occurred.  
+		Type			Type of status.
+
+	All Log Entries
+		Client			Name of the client that was backed up.  
+		Date			Date that the backup occurred.  
+		Description		Message describing the status.  
+		Master Server		Master server that controlled the backup.  
+		Media Server		NetBackup server that is controlling the media 
+					used for the backup.  
+		Policy			Name of the policy that was used to back up the 
+					client.  
+		Process			Process that returned the status.  
+		Schedule		Name of the schedule that was used to back up the 
+					client.  
+		Severity		Severity level of the status:  
+						info = informational only.  
+						error = an error occurred.  
+		Status			Completion status of the backup. If the status 
+					code is 0, the operation succeeded. If the status 
+					code is not 0, click the hyperlink to open the 
+					Troubleshooter.  
+		Time			Time of day that the backup occurred.  
+		Type			Type of status.  
+
+	Media Lists
+		Images			Total number of backups on the volume.
+		Allocated Date		Date that Media Manager allocated the volume.  
+		Allocated Time 		Time that Media Manager allocated the volume.  
+		Density			Density of the device that produced the backups 
+					on this volume.  
+		Expiration Date 	Date when the backups on the volume expire.   
+		Expiration Time		Time when the backups on the volume expire.  
+		Header Size		Optical header size in bytes.   
+		KBytes			Total number of kilobytes on this volume.  
+		Last Offset		Optical offset of the last header.   
+		Last Read Date		Date when the last restore was done from this 
+					volume.  
+		Last Read Time		Time of day when the last restore was done from 
+					this volume.  
+		Last Written Date	Date when the volume was last used for backups.  
+		Last Written Time	Time when the volume was last used for backups.  
+		Master Server		Master server that controlled the backup.  
+		Media ID		Media ID that is assigned when the volume is 
+					added to Media Manager.   
+		Media Server		Server where the volumes reside. Applies only to 
+					NetBackup Enterprise Server: It is possible to 
+					have more than one if the master server has media 
+					servers and ALL was selected for the server.  
+		Number of Restores	Number of times this volume has been used for 
+					restores.  
+		Partner ID		For an optical disk, this is the media ID of the 
+					volume on the other side of the platter.  
+		Retention Period	Retention period for the backups on this volume. 
+					An asterisk after the retention period number 
+					means that the volume can have multiple retention 
+					levels. When there are multiple retention levels, 
+					the number shown was the first level assigned.   
+		Sector Size		Optical sector size in bytes.   
+		Status			The messages that commonly appear here are:  
+						Suspended: The volume cannot be used for 
+							further backups until retention periods 
+							for all backups on it have expired. At 
+							that time, the suspended volume is 
+							deleted from the NetBackup media 
+							catalog and unassigned from NetBackup. 
+							(The bpmedia command can also be used 
+							to manually suspend or unsuspend 
+							volumes.)  A suspended volume is 
+							available for restores. If the backups 
+							have expired, the backups first require
+							importing.  
+						Frozen: The volume is unavailable for future 
+							backups. A frozen volume never expires, 
+							even after the retention period ends 
+							for all backups on the media. This 
+							means that the media ID is never 
+							deleted from the NetBackup media 
+							catalog and remainsassigned to 
+							NetBackup. (The bpmedia command can 
+							also be used to manually freeze or 
+							unfreeze volumes.) A frozen volume is 
+							available for restores. If the backups 
+							have expired, the backups first require 
+							importing.  
+						Full: The volume is full and no more backups 
+							are written to it. NetBackup sets FULL 
+							status if it encounters an end of media 
+							(EOM) during a backup.  A full volume 
+							is unavailable for future backups until
+							the retention period expires for all 
+							backups that are on it. At that time, 
+							the volume is deleted from the 
+							NetBackup media catalog and unassigned 
+							from NetBackup.  
+						Imported: The backup was imported to this 
+							server. The volume cannot be used for
+							further backups until retention periods 
+							for all backups on it have expired. At 
+							that time, the imported volume is 
+							deleted from the NetBackup media 
+							catalog and unassigned from NetBackup. 
+							An imported volume is available for 
+							restores. If the backups have expired, 
+							the backups first require importing.  
+						MultiRetlev: The volume contains backups of 
+							more than one retention level.  
+						MPX: The volume allows multiplexed backups.  
+
+		Valid images		Valid images. Number of nonexpired backups on the 
+						volume. For example, if the volume has 50 backups 
+						but only 10 are valid, then the other 40 have 
+						expired. If the volume has any multiplexed 
+						backups, this field contains MPX.  
+		VM Pool			A number that corresponds to the volume pool for 
+						the media.   
+							0 = None  
+							1 = NetBackup  
+						For other numbers, find the media ID in the 
+						volume list on the volume database host for the 
+						media ID. This list shows the volume pool for 
+						each volume.
+	Media Contents
+		Allocated Date		Date when Media Manager allocated the volume.  
+		Allocated Time		Time of day when Media Manager allocated the 
+					volume.  
+		Backup ID		Identifier that NetBackup assigns when it 
+					performs the backup.  
+		Block Size		Shows the number of bytes in the fragment and 
+					applies only to optical disk.  
+		Copy Number		Shows the copy number (1 or 2).   
+		Creation Date		Date when NetBackup created the backup.  
+		Creation Time		Time of day when NetBackup created the backup.  
+		Expiration Date		Date when the backup expires.  
+		Expiration Time		Time of day when the backup expires.  
+		File Number		Position of the file, where file 1 is the first. 
+					If the volume contains multiplexed backups, it 
+					can have multiple files with the same number.  
+		Fragment Number	Greater than 1 only if the backup is split across 
+		multiple volumes or if the storage unit maximum fragment size is exceeded.  
+		Media ID		Media ID that contains this backup. The media ID 
+					isthe same for all backups since the Media 
+					Contents can be run on only a single Media ID.  
+	Images on Media 
+		Backup ID		Identifier that NetBackup assigns when it 
+					performs the backup.  
+		Blockmap		Indicates whether this fragment is a blockmap 
+					(Yes or No).  
+		Block Size		Size of the data blocks used to write the backup. 
+					When multiplexing is used, the block size can 
+					vary between backups on the same volume.  
+		Client			Name of the client that was backed up.  
+		Compressed		Yes if the backup is compressed.  
+		Copy Number		Greater than 1 only if there are multiple copies.  
+		Density			Density of the device that produced the backup.  
+		Device Written On	Device where the backup was written. This is the 
+					drive index configured in Media Manager.  
+		Encrypted		Yes if the backup is encrypted. Encryption and 
+					decryption is possible only with the NetBackup 
+					Encryption option.  
+		Expiration Date		Date that the retention period for the backup 
+					ends.  
+		Expiration Time		Time that the retention period for the backup 
+					ends.  
+		File Number		File number on the media.  
+		Fragment Number		Number of the fragment. TIR if the fragment is 
+					part of a true-image backup.  
+		Kilobytes		Size of the fragment in kilobytes. This value 
+					does not include the space for tape headers 
+					between backups. A fragment size of 0 is possible 
+					in a multiplexed backup.  
+		Retention Period	Retention period for the backups on this volume. 
+					An asterisk after the retention period number 
+					means that the volume can have multiple retention 
+					levels. When there are multiple retention levels, 
+					the number shown was the first level assigned.   
+		Master Server		Name of the master server that controlled the 
+					backup.  
+		Media Date		Date that the media was allocated for use by 
+					NetBackup.  
+		Media ID		Media ID of the volume that has the backup image. 
+					For disk, it is a pathname.  
+		Media Server		Server with the database that has this 
+					information.  
+		Media Time		Time that the media was allocated for use by 
+					NetBackup.  
+		Media Type		Type of media and can be removable (Rmed) or disk 
+					(Disk).  
+		Multiplexed		Indicates whether this image is multiplexed (Yes 
+					or No)  
+		Number of Files		Number of files in the backup.  
+		Offset			Applies only to optical disk and is the byte 
+					offset on the media where the backup image 
+					begins. Ignore this value for tapes and magnetic 
+					disk.  
+		Policy			NetBackup policy for which the backup was 
+					created.  
+		Policy Type		Type of policy (for example, Standard, 
+					MS-Windows-NT, and so on).  
+		Remainder		Bytes written beyond kilobytes filed. Size of 
+					fragment is exactly: 
+					Kilobytes*1024 + Remainder.  
+		Schedule		Name of the schedule that produced the backup.  
+		Schedule Type		Type of schedule that produced the backup:  
+						Full (full backup)
+						Incr (differential incremental)
+						Cinc (cumulative incremental)
+						Ubackup (user backup)
+						Uarchive (user archive)
+	Media Logs
+		Client			Name of the client that was backed up.  
+		Date			Date that the backup occurred.  
+		Description		Message describing the status.  
+		Master Server		Master server that controlled the backup.  
+		Policy			Name of the policy that was used to back up the 
+					client.  
+		Process			Process that returned the status.  
+		Schedule		Name of the schedule that was used to back up the 
+					client.  
+		Media Server		NetBackup server that is controlling the media 
+					used for the backup.  
+		Severity		Severity level of the status:  
+						info = informational only  
+						error = an error occurred.  
+		Status			Completion status of the backup. If the status 
+						code is 0, the operation succeeded. If the status 
+						code is not 0, click the hyperlink to open the 
+						Troubleshooter.  
+		Time				Time of day that the backup occurred. 
+ 
+	Media Summary
+		Before running the Media Summary report, select the following report 
+		settings, then click Run Report: 
+			Media Servers 
+			Volume Pool 
+			Verbose Listing 
+		The Media Summary report summarizes active and nonactive volumes for 
+		the specified server according to expiration date. It also shows how 
+		many volumes are at each retention level. In verbose mode, the report 
+		shows each media ID and its expiration date. 
+		Nonactive media are those with a status of FULL, FROZEN, SUSPENDED, 
+		or IMPORTED. Other volumes are considered active. 
+		The only expired volumes that appear in this report are those that 
+		are FROZEN. NetBackup deletes other expired volumes from its media 
+		catalog when it runs backups. An expired volume with other status can 
+		show up only if you run the report between the time the volume 
+		expires and the next backup is done. 
+	Media Written
+		Host			NetBackup server that has the volume database 
+					with the records for this volume.  
+		KBytes			Total number of kilobytes on this volume.  
+		Last Written Date	Date when the media was last written.  
+		Last Written Time	Time when the media was last written.  
+		Master Server		Master server that controlled the backup.  
+		Media ID		Media ID that is assigned when the volume is 
+					added to Media Manager.  
+		Retention Period	Retention period for the backups on this volume. 
+					An asterisk after the retention period number 
+					means that the volume can have multiple retention 
+					levels. When there are multiple retention levels, 
+					the number shown was the first level assigned.   
+		Times Written		Number of times this media was written.  
+		
+Status Codes
+		 6			- job failed to backup requested files
+		 				> check rights on files
+		 				> read problem report
+		 				> check agent backup scripts
+		15			- file failed to close, read problems report
+		48			- client hostname cound not be found
+						> check the bp.conf file
+						> check the /etc/hosts (or DNS resolution)
+		54			- timed out connecting to the client
+						> job may already be running
+						> verify the /etc/inetd.conf file
+		71			- files in file list do not exist, check policy file
+					  list
+		84			- media write error
+						> check bptm log
+						> clean tape drive
+						> replace the tape
+		96			- unable to allocate new media
+						> Physical tapes are in the drive
+						> media is in the volume pool
+						> retention level on media is different than
+						  the backup
+						> media status may be IMPORTED, FROZEN, SUSPENDED
+						  RESERVED for catalog backups, or FULL	
+		196			- client backup not attempted because the backup
+					  window closed
+		198			- no active policies contain schedules of the 
+					  requested type for this client.
+		213			- no storage unit available for use
+						> no storage unit available for use
+						> storage unit may be "on demand only"
+						> check the Maximum Concurrent Drives attribute
+		219			- the required storage unit is not available
+						> required STU not available
+						> STU does not exist
+						> STU and robot number do not match
+						> media server is offline or not communicating
+						> disk storage units are full
+						> all drives in storage unit are in DOWN state
+						
+
+
+
+Misc Information
+		- Alternate restore failover is a list of alternate media 
+		  servers that can perform a restore.    
+		- Total Image Restore --> needed for synthetic backups
+		- Drive Status = READY Drive is up with loaded volume (tape in drive)
+		- Default Wakeup Interval = 10 min	(Detects any scheduled jobs)
+		- Vault - Installs on Master Server only + license key
+		- Three things to do to enable multiplexing and multistreaming
+			1) For the storage unit -- set the max. multiplex per drive
+ 			2) for the client, use the NEW_STREAM directive
+ 			3) Policy -> Schedule -> Attribute.........set media 
+ 			   multiplexing
+ 		- A robot and stand-alone drive CANNOT be in the same storage unit.	
+		- Patch Master and all of the sudden Oracle hot backups fail, what 
+		  needs to be done?
+		  	> 
+		- Offhost Backup 		Shifts the burden of backup processing onto
+							a separate backup agent, greatly reducing 
+							the impact on the clients's computing 
+							resources ordinarily caused by a local 
+							backup. 
+		- Flashbackup			A policy type that combines the speed of 
+							raw-partition backups with the ability to 
+							restore individual files. 
+		- Snapshot			A point-in-time disk image of the clients 
+							data for "hot" backups. NetBackup backs up 
+							the data from the snapshot image, not 
+							directly from the client's primarydata. This 
+							allows client operations to continue without 
+							interruption during the backup.
+							A Snapshot is REQUIRED for ALL features of 
+							Advanced Client.
+		- Instant Recovery		This feature makes backups available for 
+							instant recovery from disk. Instant Recovery
+							combines snapshot technology (the snapshot
+							is created without interrupting user access 
+							to data) with the ability to do rapid disk-
+							based restores. The snapshot is retained
+							on disk as well as backed up to storage.
+		- Alternate restore failover is a list of alternate media servers 
+		  that can perform a restore.
+		- You've removed a drive (library attached to a ?) media server. Now
+		  after a reboot, all of the drives are "UP" but when you insert 
+		  media into a drive ALL of the drives go down. Why does this happen?
+		- What happens with SSO if you remove the server which is controlling
+		  the robot? How do you make another media server control the robot?
+		
+
+DP-022W 
+ 
+ 
+1.	NetBackup Installation - Launch.exe
+Install Paths 
+?	install path\Program Files\VERITAS\NetBackup 		(NetBackup)
+?	install path\Program Files\VERITAS\Volmgr		
+(Media Manager)
+?	install path\Program Files\VERITAS\NetBackup\var 	
+(License Keys)
+?	install path\Program Files\VERITAS\NetBackup\bin	
+(Console program)
+ 
+ 
+2.	Where to set maximum fragment size = Storage Unit 
+NetBackup Admin Console/NetBackup Management/Storage Units
+ 
+ 
+3.	Vm.conf listed as  SCRATCH_POOL = Scratch
+Media manager conf file with entries that include servers that manage local devices and default media ID prefixes 
+ 
+ 
+4.	Synthetic backups 
+used when there is a moderate of change in the filesystem 
+ 
+ 
+5.	True Image Restore 
+Policy ?Attributes - select "Collect True Image Restore Information" 
+ 
+ 
+6.	Instant Recovery 
+Policy-Attributes ? Advance client - select perform snapshot backup ? or - retain snapshots for instant recovery (disk only)
+ 
+ 
+7.	Where are Retention levels set?
+set in -Policy-Schedules-Attributes 	 
+25 retention levels 
+ 
+ 
+8.	Where are Volume Pool? 
+NBU Server/Media and Device Mgmt/Media
+also
+Policy-schedules-sele?ct override policy volume pool 
+9.	Drive Status 
+READY means drive is up and with loaded volume tape in the drive) 
+
+10.	Tpconfig 
+Add/configure robots, configure tape drives, delete robot/drives, display robot/drive configuration 
+ 
+11.	Storage Unit Commands= 
+Bpstuadd-
+command line interface for configuring devices 
+Bpstulist-
+command used to display & manage storage units & groups
+Bpstudel-
+command used to delete a storage unit
+Bpsturep-
+command used to modify storage units and groups
+ 
+ 
+12.	Vmoprcmd  
+display drive status up drive-down drive-reset drive; assign/deny/resubmit request 
+ 
+ 
+13.	Vmoprcmd -up  
+drive up 
+ 
+ 
+14.	Vmcheckxxx 
+Report media contents of the robotic library
+check and compare volume configuration with  robot configuration
+ 
+ 
+15.	Vmupdate  
+perform inventory of media contents of the library and update of the volume database (catalog)  from the robots content 
+ 
+ 
+16.	NBU 5.0 Default Wakeup Interval 
+10 min to detect if there are any schedule jobs 
+
+17.	Where to find client version info? 
+
+?	Admin console  help ? About NetBackup
+?	On client-click Backup, Archive. Restore- about Veritas NetBackup 
+?	installpath\Veritas\NetBackup\ve?rsion.txt 
+ 
+18. 	How to get a client to use a different media pool? 
+Policy/ schedules/ override policy volume pool
+ 
+19. 	MSSQL Backup Requirements 
+needs account with MSSQL admin rights, verify ODBC 
+ 
+ 
+20.	NetBackup Vault 
+installs on Master Server only with NBU install , but needs to be licensed 
+ 
+
+ 
+21.	You can Preview Vault Session 
+vltrun -preview 	without ejecting tapes 
+ 
+ 
+22.	NetBackup 5.0 will 
+support media servers/clients one major release backward.  
+Media Servers & Clients can be v4.5 
+ 
+ 
+23.	Bp clientcmd    bpclntcmd -sv
+Netback version on master or client 
+ 
+ 
+24.	Bp clientcmd     bpclntcmd -pn 
+Gives DNS name, server name, ip address, and port
+ 
+ 
+25.	Bp clientcmd      bpclntcmd -hn 
+Enable you to specify a hostname 
+ 
+ 
+26.	Bp clientcmd      bpclntcmd - ip 
+Enables you to specify an ip address for lookup 
+ 
+ 
+27.	When does a volume become suspended?  
+?	When write failures occur or if volume exceeds the number of mounts.  
+?	Available for restore but not for backups or archives until last image expires. 
+ 
+
+
+
+ 
+28. 	When does a volume become frozen?  
+?	When NBU sense a format other than NetBackup.  
+?	Not mounted for backup or archives, but can restore from frozen.  ALLOW_MEDIA_OVERWRITE in bp.conf to overwrite & re use 
+
+29.	Daemons/processes running after you install NBU Master? 
+?	bprd
+?	bpdbm	
+?	bpjobd 	 
+?	nbdbd 	
+?	bpsched  	
+?	vmd
+ 
+ 
+30.	Upgrading NBU Master
+?	Read release notes
+?	Backup all catalogs
+?	Backup all patches, scripts,& .conf entries
+?	Stop all processes
+?	Identify release level of clients
+
+ 
+31.	Backup NBU Catalogs
+NetBackup Admin Console / select Catalog / right-click / Backup NetBackup Catalog 
+ 
+ 
+32.	Verify that catalog backups are successful
+?	check status in the activity monitor
+?	dbbackup_notify script
+?	reports utility
+?	media log reports
+ 
+ 
+33.	VSP 
+Each volume will have a corresponding VSP cache file 
+ 
+ 
+34.	Install NBU w/autoplay disabled ? 
+run Launch.exe program 
+
+
+
+ 
+35. 	Remote Install of NBU Clients - 
+?	run launch.exe 
+?	click netbackup installation 
+?	start Netbackup client installation 
+?	'select from available computers on the network' 
+ 
+36.	Why reboot NetBackup Server? 
+?	Add new devices 
+?	Install database agents 
+?	Increased available shared memory
+?	Changing operating systems settings
+ 
+37.	Tpreq 
+Request a tape volume for mounting and associate a file name with the assigned drive  
+
+38.	tpreq and tpunmount 
+are user commands for requesting tape mounts and unmounts for configured drives.
+
+39.	VXassist snapstart
+create snapshot mirror of a designated drive
+
+40.	VXassist snapshot
+create a snapshot of a primary volume before a split
+
+41.	FMR
+fast mirror resync, used in conjunction with Instant Recovery 
+
+42.	Multistreaming
+multiple clients to multiple drives
+
+43.	Multiplexing
+Multiple clients to one drive
+
+44.	Status Code 150
+operator aborted job
+
+45.	Status Code 71
+no files or folders found
+
+46.	Status Code 196
+backup window closed
+
+
+47.	Status Code 198
+no active policy with schedule for this type of client
+
+48.	Status Code 59
+access to client not allowed
+
+49.	Status Code 41
+network connection timed out
+
+50.	Status Code 96
+unable to allocate media
+
+51.	Status Code 1
+partially successful backup / open or locked files / permissions
+
+52.	Media Catalog
+information of backups to the volumes where they are stored  MEDIA SERVER - CONTAINS TAPES THAT HAVE BEEN USED 
+
+53.	Volume Catalog
+volumes that have NetBackup catalog backups that do not appear in the Media catalog   HISTORY OF ALL TAPES
+
+54.	SSO SAN compatibility
+support.veritas.?com (SSO Tested Device List for NetBackup) 
+
+

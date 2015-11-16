@@ -1,0 +1,4 @@
+"id","primaryClusterUuid","name","frequencies","replicationSpecs","numVms","numSnapshots","isDefault","uiColor"
+"GOLD_df670c6e-a4ea-4c72-9793-83e8d46b0065","117dd081-643a-4e1e-96f3-23043f39ea97","Gold","System.Object[]","System.Object[]","4","75","True","#f8c044"
+"BRONZE_dcdf512e-d0e3-4d72-9619-957a47f6cc1c","117dd081-643a-4e1e-96f3-23043f39ea97","Bronze","System.Object[]","System.Object[]","3","16","False","#cc8366"
+"SILVER_b14d98fb-7172-4dda-8390-3befd5abfadd","117dd081-643a-4e1e-96f3-23043f39ea97","Silver","System.Object[]","System.Object[]","2","9","False","#ccccca"

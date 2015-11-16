@@ -1,0 +1,94 @@
+# VMware version-mapping file.
+#
+# This file provides a one-to-one mapping between VMware Tools for
+# ESX/ESXi version-number codes, and paths to OSP repositories suitable
+# for that Tools version.
+#
+# The ESXi server mapping is only to show that the particular version of
+# Tools ships with that particular ESXi server build number, but the Tools
+# can work with a greater range of ESXi versions.
+#
+# Column 1: Tools version on NGC/VI Client
+# Column 2: ESXi server version
+# Column 3: Tools version on guest Setup/About page
+# Column 4: ESXi server build number
+#
+9536        esx/6.0                                9.10.0        2476743
+9355        esx/5.5ep06                            9.4.11        2456374
+9355        esx/5.5p04                             9.4.11        2403361
+9354        esx/5.5ep05                            9.4.10        2143827 
+9354        esx/5.5p03                             9.4.10        2143827 
+9354        esx/5.5u2                              9.4.10        2068190
+9350        esx/5.5p02                             9.4.6         1892794
+9349        esx/5.5ep04                            9.4.5         1881737
+9349        esx/5.5ep03                            9.4.5         1746974
+9349        esx/5.5ep02                            9.4.5         1750340
+9349        esx/5.5u1                              9.4.5         1623387
+9344        esx/5.5p01                             9.4.0         1474528
+9344        esx/5.5                                9.4.0         1331820
+9231        esx/5.1u3                              9.0.15        2323236
+9229        esx/5.1p06                             9.0.13        2126665
+9228        esx/5.1p05                             9.0.12        1897911
+9227        esx/5.1ep05                            9.0.11        1900470
+9227        esx/5.1p04                             9.0.11        1743533
+9226        esx/5.1ep04                            9.0.10        1612806
+9226        esx/5.1u2                              9.0.10        1483097
+9221        esx/5.1p03                             9.0.5         1312873
+9221        esx/5.1p02                             9.0.5         1157734
+9221        esx/5.1ep03                            9.0.5         1117900
+9221        esx/5.1u1                              9.0.5         1065491
+9217        esx/5.1ep02                            9.0.1         1021289
+9217        esx/5.1p01                             9.0.1         914609
+9216        esx/5.1                                9.0.0         799733
+8399        esx/5.0p11                             8.6.15        2509828
+8398        esx/5.0p10                             8.6.14        2312428
+8398        esx/5.0p09                             8.6.14        1976090
+8397        esx/5.0ep06                            8.6.13        1918656
+8397        esx/5.0p08                             8.6.13        1851670
+8396        esx/5.0p07                             8.6.12        1489271
+8395        esx/5.0u3                              8.6.11        1311175
+8395        esx/5.0p06                             8.6.11        1254542
+8395        esx/5.0ep05                            8.6.11        1117897
+8395        esx/5.0p05                             8.6.11        1024429
+8394        esx/5.0u2                              8.6.10        914586
+8397        esx/5.0p08                             8.6.13        1739451
+8389        esx/5.0p04                             8.6.5         821926 
+8389        esx/5.0p03                             8.6.5         768111
+8389        esx/5.0u1                              8.6.5         623860
+8384        esx/5.0p02                             8.6.0         515841
+8384        esx/5.0p01                             8.6.0         474610
+8384        esx/5.0                                8.6.0         469512
+8307        esx/4.1p11                             8.3.19
+8307        esx/4.1p10                             8.3.19
+8307        esx/4.1p09                             8.3.19
+8307        esx/4.1p08                             8.3.19
+8306        esx/4.1p07                             8.3.18
+8305        esx/4.1p06                             8.3.17
+8305        esx/4.1u3                              8.3.17
+8300        esx/4.1p05                             8.3.12
+8300        esx/4.1p04                             8.3.12
+8300        esx/4.1u2                              8.3.12
+8295        esx/4.1p03                             8.3.7
+8295        esx/4.1u1                              8.3.7
+8290        esx/4.1                                8.3.2
+8199        esx/4.0p15                             8.0.7
+8199        esx/4.0p14                             8.0.7
+8198        esx/4.0p13                             8.0.6
+8197        esx/4.0ep09                            8.0.5
+8196        esx/4.0p12                             8.0.4
+8196        esx/4.0p11                             8.0.4
+8196        esx/4.0u4                              8.0.4
+8196        esx/4.0p10                             8.0.4
+8196        esx/4.0u3                              8.0.4
+8195        esx/4.0u2                              8.0.3
+8194        esx/4.0u1                              8.0.2
+8192        esx/4.0                                8.0.0
+7304        esx/3.5p27                             7.4.8
+7304        esx/3.5p25                             7.4.8
+7304        esx/3.5p24                             7.4.8
+7304        esx/3.5u5                              7.4.8
+7303        esx/3.5u4                              7.4.7
+7302        esx/3.5u3                              7.4.6
+7302        esx/3.5u2                              7.4.6
+
+

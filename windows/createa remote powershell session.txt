@@ -1,0 +1,6 @@
+$server="servername"
+$cred = Get-Credential
+$session = New-PSSession -Credential $cred -ComputerName $server
+Enter-PSSession $session
+
+# Exit-PSSession 
