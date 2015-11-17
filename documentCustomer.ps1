@@ -31,16 +31,26 @@ documentCustomer.ps1 -initFile "C:\admin\scripts\Customer_Settings\customer1.ini
 # Author: teiva.rodiere@gmail.com
 param(
 	[Parameter(Mandatory=$true)][string]$inifile,
-	[bool]$stopReportGenerator=$false
+	[bool]$stopReportGenerator=$false,
+	[bool]$silent=$false
 )
 $scriptsLoc=$(Split-Path $($MyInvocation.MyCommand.Path))
-#Write-Host $scriptsLoc
+Set-Variable -Scope Global -Name silent -Value $silent
+#printToScreen -msg $scriptsLoc
+
+function printToScreen([string]$msg,[string]$ForegroundColor="Yellow")
+{
+	if (!$global:silent)
+	{
+		Write-Host $msg -ForegroundColor $ForegroundColor
+	}
+}
 
 
 # Read in module
 Get-Content $inifile | Foreach-Object{
 	$var = $_.Split('=')
-	#Write-Host $var
+	#printToScreen -msg $var
 	if ($var[0] -and $var[1] -and !$var[0].Contains("#"))
 	{
 		if ($var[1] -eq "true")
@@ -62,7 +72,7 @@ Get-Content $inifile | Foreach-Object{
 	
 	#if ($var[0].Contains("#") -or $var[1].Contains("#"))
 	#{
-	#	Write-Host "Found variable with HASH in it $($var[0])" -ForegroundColor Red
+	#	printToScreen -msg "Found variable with HASH in it $($var[0])" -ForegroundColor Red
 	#}
 }
 
@@ -95,7 +105,12 @@ if (!$outputDirectory)
 
 $logfile="$outputDirectory\documentCustomer.log"
 
-#Write-Host $vmwareScriptsHomeDir
+if (!$global:silent)
+{
+	Invoke-Item $outputDirectory
+}
+
+#printToScreen -msg $vmwareScriptsHomeDir
 ###########################################################################
 #
 # VMWARE REPORTING :- 
@@ -107,12 +122,12 @@ if ($collectVMwareReports)
 	$passwordFile = "$($($vcCredentialsFile | Resolve-Path).Path)"
 	Set-Location $scriptsLoc\$vmwareScriptsHomeDir
 	
-	#Write-Host $(Split-Path $MyInvocation.MyCommand.Path) -BackgroundColor Red -ForegroundColor White
+	#printToScreen -msg $(Split-Path $MyInvocation.MyCommand.Path) -BackgroundColor Red -ForegroundColor White
 	if (!$srvconnection)
 	{
-		Write-Host ">>>>" -ForegroundColor Yellow
-		Write-Host "$vCenterServers"
-		Write-Host ">>>>" -ForegroundColor Yellow
+		printToScreen -msg ">>>>" -ForegroundColor Yellow
+		printToScreen -msg "$vCenterServers"
+		printToScreen -msg ">>>>" -ForegroundColor Yellow
 		$credentials = & "$scriptsLoc\$vmwareScriptsHomeDir\Get-MyCredentials.ps1" -User $vcUser -SecureFileLocation  $passwordFile
 		$vCenterServers=$vCenterServers -split ','
 		$srvconnection= Connect-VIServer -Server @($vCenterServers) -Credential $credentials

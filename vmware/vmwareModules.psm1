@@ -1957,16 +1957,16 @@ function GetVMSnapshots($vm)
 	        }
 	        $TaskCollector.DestroyCollector()
 			$mydatestring = new-timespan -End (get-date) -Start (get-date $snapshot.Created)
-			$row | Add-Member  MemberType NoteProperty  Name "VM" -Value $vm.Name
-			$row | Add-Member  MemberType NoteProperty  Name "State" -Value $vm.PowerState
-			$row | Add-Member  MemberType NoteProperty  Name "VM (in snapshot)" -Value $snapshot.VM
-			$row | Add-Member  MemberType NoteProperty  Name "Snapshot" -Value $snapshot.Name
-			$row | Add-Member  MemberType NoteProperty  Name "Description" -Value $snapshot.Description
-			$row | Add-Member  MemberType NoteProperty  Name "Size (GB)" -Value $([math]::round($snapshot.SizeGB,2))
-			$row | Add-Member  MemberType NoteProperty  Name "State Before Snapshot" -Value $snapshot.PowerState
-			$row | Add-Member  MemberType NoteProperty  Name "IsCurrent" -Value $snapshot.IsCurrent
-			$row | Add-Member  MemberType NoteProperty  Name "Age" -Value "$($mydatestring.Days) days $($mydatestring.hours) hours"			
-	        $row | Add-Member  MemberType NoteProperty  Name "CreatedBy"  Value $SnapUser
+			$row | Add-Member -MemberType NoteProperty -Name "VM" -Value $vm.Name
+			$row | Add-Member -MemberType NoteProperty -Name "State" -Value $vm.PowerState
+			$row | Add-Member -MemberType NoteProperty -Name "VM (in snapshot)" -Value $snapshot.VM
+			$row | Add-Member -MemberType NoteProperty -Name "Snapshot" -Value $snapshot.Name
+			$row | Add-Member -MemberType NoteProperty -Name "Description" -Value $snapshot.Description
+			$row | Add-Member -MemberType NoteProperty -Name "Size (GB)" -Value $([math]::round($snapshot.SizeGB,2))
+			$row | Add-Member -MemberType NoteProperty -Name "State Before Snapshot" -Value $snapshot.PowerState
+			$row | Add-Member -MemberType NoteProperty -Name "IsCurrent" -Value $snapshot.IsCurrent
+			$row | Add-Member -MemberType NoteProperty -Name "Age" -Value "$($mydatestring.Days) days $($mydatestring.hours) hours"			
+	        $row | Add-Member -MemberType NoteProperty -Name "CreatedBy" -Value $SnapUser
 			$row 
 	       	
 		}		
