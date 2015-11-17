@@ -3,7 +3,7 @@
 # better code managemnt
 #
 # Maintained by: teiva.rodiere@gmail.com
-# Version: 12.8 - 7/10/2015
+# Version: 12.10 - 7/11/2015
 # Usage: in any of your scripts, just add this line "Import-Module <path>\vmwareModules.psm1"
 #
 
@@ -2756,11 +2756,12 @@ function logThis (
 	[Parameter(Mandatory=$true)][string] $msg, 
 	[Parameter(Mandatory=$false)][string] $logFile,
 	[Parameter(Mandatory=$false)][string] $ForegroundColor = "yellow",
+	[Parameter(Mandatory=$false)][string] $BackgroundColor = "black",
 	[Parameter(Mandatory=$false)][bool]$logToScreen = $true,
 	[Parameter(Mandatory=$false)][bool]$NoNewline = $false
 	)
 {
-	if ($logToScreen)
+	if ($logToScreen -and !$global:silent)
 	{
 		# Also verbose to screent
 		if ($NoNewline)

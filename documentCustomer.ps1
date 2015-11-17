@@ -36,21 +36,12 @@ param(
 )
 $scriptsLoc=$(Split-Path $($MyInvocation.MyCommand.Path))
 Set-Variable -Scope Global -Name silent -Value $silent
-#printToScreen -msg $scriptsLoc
-
-function printToScreen([string]$msg,[string]$ForegroundColor="Yellow")
-{
-	if (!$global:silent)
-	{
-		Write-Host $msg -ForegroundColor $ForegroundColor
-	}
-}
-
+Import-Module ".\generic\genericModule.psm1" -Force
 
 # Read in module
 Get-Content $inifile | Foreach-Object{
 	$var = $_.Split('=')
-	#printToScreen -msg $var
+	#logThis -msg $var
 	if ($var[0] -and $var[1] -and !$var[0].Contains("#"))
 	{
 		if ($var[1] -eq "true")
@@ -69,13 +60,11 @@ Get-Content $inifile | Foreach-Object{
 		}
 		
 	}
-	
 	#if ($var[0].Contains("#") -or $var[1].Contains("#"))
 	#{
-	#	printToScreen -msg "Found variable with HASH in it $($var[0])" -ForegroundColor Red
+	#	logThis -msg "Found variable with HASH in it $($var[0])" -ForegroundColor Red
 	#}
 }
-
 #[Parameter(Mandatory=$true)][object]$srvConnection,
 #[object]$srvConnection,
 ###########################################################################
@@ -103,6 +92,11 @@ if (!$outputDirectory)
 	$outputDirectory=$logDir
 }
 
+if ((Test-Path -path $outputDirectory) -ne $true) {
+	New-Item -type directory -Path $outputDirectory
+	$childitem = Get-Item -Path $outputDirectory
+	$outputDirectory = $childitem.FullName
+}
 $logfile="$outputDirectory\documentCustomer.log"
 
 if (!$global:silent)
@@ -110,7 +104,12 @@ if (!$global:silent)
 	Invoke-Item $outputDirectory
 }
 
-#printToScreen -msg $vmwareScriptsHomeDir
+if (Test-Path $logfile)
+{
+	Remove-Item $logFile
+}
+
+logThis -msg $vmwareScriptsHomeDir
 ###########################################################################
 #
 # VMWARE REPORTING :- 
@@ -118,17 +117,38 @@ if (!$global:silent)
 ###########################################################################
 if ($collectVMwareReports)
 {
-	
-	$passwordFile = "$($($vcCredentialsFile | Resolve-Path).Path)"
+	$vcCredentialsFileDirectory = Split-Path $vcCredentialsFile
+	if (!$vcCredentialsFileDirectory)
+	{
+		$vcCredentialsFile="$(Split-Path $inifile)\$vcCredentialsFile"
+		
+	}
+	try 
+	{	
+		$filepath=$vcCredentialsFile | Resolve-Path -ErrorAction Stop
+		
+		$passwordFile = "$($($filepath).Path)"		
+		#$passwordFile
+		#pause
+	} Catch {		
+		#$ErrorMessage = $_.Exception.Message
+    		#$FailedItem = $_.Exception.ItemName
+		#showError -msg $ErrorMessage
+		set-mycredentials -Filename $vcCredentialsFile
+		$passwordFile = $vcCredentialsFile.Path
+		#break
+	}	
+
 	Set-Location $scriptsLoc\$vmwareScriptsHomeDir
 	
-	#printToScreen -msg $(Split-Path $MyInvocation.MyCommand.Path) -BackgroundColor Red -ForegroundColor White
+	#logThis -msg $(Split-Path $MyInvocation.MyCommand.Path) -BackgroundColor Red -ForegroundColor White
 	if (!$srvconnection)
 	{
-		printToScreen -msg ">>>>" -ForegroundColor Yellow
-		printToScreen -msg "$vCenterServers"
-		printToScreen -msg ">>>>" -ForegroundColor Yellow
-		$credentials = & "$scriptsLoc\$vmwareScriptsHomeDir\Get-MyCredentials.ps1" -User $vcUser -SecureFileLocation  $passwordFile
+		logThis -msg ">>>>" -ForegroundColor Yellow
+		logThis -msg "$vCenterServers"
+		logThis -msg ">>>>" -ForegroundColor Yellow
+		#$credentials = & "$scriptsLoc\$vmwareScriptsHomeDir\get-mycredentials-fromFile.ps1" -User $vcUser -SecureFileLocation  $passwordFile
+		$credentials = get-mycredentials-fromFile -User $vcUser -SecureFileLocation $passwordFile
 		$vCenterServers=$vCenterServers -split ','
 		$srvconnection= Connect-VIServer -Server @($vCenterServers) -Credential $credentials
 		
@@ -144,7 +164,6 @@ if ($collectVMwareReports)
 
 	logThis -msg "Collecting VMware Reports ($outputDirectory)" -logfile $logfile 
 	#$scriptsLoc\$vmwareScriptsHomeDir="C:\admin\scripts\vmware" # requires interacting with VMware vCenter server
-	
 	if ($srvconnection)
 	{
 		###########################################################################
@@ -156,15 +175,12 @@ if ($collectVMwareReports)
 		{
 			$thisReportLogdir="$logdir\Capacity_Reports" # Where all the CSVs are output by collectAll
 			$reportHeader="VMware Infrastructure Capacity Reports for $customer"
-			$reportIntro="The objective of this document is to provide $customer with information about its VMware Infrastructure(s). The report was prepared by $itoContactName and generated on $(get-date). A total of $($srvconnection.count) x vCenter Servers were audited for this sreport."
-						
+			$reportIntro="The objective of this document is to provide $customer with information about its VMware Infrastructure(s). The report was prepared by $itoContactName and generated on $(get-date). A total of $($srvconnection.count) x vCenter Servers were audited for this sreport."			
 			if (!$reportOnly)
 			{
 				logThis -msg "`t-> Collecting capacity information to location: $thisReportLogdir"	-logfile $logfile 
 				
 				& "$scriptsLoc\$vmwareScriptsHomeDir\collectAll.ps1" -logProgressHere $logfile -srvConnection $srvconnection -logDir $thisReportLogdir -runCapacityReports $true -runPerformanceReports $false -runExtendedReports $runExtendedVMwareReports -vms $vmsToCheckPerformance -showPastMonths $previousMonths
-				
-				#& "$scriptsLoc\$vmwareScriptsHomeDir\collectAll.ps1" -logProgressHere $logfile -srvConnection $srvconnection -logDir $thisReportLogdir -runCapacityReports $false -runPerformanceReports $false -runExtendedReports $false -runDevReports $true -vms $vmsToCheckPerformance -showPastMonths $previousMonths
 			}
 			
 			logThis -msg "`t-> Generating Capacity Report from input directory $thisReportLogdir to output directory $outputDirectory"	 -logfile $logfile 
@@ -177,6 +193,8 @@ if ($collectVMwareReports)
 				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
 			}
 		}
+		
+		
 		
 		###########################################################################
 		#
@@ -287,7 +305,8 @@ if ($collectSANReports)
         
         if ($sanV7000User -and $sanV7000SecurePasswordFile -and !$sanV700password)
         {
-            $credentials = & "$scriptsLoc\$sanV7000scriptsHomeDir\Get-MyCredentials.ps1" -User $sanV7000User -SecureFileLocation $passwordFile
+            #$credentials = & "$scriptsLoc\$sanV7000scriptsHomeDir\get-mycredentials-fromFile.ps1" -User $sanV7000User -SecureFileLocation $passwordFile
+		  $credentials = get-mycredentials-fromFile -User $sanV7000User -SecureFileLocation $passwordFile
             #$credentials
             #pause
         }
