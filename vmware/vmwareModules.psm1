@@ -46,6 +46,7 @@
 
 function getIssues(
 	[Parameter(Mandatory=$true)][Object]$objectsArray,
+	[Parameter(Mandatory=$true)][Object]$srvconnection,
 	[bool]$returnDataOnly=$true,
 	[int]$performanceLastDays=7,
 	[string]$lastDayOfReportOveride,
@@ -53,6 +54,7 @@ function getIssues(
 	[int]$maxsamples = [int]::MaxValue,
 	[int]$headerType=1,
 	[string]$li="<li>"
+	
 )		
 {
 	if ($lastDayOfReportOveride)
@@ -71,6 +73,7 @@ function getIssues(
 	}
 	$vmtoolsMatrix = getVMwareToolsVersionMatrix
 	$enable = $true
+	
 	if ($enable)
 	{
 		logThis -msg "######################################################################" -ForegroundColor Green
@@ -99,14 +102,14 @@ function getIssues(
 						$deviceIndex=1
 						$dataTable = $objArray | sort Name | %{
 							$obj = $_							
-							$myvCenter = $global:srvConnection | ?{$_.Name -eq $obj.vCenter}
+							$myvCenter = $srvconnection | ?{$_.Name -eq $obj.vCenter}
 							$intervalsSecs = (Get-StatInterval -Server $myvCenter | ?{$_.Name -eq "Past Day"}).SamplingPeriodSecs
 							Write-Progress -Activity "$title" -Id 2 -ParentId 1 -Status "$deviceIndex/$($objArray.Count) :- $($myvCenter.Name)\$($obj.Name)..." -PercentComplete (($deviceIndex/$($objArray.Count))*100)
 							logthis -msg "`t-$($myvCenter.Name)\$($obj.Name)"
 							$objectIssues = 0; $objectIssuesRegister = ""
 							$clear = $false # use to disable the incomplete if statements below	
 							$row = New-Object System.Object
-							if ($global:srvConnection.Count -gt 1)
+							if ($srvconnection.Count -gt 1)
 							{
 								$row | Add-Member -MemberType NoteProperty -Name "Name" -Value "$($myvCenter.Name.ToUpper())\$($obj.Name.ToUpper())"
 							} else {
@@ -447,13 +450,13 @@ function getIssues(
 						$deviceIndex=1
 						$dataTable = $objArray | sort Name | %{		
 							$obj = $_
-							$myvCenter=$global:srvConnection | ?{$_.Name -eq $obj.vCenter}
+							$myvCenter=$srvconnection | ?{$_.Name -eq $obj.vCenter}
 							Write-Progress -Activity "$title" -Id 2 -ParentId 1 -Status "$deviceIndex/$($objArray.Count) :- $($myvCenter.Name)\$($obj.Name)..." -PercentComplete (($deviceIndex/$($objArray.Count))*100)
 							logthis -msg "`t-$($myvCenter.Name)\$($obj.Name)"
 							$objectIssues = 0; $objectIssuesRegister = ""
 							$clear = $false # use to disable the incomplete if statements below				
 							$row = New-Object System.Object
-							if ($global:srvConnection.Count -gt 1)
+							if ($srvconnection.Count -gt 1)
 							{
 								$row | Add-Member -MemberType NoteProperty -Name "Name" -Value "$($myvCenter.Name.ToUpper())\$($obj.Name.ToUpper())"
 							} else {
@@ -673,7 +676,7 @@ function getIssues(
 						$deviceIndex=1
 						$dataTable = $objArray | sort Name | %{
 							$obj = $_
-							$myvCenter=$global:srvConnection | ?{$_.Name -eq $obj.vCenter}
+							$myvCenter=$srvconnection | ?{$_.Name -eq $obj.vCenter}
 							Write-Progress -Activity "$title" -Id 2 -ParentId 1 -Status "$deviceIndex/$($objArray.Count) :- $($myvCenter.Name)\$($obj.Name)..." -PercentComplete (($deviceIndex/$($objArray.Count))*100)
 							logthis -msg "`t-$($myvCenter.Name)\$($obj.Name)"
 							$objectIssues = 0; $objectIssuesRegister = ""		
@@ -713,7 +716,7 @@ function getIssues(
 							# Check if there are Non VMFS 5 Volumes
 							
 							# Check for growth
-							$dataTable = .\Datastore_Usage_Report.ps1 -srvConnection $global:srvConnection  -includeThisMonthEvenIfNotFinished $false -showPastMonths $showPastMonths -datastore $obj -vcenter $myvCenter -returnTableOnly $true
+							$dataTable = .\Datastore_Usage_Report.ps1 -srvConnection $srvconnection  -includeThisMonthEvenIfNotFinished $false -showPastMonths $showPastMonths -datastore $obj -vcenter $myvCenter -returnTableOnly $true
 							
 							# Check for Orphaned Disks on Datastores
 							# -- Collected a list of assigned/used disks
@@ -860,20 +863,8 @@ function getIssues(
 						$totalIssues = 0
 						$deviceIndex=1
 						$dataTable = $objArray | sort Name | %{
-							$obj = $_
-							Write-Host "________________________"
-							Write-Host $obj.vCenter
-							Write-Host "________________________"
-							
-							
-							
-							$myvCenter = $global:srvConnection | ?{$_.Name -eq $obj.vCenter}
-							
-							Write-Host "________________________"
-							Write-Host $srvConnection.Name
-							Write-Host "________________________"
-							pause
-							
+							$obj = $_							
+							$myvCenter = $srvconnection | ?{$_.Name -eq $obj.vCenter}							
 							$intervalsSecs = (Get-StatInterval -Server $myvCenter | ?{$_.Name -eq "Past Day"}).SamplingPeriodSecs
 							Write-Progress -Activity "$title" -Id 2 -ParentId 1 -Status "$deviceIndex/$($objArray.Count) :- $($myvCenter.Name)\$($obj.Name)..." -PercentComplete (($deviceIndex/$($objArray.Count))*100)
 							logthis -msg "`t-$($myvCenter.Name)\$($obj.Name)"
@@ -1111,13 +1102,13 @@ function getIssues(
 						$sectionIssuesHTMLText = $htmlTableHeader
 						$dataTable = $objArray | sort Name | %{
 							$obj = $_
-							$myvCenter=$global:srvConnection | ?{$_.Name -eq $obj.vCenter}
+							$myvCenter=$srvconnection | ?{$_.Name -eq $obj.vCenter}
 							Write-Progress -Activity "$title" -Id 2 -ParentId 1 -Status "$deviceIndex/$($objArray.Count) :- $($myvCenter.Name)\$($obj.Name)..." -PercentComplete (($deviceIndex/$($objArray.Count))*100)
 							logthis -msg "`t-$($myvCenter.Name)\$($obj.Name)"
 							$objectIssues = 0; $objectIssuesRegister = ""
 							$clear = $false # use to disable the incomplete if statements below						
 							$row = New-Object System.Object
-							if ($global:srvConnection.Count -gt 1)
+							if ($srvconnection.Count -gt 1)
 							{
 								$row | Add-Member -MemberType NoteProperty -Name "Name" -Value "$($myvCenter.Name.ToUpper())\$($obj.Name.ToUpper())"
 							} else {

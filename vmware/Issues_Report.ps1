@@ -106,7 +106,7 @@ $metaInfo +="displayTableOrientation=Table" # options are List or Table
 ExportMetaData -metadata $metaInfo
 updateReportIndexer -string $global:scriptName
 
-$results = getIssues -objectsArray $objectsArray -returnDataOnly $true -performanceLastDays $performanceLastDays  -headerType $($headerType+2) -showPastMonths $lastMonths
+$results = getIssues -objectsArray $objectsArray -srvconnection $srvconnection -returnDataOnly $true -performanceLastDays $performanceLastDays  -headerType $($headerType+2) -showPastMonths $lastMonths 
 
 $totalIssues = $(($results.Values.IssuesCount | measure -Sum).Sum)
 #if ($totalIssues) { $analysis =  "A total of $totalIssues issues were found affecting this system.`n" }
