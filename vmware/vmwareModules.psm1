@@ -3284,9 +3284,7 @@ function Get-Stat2 {
 
   # Test if entity is valid
   $EntityType = $Entity.GetType().Name
-  Write-Host "-----------"
-	$Entity.GetType()
- Write-Host "-----------"	
+
   if(!(("HostSystem",
         "VirtualMachine",
         "ClusterComputeResource",
