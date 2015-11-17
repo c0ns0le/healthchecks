@@ -3157,7 +3157,7 @@ function InitialiseModule ()#([Parameter(Mandatory=$true)][string] $script)#, [P
 function Get-MyEvents {
 param(
 [Parameter(Mandatory=$true)][object]$obj, # Type of Entity, if left Empty assumes VirtualMachine
-[Parameter(Mandatory=$true)][object]$vCenterObj, # pass an object obtain using command ""get-vc <vcentername>""
+[Parameter(Mandatory=$true)][object]$vCenterObj, # pass an object obtain using command ""Connect-VIServer <vcentername>""
 [string[]]$EventCategories, #Info, warning, error
 [string]$MessageFilter, # pass a string if you want to filter on FullFormattedMessage, usefull if you don't know the EventType and/or Catgory
 [DateTime]$startPeriod,

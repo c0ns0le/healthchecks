@@ -115,7 +115,7 @@ if ($collectVMwareReports)
 		Write-Host ">>>>" -ForegroundColor Yellow
 		$credentials = & "$scriptsLoc\$vmwareScriptsHomeDir\Get-MyCredentials.ps1" -User $vcUser -SecureFileLocation  $passwordFile
 		$vCenterServers=$vCenterServers -split ','
-		$srvconnection= get-vc -Server @($vCenterServers) -Credential $credentials
+		$srvconnection= Connect-VIServer -Server @($vCenterServers) -Credential $credentials
 		
 	}
 	Import-Module -Name "$scriptsLoc\$vmwareScriptsHomeDir\vmwareModules.psm1" -Force
