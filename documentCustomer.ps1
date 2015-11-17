@@ -228,7 +228,7 @@ if ($collectVMwareReports)
 
 		###########################################################################
 		#
-		# REPORT 3 :- Some kind of HealthCheck on Each VM (Performances, Configurations etc..) lovely
+		# REPORT 3 :- Perform an Infrastructure Wide Health Check (Performances, Configurations etc..) lovely
 		#
 		###########################################################################
 
@@ -249,18 +249,18 @@ if ($collectVMwareReports)
 
 		###########################################################################
 		#
-		# REPORT 4 :- Per Virtual Machine Intensive HealthCheck -- Cool too
+		# REPORT 4 :- Create a audit of each Virtual Machine - Intensive & Detailed output HealthCheck -- Cool too
 		#
 		###########################################################################
-		if ($vmChecks -and !$reportOnly)
+		if ($generatePerVMReport -and !$reportOnly)
 		{
 			$thisReportLogdir="$logdir\VMs_HealthChecks"
 			$enable=$true
 			# check only VMs specified in vmsToCheck. vmsToCheck is set in the customer INI file (Comma delimited)
-			if ($vmsToCheckHealthCheck)
+			if ($vmsToCheckHealthCheck -and $vmsToCheckHealthCheck -ne "*")
 			{
-				logThis -msg "`t-> Generating Individual VM Checks FOr $([string]$VmsToCheck)" -logfile $logfile 
-				$vmsToCheck -split "," | %{
+				logThis -msg "`t-> Generating Individual VM Checks For $([string]$vmsToCheckHealthCheck)" -logfile $logfile 
+				$vmsToCheckHealthCheck -split "," | %{
 					& "$scriptsLoc\$vmwareScriptsHomeDir\exportVMDetails.ps1" -srvConnection $srvconnection -guestName $_ -includeSectionSysInfo $enable -includeSectionPerfStats $true -includeTasks $enable -includeErrors $enable -includeAlarms $enable -includeVMEvents $enable -includeVMSnapshots $enable -launchBrowser $false -showIndividualDevicesStats $false -logDir $thisReportLogdir -showPastMonths $previousMonths
 				}
 			} else {
