@@ -99,7 +99,11 @@ function getIssues(
 						$deviceIndex=1
 						$dataTable = $objArray | sort Name | %{
 							$obj = $_
-							$myvCenter=$global:srvConnection | ?{$_.Name -eq $obj.vCenter}
+							Write-Host "________________________"
+							Write-Host $obj.vCenter
+							Write-Host "________________________"
+							pause
+							$myvCenter = $global:srvConnection | ?{$_.Name -eq $obj.vCenter}
 							$intervalsSecs = (Get-StatInterval -Server $myvCenter | ?{$_.Name -eq "Past Day"}).SamplingPeriodSecs
 							Write-Progress -Activity "$title" -Id 2 -ParentId 1 -Status "$deviceIndex/$($objArray.Count) :- $($myvCenter.Name)\$($obj.Name)..." -PercentComplete (($deviceIndex/$($objArray.Count))*100)
 							logthis -msg "`t-$($myvCenter.Name)\$($obj.Name)"
