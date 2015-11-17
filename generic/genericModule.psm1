@@ -43,7 +43,7 @@ function logThis (
 		$msg  | out-file -filepath $logFile -append
 	} else 
 	{
-		if ((Test-Path -path $global:logDir) -ne $true) {
+		if (!(Test-Path -path $global:logDir)) {
 					
 			New-Item -type directory -Path $global:logDir
 			$childitem = Get-Item -Path $global:logDir

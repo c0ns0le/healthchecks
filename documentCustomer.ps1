@@ -85,11 +85,11 @@ $defaultOutputReportDirectory="$(Split-Path $($MyInvocation.MyCommand.Path))\$cu
 ############### MAIN ###########
 if (!$outputDirectory)
 {
-	$logDir = "$defaultOutputReportDirectory\$runtimeDate"
-	$outputDirectory=$logDir
+	Set-Variable -Name logDir -Value "$defaultOutputReportDirectory\$runtimeDate" -Scope Global 
+	$outputDirectory=$global:logDir
 } else {
-	$logDir = "$outputDirectory\$runtimeDate"
-	$outputDirectory=$logDir
+	Set-Variable -Name logDir -Value "$outputDirectory\$runtimeDate" -Scope Global 
+	$outputDirectory=$global:logDir
 }
 
 if ((Test-Path -path $outputDirectory) -ne $true) {
@@ -109,7 +109,6 @@ if (Test-Path $logfile)
 	Remove-Item $logFile
 }
 
-logThis -msg $vmwareScriptsHomeDir
 ###########################################################################
 #
 # VMWARE REPORTING :- 
@@ -120,22 +119,24 @@ if ($collectVMwareReports)
 	$vcCredentialsFileDirectory = Split-Path $vcCredentialsFile
 	if (!$vcCredentialsFileDirectory)
 	{
-		$vcCredentialsFile="$(Split-Path $inifile)\$vcCredentialsFile"
-		
+		$vcCredentialsFile="$(Split-Path $inifile)\$vcCredentialsFile"		
 	}
+	
 	try 
 	{	
 		$filepath=$vcCredentialsFile | Resolve-Path -ErrorAction Stop
 		
-		$passwordFile = "$($($filepath).Path)"		
+		$passwordFile = "$($($filepath).Path)"	
 		#$passwordFile
 		#pause
 	} Catch {		
 		#$ErrorMessage = $_.Exception.Message
     		#$FailedItem = $_.Exception.ItemName
 		#showError -msg $ErrorMessage
+		$vcCredentialsFile
+		pause
 		set-mycredentials -Filename $vcCredentialsFile
-		$passwordFile = $vcCredentialsFile.Path
+		$passwordFile = $vcCredentialsFile
 		#break
 	}	
 
@@ -155,7 +156,7 @@ if ($collectVMwareReports)
 	}
 	Import-Module -Name "$scriptsLoc\$vmwareScriptsHomeDir\vmwareModules.psm1" -Force
 	Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
-	Set-Variable -Name logDir -Value $logDir -Scope Global
+	
 	$global:logfile
 	$global:outputCSV
 	
@@ -315,8 +316,8 @@ if ($collectSANReports)
 			$credentials = Get-Credential -UserName  $sanV7000User -Message "Please specify a password for user account ""$sanV7000User"" to use to authenticate against arrays [string]$sanV700ArraysIPs"
             #$deviceList = (($sanV7000ArraysIPs -split ',' -replace '^','"') -replace '$','"') -join ','
             $deviceList = $sanV7000ArraysIPs -split ','
-            $deviceList
-            pause
+            #$deviceList
+            #pause
             & "$scriptsLoc\$sanV7000scriptsHomeDir\ibmstorwize-checks.ps1" -logDir $thisReportLogdir -username $sanV7000User -cpassword $sanV700password -arrayOfTargetDevices $deviceList
 
 		}
