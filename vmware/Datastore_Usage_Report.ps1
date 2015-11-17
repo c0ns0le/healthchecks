@@ -34,9 +34,7 @@ $global:outputCSV
 # Want to initialise the module and blurb using this 1 function
 InitialiseModule
 
-
 $now = get-date #(get-date).AddMonths(-1) #use now but because we are half way thought the month, i only want up to the last day of the previous month
-
 
 if ($datastore)
 {
@@ -71,13 +69,17 @@ if (!$datastores)
 	$metrics = "disk.capacity.latest","disk.provisioned.latest","disk.used.latest"
 	
 	$dataTable = $datastores | %{
-		$row = New-Object System.Object
+		
 		$ds=$_
 		$myvCenter = $srvConnection | ?{$_.Name -eq $ds.vCenter}
 		logThis -msg "Processing $($_.Name)"
 		$report = @()
+		$row = New-Object System.Object
 		$row | Add-Member -MemberType NoteProperty -Name "Datastore" -Value $ds.Name
-		$tmp = Get-Stat2 -entity $ds.ExtensionData -stat $metrics -interval "HI2" -vcenter $myvCenter -start $reportFirstDay -finish $reportLastDay;
+		#Write-Host $ds.Name
+		#pause
+		$tmp = Get-Stat2 -entity $ds -stat $metrics -interval "HI2" -vcenter $myvCenter -start $reportFirstDay -finish $reportLastDay;
+		#$tmp = Get-Stat2 -entity $ds.ExtensionData -stat $metrics -interval "HI2" -vcenter $myvCenter -start $reportFirstDay -finish $reportLastDay;
 		$tmp | %{ $_.Timestamp = get-date $_.Timestamp}
 		$report = $tmp | sort-Object -Property Timestamp | group-Object -Property Timestamp | %{
 			New-Object PSObject -Property @{

@@ -74,23 +74,7 @@ $vmtoolsMatrix = getVMwareToolsVersionMatrix
 
 # define all the Devices to query
 $objectsArray = @(
-	@($srvConnection | %{ $vcenterName=$_.Name; get-cluster * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-	@($srvConnection | %{ $vcenterName=$_.Name; get-vmhost * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-	@($srvConnection | %{ 
-		$vcenterName=$_.Name; 
-		$targetVMs = get-vm * -server $_ 
-		$targetVMs | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; 		
-			if ($vmsToCheck)
-			{
-				if ($vmsToCheck.Contains($obj.Name))
-				{
-					$obj
-				}
-			} else {
-				$obj
-			}
-		}
-	}),
+	
 	@($srvConnection | %{ $vcenterName=$_.Name; get-datacenter * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
 	@($srvConnection | %{ $vcenterName=$_.Name; get-datastore * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} })
 )

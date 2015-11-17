@@ -716,7 +716,7 @@ function getIssues(
 							# Check if there are Non VMFS 5 Volumes
 							
 							# Check for growth
-							$dataTable = .\Datastore_Usage_Report.ps1 -srvConnection $srvconnection  -includeThisMonthEvenIfNotFinished $false -showPastMonths $showPastMonths -datastore $obj -vcenter $myvCenter -returnTableOnly $true
+							#$dataTable = .\Datastore_Usage_Report.ps1 -srvConnection $srvconnection  -includeThisMonthEvenIfNotFinished $false -showPastMonths $showPastMonths -datastore $obj -vcenter $myvCenter -returnTableOnly $true
 							
 							# Check for Orphaned Disks on Datastores
 							# -- Collected a list of assigned/used disks
@@ -3271,14 +3271,12 @@ function Get-Stat2 {
 
   [CmdletBinding()]
   param (
-  [parameter(Mandatory = $true,  ValueFromPipeline = $true)]
-  [PSObject]$Entity,
+  [parameter(Mandatory = $true,  ValueFromPipeline = $true)][PSObject]$Entity,
   [DateTime]$Start,
   [DateTime]$Finish,
   [String[]]$Stat,
   [String]$Instance = "",
-  [ValidateSet("RT","HI1","HI2","HI3","HI4")]
-  [String]$Interval = "RT",
+  [ValidateSet("RT","HI1","HI2","HI3","HI4")][String]$Interval = "RT",
   [int]$MaxSamples,
   [switch]$QueryMetrics,
   [switch]$QueryInstances,
@@ -3286,13 +3284,15 @@ function Get-Stat2 {
 
   # Test if entity is valid
   $EntityType = $Entity.GetType().Name
-
+  Write-Host "-----------"
+	$Entity.GetType()
+ Write-Host "-----------"	
   if(!(("HostSystem",
         "VirtualMachine",
         "ClusterComputeResource",
-        "Datastore",
+        "VmfsDatastoreImpl",
         "ResourcePool") -contains $EntityType)) {
-    Throw "-Entity parameters should be of type HostSystem, VirtualMachine, ClusterComputeResource, Datastore or ResourcePool"
+    Throw "-Entity parameters should be of type HostSystem, VirtualMachine, ClusterComputeResource, VmfsDatastoreImpl or ResourcePool"
   }
 
   $perfMgr = Get-View $vcenter.ExtensionData.content.perfManager
@@ -3319,7 +3319,7 @@ function Get-Stat2 {
   $dsValidIntervals = "HI2","HI3","HI4"
   $intervalIndex = $intervalTab[$Interval]
 
-  if($EntityType -ne "datastore"){
+  if($EntityType -ne "VmfsDatastoreImpl"){
     if($Interval -eq "RT"){
       $numinterval = 20
     }
@@ -3474,3 +3474,5 @@ function Get-Stat2 {
     $data | Sort-Object -Property Timestamp -Descending | select -First $MaxSamples
   }
 }
+
+#Get-Stat2 -entity $ds -stat $metrics -interval "HI2" -vcenter $myvCenter -start $reportFirstDay -finish $reportLastDay;
