@@ -5,14 +5,19 @@
 #
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1)
 logThis -msg "Importing Module vmwareModules.psm1 (force)"
+Write-Host "$logfile" -BackgroundColor Red -ForegroundColor Yellow
+Write-Host "global: $global:logfile" -BackgroundColor Red -ForegroundColor Yellow
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
-Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-InitialiseModule
+Set-Variable -Name logDir -Value $logDir -Scope Global
 
+InitialiseModule
+#Set-Variable -Name logDir -Value $logDir -Scope Global
+
+Write-Host "$logfile" -BackgroundColor Red -ForegroundColor Yellow
+Write-Host "global: $global:logfile" -BackgroundColor Red -ForegroundColor Yellow
+#pause
 
 # Report Meta Data
 $metaInfo = @()

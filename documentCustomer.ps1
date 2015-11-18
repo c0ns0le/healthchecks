@@ -38,6 +38,7 @@ $scriptsLoc=$(Split-Path $($MyInvocation.MyCommand.Path))
 Set-Variable -Scope Global -Name silent -Value $silent
 Import-Module ".\generic\genericModule.psm1" -Force
 
+
 # Read in module
 Get-Content $inifile | Foreach-Object{
 	$var = $_.Split('=')
@@ -157,8 +158,8 @@ if ($collectVMwareReports)
 	Import-Module -Name "$scriptsLoc\$vmwareScriptsHomeDir\vmwareModules.psm1" -Force
 	Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 	
-	$global:logfile
-	$global:outputCSV
+	#$global:logfile = $logfile
+	#$global:outputCSV
 	
 	# Want to initialise the module and blurb using this 1 function
 	InitialiseModule
@@ -179,19 +180,58 @@ if ($collectVMwareReports)
 			$reportIntro="The objective of this document is to provide $customer with information about its VMware Infrastructure(s). The report was prepared by $itoContactName and generated on $(get-date). A total of $($srvconnection.count) x vCenter Servers were audited for this sreport."			
 			if (!$reportOnly)
 			{
-				logThis -msg "`t-> Collecting capacity information to location: $thisReportLogdir"	-logfile $logfile 
+				logThis -msg "`t-> Collecting capacity information to location: $thisReportLogdir"-logfile $logfile 
+				$scriptParams = @{
+					'logProgressHere'=$logfile;
+					'srvconnection'=$srvconnection;
+					'logDir'=$thisReportLogdir;
+					'runCapacityReports'=$true;
+					'runPerformanceReports'=$false;
+					'runExtendedReports'=$runExtendedVMwareReports;
+					'vms'=$vmsToCheckPerformance;
+					'showPastMonths'=$previousMonths
+				}
 				
-				& "$scriptsLoc\$vmwareScriptsHomeDir\collectAll.ps1" -logProgressHere $logfile -srvConnection $srvconnection -logDir $thisReportLogdir -runCapacityReports $true -runPerformanceReports $false -runExtendedReports $runExtendedVMwareReports -vms $vmsToCheckPerformance -showPastMonths $previousMonths
+				& "$scriptsLoc\$vmwareScriptsHomeDir\collectAll.ps1" @scriptParams
+				#& "$scriptsLoc\$vmwareScriptsHomeDir\collectAll.ps1" -logProgressHere $logfile -srvConnection $srvconnection -logDir $thisReportLogdir -runCapacityReports $true -runPerformanceReports $false -runExtendedReports $runExtendedVMwareReports -vms $vmsToCheckPerformance -showPastMonths $previousMonths
+				
 			}
 			
-			logThis -msg "`t-> Generating Capacity Report from input directory $thisReportLogdir to output directory $outputDirectory"	 -logfile $logfile 
+			logThis -msg "`t-> Generating Capacity Report from input directory $thisReportLogdir to output directory $outputDirectory" -logfile $logfile 
+			
 			if ($emailReport)
 			{
-				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $openReportOnCompletion -createHTMLFile $true -emailReport $true -verbose $false -itoContactName $itoContactName
+				$scriptParams = @{
+					'inDir'=$thisReportLogdir;
+					'logDir'=$outputDirectory;
+					'reportHeader'=$reportHeader;
+					'reportIntro'=$reportIntro;
+					'farmName'=$customer;
+					'openReportOnCompletion'=$openReportOnCompletion;
+					'createHTMLFile'=$true;
+					'emailReport'=$true;
+					'verbose'=$false;
+					'itoContactName'=$itoContactName;
+				}
+				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $openReportOnCompletion -createHTMLFile $true -emailReport $true -verbose $false -itoContactName $itoContactName
+				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" @scriptParms
 			} 
 			if(!$stopReportGenerator)
 			{
-				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
+				$scriptParams = @{
+					'inDir'=$thisReportLogdir;
+					'logDir'=$outputDirectory;
+					'reportHeader'=$reportHeader;
+					'reportIntro'=$reportIntro;
+					'farmName'=$customer;
+					'openReportOnCompletion'=$openReportOnCompletion;
+					'createHTMLFile'=$true;
+					'emailReport'=$false;
+					'verbose'=$false;
+					'itoContactName'=$itoContactName;
+				}
+				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
+				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" @scriptParms
 			}
 		}
 		
@@ -215,13 +255,39 @@ if ($collectVMwareReports)
 			}
 			
 			logThis -msg "`t-> Generating Performance Checks Report" -logfile $logfile 
-			if ($emailReport)
+			if ($emailReport)				
 			{
-				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $openReportOnCompletion -createHTMLFile $true -emailReport $true -verbose $false -itoContactName $itoContactName
+				$scriptParams = @{
+					'inDir'=$thisReportLogdir;
+					'logDir'=$outputDirectory;
+					'reportHeader'=$reportHeader;
+					'reportIntro'=$reportIntro;
+					'farmName'=$customer;
+					'openReportOnCompletion'=$openReportOnCompletion;
+					'createHTMLFile'=$true;
+					'emailReport'=$true;
+					'verbose'=$false;
+					'itoContactName'=$itoContactName;
+				}
+				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $openReportOnCompletion -createHTMLFile $true -emailReport $true -verbose $false -itoContactName $itoContactName
+				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" @scriptParams
 			} 
 			if(!$stopReportGenerator)
 			{
-				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
+				$scriptParams = @{
+					'inDir'=$thisReportLogdir;
+					'logDir'=$outputDirectory;
+					'reportHeader'=$reportHeader;
+					'reportIntro'=$reportIntro;
+					'farmName'=$customer;
+					'openReportOnCompletion'=$openReportOnCompletion;
+					'createHTMLFile'=$true;
+					'emailReport'=$false;
+					'verbose'=$false;
+					'itoContactName'=$itoContactName;
+				}
+				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
+				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" @scriptParams
 			}
 		}
 
@@ -242,7 +308,20 @@ if ($collectVMwareReports)
 			
 			if(!$stopReportGenerator)
 			{
-				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
+				$scriptParams = @{
+					'inDir'=$thisReportLogdir;
+					'logDir'=$outputDirectory;
+					'reportHeader'=$reportHeader;
+					'reportIntro'=$reportIntro;
+					'farmName'=$customer;
+					'openReportOnCompletion'=$openReportOnCompletion;
+					'createHTMLFile'=$true;
+					'emailReport'=$false;
+					'verbose'=$false;
+					'itoContactName'=$itoContactName;
+				}
+				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
+				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1"  @scriptParams
 			}
 		}
 		

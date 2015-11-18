@@ -53,8 +53,8 @@ function getIssues(
 	[int]$showPastMonths=3,
 	[int]$maxsamples = [int]::MaxValue,
 	[int]$headerType=1,
-	[string]$li="<li>",
-	[string]$ensureTheseFieldsAreFieldIn
+	[string]$li="",
+	$ensureTheseFieldsAreFieldIn
 	
 )		
 {
@@ -373,25 +373,28 @@ function getIssues(
 							
 							
 							if ($ensureTheseFieldsAreFieldIn)
-							{
-								logThis -msg "`t`tChecking for $ensureTheseFieldsAreFieldIn"
+							{								
 								$ensureTheseFieldsAreFieldIn | %{
 									$attributeName=$_
+									logThis -msg "`t`tChecking for Attribute information: $attributeName"
 									$attibute = Get-CustomAttribute -Name $attributeName -Server $myvCenter
 									if ($attibute)
 									{
 										$value = ($obj.CustomFields | ?{$_.Key -eq $($attibute.Name)}).Value
 										if (!$value)
 										{
-											$objectIssuesRegister += "$($li)The date in field ""$attributeName"" is empty.`n"
+											$objectIssuesRegister += "$($li)Field ""$attributeName"" for this server is empty.`n"
 											$objectIssues++
 										} else {
-											$lastBackupDate=get-date (($obj.CustomFields | ?{$_.Key -eq $($attibute.Name)}).Value)
-											if ($lastBackupDate -lt $performanceStartPeriod)
+											if ($attributeName -like "*date*")
 											{
-												#$lastBackupDate
-												$objectIssuesRegister += "$($li)The date in field ""$attributeName"" of $lastBackupDate and is older than $performanceLastDays days.`n"
-												$objectIssues++
+												$lastBackupDate=get-date (($obj.CustomFields | ?{$_.Key -eq $($attibute.Name)}).Value)
+												if ($lastBackupDate -lt $performanceStartPeriod)
+												{
+													#$lastBackupDate
+													$objectIssuesRegister += "$($li)The date in field ""$attributeName"" of $lastBackupDate and is older than $performanceLastDays days.`n"
+													$objectIssues++
+												}
 											}
 										}
 										
@@ -425,8 +428,8 @@ function getIssues(
 							$objMetaInfo +="titleHeaderType=h$($headerType+1)"
 							$objMetaInfo +="showTableCaption=false"
 							$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
-							$metricCSVFilename = "$logdir\$($title -replace '\s','_').csv"
-							$metricNFOFilename = "$logdir\$($title -replace '\s','_').nfo"
+							$metricCSVFilename = "$global:logDir\$($title -replace '\s','_').csv"
+							$metricNFOFilename = "$global:logDir\$($title -replace '\s','_').nfo"
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
@@ -641,8 +644,8 @@ function getIssues(
 							$objMetaInfo +="titleHeaderType=h$($headerType+1)"
 							$objMetaInfo +="showTableCaption=false"
 							$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
-							$metricCSVFilename = "$logdir\$($title -replace '\s','_').csv"
-							$metricNFOFilename = "$logdir\$($title -replace '\s','_').nfo"
+							$metricCSVFilename = "$global:logDir\$($title -replace '\s','_').csv"
+							$metricNFOFilename = "$global:logDir\$($title -replace '\s','_').nfo"
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
@@ -735,7 +738,7 @@ function getIssues(
 							$dsBrowser = Get-View $dsView.browser -Server $myvCenter
 							$rootPath = "[" + $dsView.Name + "]"
 							logthis -msg "Searching for Folders - BEFORE"
-							$searchResult = $dsBrowser.SearchDatastoreSubFolders($rootPath, $searchSpec)
+							#$searchResult = $dsBrowser.SearchDatastoreSubFolders($rootPath, $searchSpec)
 							logthis -msg "Searching for Folders - AFTER"
 							if ($orphanDisksOutput) { Remove-variable orphanDisksOutput }
 							$orphanDisksOutput = @()
@@ -835,8 +838,8 @@ function getIssues(
 							$objMetaInfo +="titleHeaderType=h$($headerType+1)"
 							$objMetaInfo +="showTableCaption=false"
 							$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
-							$metricCSVFilename = "$logdir\$($title -replace '\s','_').csv"
-							$metricNFOFilename = "$logdir\$($title -replace '\s','_').nfo"
+							$metricCSVFilename = "$global:logDir\$($title -replace '\s','_').csv"
+							$metricNFOFilename = "$global:logDir\$($title -replace '\s','_').nfo"
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
@@ -1083,8 +1086,8 @@ function getIssues(
 							$objMetaInfo +="titleHeaderType=h$($headerType+1)"
 							$objMetaInfo +="showTableCaption=false"
 							$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
-							$metricCSVFilename = "$logdir\$($title -replace '\s','_').csv"
-							$metricNFOFilename = "$logdir\$($title -replace '\s','_').nfo"
+							$metricCSVFilename = "$global:logDir\$($title -replace '\s','_').csv"
+							$metricNFOFilename = "$global:logDir\$($title -replace '\s','_').nfo"
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
@@ -1171,8 +1174,8 @@ function getIssues(
 							$objMetaInfo +="titleHeaderType=h$($headerType+1)"
 							$objMetaInfo +="showTableCaption=false"
 							$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
-							$metricCSVFilename = "$logdir\$($title -replace '\s','_').csv"
-							$metricNFOFilename = "$logdir\$($title -replace '\s','_').nfo"
+							$metricCSVFilename = "$global:logDir\$($title -replace '\s','_').csv"
+							$metricNFOFilename = "$global:logDir\$($title -replace '\s','_').nfo"
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
@@ -3129,7 +3132,7 @@ function getRuntimeDateString()
 	return $global:runtime
 	
 }
-function InitialiseModule ()#([Parameter(Mandatory=$true)][string] $script)#, [Parameter(Mandatory=$true)][string] $logDir)
+function InitialiseModule ()#([Parameter(Mandatory=$true)][string] $script)#, [Parameter(Mandatory=$true)][string] $global:logDir)
 {
 	
 	$global:runtime="$(date -f dd-MM-yyyy)"

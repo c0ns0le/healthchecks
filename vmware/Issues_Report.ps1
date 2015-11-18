@@ -25,7 +25,7 @@ param(
 	[Parameter(Mandatory=$true)][int]$headerType=1,
 	[int]$maxsamples = [int]::MaxValue,
 	[int]$performanceLastDays=7,
-	[string]$ensureTheseFieldsAreFieldIn,
+	$ensureTheseFieldsAreFieldIn,
 	[int]$showPastMonths=1,
 	[string]$lastDayOfReportOveride,	
 	[object]$vmsToCheck,
@@ -73,13 +73,13 @@ $vmtoolsMatrix = getVMwareToolsVersionMatrix
 
 # define all the Devices to query
 $objectsArray = @(
-	#@($srvConnection | %{ $vcenterName=$_.Name; get-cluster * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-	#@($srvConnection | %{ $vcenterName=$_.Name; get-vmhost * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+	@($srvConnection | %{ $vcenterName=$_.Name; get-cluster * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+	@($srvConnection | %{ $vcenterName=$_.Name; get-vmhost * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
 	@($srvConnection | %{ 
 		$vcenterName=$_.Name; 
 		$targetVMs = get-vm * -server $_ 
 		$targetVMs | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; 		
-			if ($vmsToCheck)
+			if ($vmsToCheck -and $vmsToCheck -ne "*" )
 			{
 				if ($vmsToCheck.Contains($obj.Name))
 				{
@@ -104,6 +104,8 @@ $metaInfo +="showTableCaption=false"
 $metaInfo +="displayTableOrientation=Table" # options are List or Table
 ExportMetaData -metadata $metaInfo
 updateReportIndexer -string $global:scriptName
+
+#$objectsArray
 
 $results = getIssues -objectsArray $objectsArray -srvconnection $srvconnection -returnDataOnly $true -performanceLastDays $performanceLastDays  -headerType $($headerType+2) -showPastMonths $lastMonths -ensureTheseFieldsAreFieldIn $ensureTheseFieldsAreFieldIn
 
