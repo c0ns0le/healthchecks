@@ -53,7 +53,8 @@ function getIssues(
 	[int]$showPastMonths=3,
 	[int]$maxsamples = [int]::MaxValue,
 	[int]$headerType=1,
-	[string]$li="<li>"
+	[string]$li="<li>",
+	[string]$ensureTheseFieldsAreFieldIn
 	
 )		
 {
@@ -371,10 +372,10 @@ function getIssues(
 							}
 							
 							
-							if ($vmDateFieldsToCheck)
+							if ($ensureTheseFieldsAreFieldIn)
 							{
-								logThis -msg "`t`tChecking for $vmDateFieldsToCheck"
-								$vmDateFieldsToCheck | %{
+								logThis -msg "`t`tChecking for $ensureTheseFieldsAreFieldIn"
+								$ensureTheseFieldsAreFieldIn | %{
 									$attributeName=$_
 									$attibute = Get-CustomAttribute -Name $attributeName -Server $myvCenter
 									if ($attibute)
@@ -679,6 +680,7 @@ function getIssues(
 							$myvCenter=$srvconnection | ?{$_.Name -eq $obj.vCenter}
 							Write-Progress -Activity "$title" -Id 2 -ParentId 1 -Status "$deviceIndex/$($objArray.Count) :- $($myvCenter.Name)\$($obj.Name)..." -PercentComplete (($deviceIndex/$($objArray.Count))*100)
 							logthis -msg "`t-$($myvCenter.Name)\$($obj.Name)"
+							
 							$objectIssues = 0; $objectIssuesRegister = ""		
 							$clear = $false # use to disable the incomplete if statements below	
 							$row = New-Object System.Object
@@ -732,12 +734,14 @@ function getIssues(
 							$searchSpec.sortFoldersFirst = $true
 							$dsBrowser = Get-View $dsView.browser -Server $myvCenter
 							$rootPath = "[" + $dsView.Name + "]"
+							logthis -msg "Searching for Folders - BEFORE"
 							$searchResult = $dsBrowser.SearchDatastoreSubFolders($rootPath, $searchSpec)
-							
+							logthis -msg "Searching for Folders - AFTER"
 							if ($orphanDisksOutput) { Remove-variable orphanDisksOutput }
 							$orphanDisksOutput = @()
 							foreach ($folder in $searchResult)
 							{
+								echo "Searching for Folders"
 								foreach ($fileResult in $folder.File)
 								{
 									if ($fileResult.Path)

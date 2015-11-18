@@ -25,7 +25,7 @@ param(
 	[Parameter(Mandatory=$true)][int]$headerType=1,
 	[int]$maxsamples = [int]::MaxValue,
 	[int]$performanceLastDays=7,
-	[string]$vmDateFieldsToCheck,
+	[string]$ensureTheseFieldsAreFieldIn,
 	[int]$showPastMonths=1,
 	[string]$lastDayOfReportOveride,	
 	[object]$vmsToCheck,
@@ -73,8 +73,8 @@ $vmtoolsMatrix = getVMwareToolsVersionMatrix
 
 # define all the Devices to query
 $objectsArray = @(
-	@($srvConnection | %{ $vcenterName=$_.Name; get-cluster * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-	@($srvConnection | %{ $vcenterName=$_.Name; get-vmhost * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+	#@($srvConnection | %{ $vcenterName=$_.Name; get-cluster * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+	#@($srvConnection | %{ $vcenterName=$_.Name; get-vmhost * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
 	@($srvConnection | %{ 
 		$vcenterName=$_.Name; 
 		$targetVMs = get-vm * -server $_ 
@@ -105,7 +105,7 @@ $metaInfo +="displayTableOrientation=Table" # options are List or Table
 ExportMetaData -metadata $metaInfo
 updateReportIndexer -string $global:scriptName
 
-$results = getIssues -objectsArray $objectsArray -srvconnection $srvconnection -returnDataOnly $true -performanceLastDays $performanceLastDays  -headerType $($headerType+2) -showPastMonths $lastMonths 
+$results = getIssues -objectsArray $objectsArray -srvconnection $srvconnection -returnDataOnly $true -performanceLastDays $performanceLastDays  -headerType $($headerType+2) -showPastMonths $lastMonths -ensureTheseFieldsAreFieldIn $ensureTheseFieldsAreFieldIn
 
 $totalIssues = $(($results.Values.IssuesCount | measure -Sum).Sum)
 #if ($totalIssues) { $analysis =  "A total of $totalIssues issues were found affecting this system.`n" }

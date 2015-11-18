@@ -238,7 +238,7 @@ if ($collectVMwareReports)
 			$reportHeader="Health Check & Issues Report"
 			$reportIntro="This report forms a Health Check report for $customer’s VMware infrastructure(s). $($srvconnection.count) VMware Infrastructure(s) have been audited as part of this report."
 			
-			& "$scriptsLoc\$vmwareScriptsHomeDir\Issues_Report.ps1" -srvConnection $srvconnection -logDir $thisReportLogdir -saveReportToDirectory $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -headerType 2 -vmDateFieldsToCheck $vmDateFieldsToCheck -performanceLastDays 7 -showPastMonths $previousMonths -vmsToCheck $vmsToCheckHealthCheck -excludeThinDisks $excludeThinDisks
+			& "$scriptsLoc\$vmwareScriptsHomeDir\Issues_Report.ps1" -srvConnection $srvconnection -logDir $thisReportLogdir -saveReportToDirectory $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -headerType 2 -ensureTheseFieldsAreFieldIn $ensureTheseFieldsAreFieldIn -performanceLastDays 7 -showPastMonths $previousMonths -vmsToCheck $vmsToCheckHealthCheck -excludeThinDisks $excludeThinDisks
 			
 			if(!$stopReportGenerator)
 			{

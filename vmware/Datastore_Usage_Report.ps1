@@ -23,11 +23,14 @@ param([object]$srvConnection="",
 )
 
 #$([int]::MaxValue),
-Write-Host -msg "Importing Module vmwareModules.psm1 (force)"
+Write-Host "Importing Module vmwareModules.psm1 (force) -In Here"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
+
+Write-Host "vCenter Name: $($srvConnection.Name)"
+
 $global:logfile
 $global:outputCSV
 
@@ -56,6 +59,7 @@ if ($datastore)
 	})
 }
 
+$datastores
 if (!$datastores)
 {
 	showError "No datastores found"
