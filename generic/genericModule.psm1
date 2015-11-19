@@ -1,6 +1,6 @@
 ﻿#genericModule.psm1
 #$global:logDir=""
-$runtimeCSVMetaFile=""
+#$global:runtimeLogFile=""
 
 function showError ([Parameter(Mandatory=$true)][string] $msg, $errorColor="Red")
 {
@@ -51,9 +51,9 @@ function logThis (
 			$childitem = Get-Item -Path $global:logDir
 			$global:logDir = $childitem.FullName
 		}
-		if ($runtimeCSVMetaFile)
+		if ($global:runtimeLogFile)
 		{
-			$msg  | out-file -filepath $runtimeCSVMetaFile -append
+			$msg  | out-file -filepath $global:runtimeLogFile -append
 		} 
 	}
 }

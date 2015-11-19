@@ -2804,9 +2804,9 @@ function logThis (
 			$childitem = Get-Item -Path $global:logDir
 			$global:logDir = $childitem.FullName
 		}
-		if ($global:logFile)
+		if ($global:runtimeLogFile)
 		{
-			$msg  | out-file -filepath $global:logFile -append
+			$msg  | out-file -filepath $global:runtimeLogFile -append
 		} 
 	}
 }
@@ -2815,16 +2815,16 @@ function SetmyLogFile(
 		[Parameter(Mandatory=$true)][string] $filename
 	)
 {
-	if($global:logFile)
+	if($global:runtimeLogFile)
 	{
-		$global:logFile = $filename
+		$global:runtimeLogFile = $filename
 	} else {
-		Set-Variable -Name logFile -Value $filename -Scope Global
+		Set-Variable -Name runtimeLogFile -Value $filename -Scope Global
 	}
 	
 	# Empty the file
-	"" | out-file -filepath $global:logFile
-	logThis -msg "This script will be logging to $global:logFile"
+	"" | out-file -filepath $global:runtimeLogFile
+	logThis -msg "This script will be logging to $global:runtimeLogFile"
 }
 
 function SetmyCSVOutputFile(

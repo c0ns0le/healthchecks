@@ -84,11 +84,11 @@ $defaultOutputReportDirectory="$(Split-Path $($MyInvocation.MyCommand.Path))\$cu
 ############### MAIN ###########
 if (!$outputDirectory)
 {
-	#$logDir = "$defaultOutputReportDirectory\$runtimeDate"
+	$global:logDir = "$defaultOutputReportDirectory\$runtimeDate"
 	$logDir="$defaultOutputReportDirectory\$runtimeDate"
 	$outputDirectory="$defaultOutputReportDirectory\$runtimeDate"
 } else {
-	#$logDir="$outputDirectory\$runtimeDate"
+	$global:logDir="$outputDirectory\$runtimeDate"
 	$logDir = "$outputDirectory\$runtimeDate" 
 	$outputDirectory="$outputDirectory\$runtimeDate" 
 }
