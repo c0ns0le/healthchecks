@@ -688,8 +688,8 @@ $node["Jobs Summary"] = Get-BackupJobsSummary -chartFriendly $chartFriendly -rep
 logThis -msg  "`t->Client Sizes"
 $node["Client Sizes"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-logThis -msg  "`t->Summary of Client Data Change Rate"
-$node["Summary of Client Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+logThis -msg  "`t->Data Change Rate"
+$node["Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
 logThis -msg  "`t->Data Transfered"
 $node["Data Transfered"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
@@ -706,7 +706,7 @@ if ($xmlOutput)
 }
 if ($csvOutput)
 {
-	"Server Information","Repositories","Backup Sessions","Backups by Clients","Jobs Summary","Client Sizes","Summary of Client Data Change Rate","Data Transfered","Monthly Capacity" | %{
+	"Server Information","Repositories","Backup Sessions","Backups by Clients","Jobs Summary","Client Sizes","Data Change Rate","Data Transfered","Monthly Capacity" | %{
 		$lable=$_
 		$node[$lable]  | Export-Csv -NoTypeInformation "$prefix\$lable.csv"
 		#$node[$lable]  | Export-Csv -NoTypeInformation "$lable.csv"
