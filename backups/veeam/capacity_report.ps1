@@ -685,29 +685,31 @@ $reportingMonths = $node["Backup Sessions"].Month | %{ get-date $_ } | Select -U
 logThis -msg  "`t-> Creating Backup Jobs Summary"
 $node["Jobs Summary"] = Get-BackupJobsSummary -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-logThis -msg  "`t->Summary of Client Infrastructure Size"
-$node["Summary of Client Infrastructure Size"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+logThis -msg  "`t->Client Sizes"
+$node["Client Sizes"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
 logThis -msg  "`t->Summary of Client Data Change Rate"
 $node["Summary of Client Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-logThis -msg  "`t->Summary of Client Data Transfered to Veeam for Backup"
-$node["Summary of Client Data Transfered to Veeam for Backup"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+logThis -msg  "`t->Data Transfered"
+$node["Data Transfered"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
 logThis -msg  "`t-> Creating Monthly Capacity Summary"
 $node["Monthly Capacity"] = Get-MonthlyBackupCapacity -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
 logThis -msg "Writing Report to Disks @ $logDir"
-$prefix="$logDir\$reportDate-$($node['Name'])"
+#$prefix="$logDir\$reportDate-$($node['Name'])"
+$prefix="$logDir"
 if ($xmlOutput)
 {
-	$node | Export-Clixml "$prefix.xml"
+	$node | Export-Clixml "$logDir\$reportDate-$($node['Name']).xml"
 }
 if ($csvOutput)
 {
-	"Server Information","Repositories","Backup Sessions","Backups by Clients","Jobs Summary","Summary of Client Infrastructure Size","Summary of Client Data Change Rate","Summary of Client Data Transfered to Veeam for Backup","Monthly Capacity" | %{
+	"Server Information","Repositories","Backup Sessions","Backups by Clients","Jobs Summary","Client Sizes","Summary of Client Data Change Rate","Data Transfered","Monthly Capacity" | %{
 		$lable=$_
-		$node[$lable]  | Export-Csv -NoTypeInformation "$prefix-$lable.csv"
+		$node[$lable]  | Export-Csv -NoTypeInformation "$prefix\$lable.csv"
+		#$node[$lable]  | Export-Csv -NoTypeInformation "$lable.csv"
 	}
 }
 logThis -msg  "Completed @ $(Get-date)"

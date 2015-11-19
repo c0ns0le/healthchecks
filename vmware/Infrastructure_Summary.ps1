@@ -3,20 +3,23 @@
 # Last updated: 23 March 2015
 # Author: teiva.rodiere@gmail.com
 #
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1)
-logThis -msg "Importing Module vmwareModules.psm1 (force)"
-Write-Host "$logfile" -BackgroundColor Red -ForegroundColor Yellow
-Write-Host "global: $global:logfile" -BackgroundColor Red -ForegroundColor Yellow
+param(	[object]$srvConnection="",
+		[string]$logDir="output",
+		[string]$comment="",
+		[bool]$showDate=$false,
+		[int]$headerType=1
+)
+
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+logThis -msg "Importing Module vmwareModules.psm1 (force)"
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-
 InitialiseModule
-#Set-Variable -Name logDir -Value $logDir -Scope Global
 
-Write-Host "$logfile" -BackgroundColor Red -ForegroundColor Yellow
-Write-Host "global: $global:logfile" -BackgroundColor Red -ForegroundColor Yellow
+Write-Host ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+Write-Host "$logDir"
+Write-Host ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 #pause
 
 # Report Meta Data
@@ -30,22 +33,31 @@ $metaInfo +="chartable=false"
 
 #logThis -msg "Enumerating datacenters..."
 
-#$svConnection
-logThis -msg "-> Loading clusters"
-$clusters = Get-Cluster -Server $svConnection
-logThis -msg "-> Loading Datacenters"
-$datacenters = Get-datacenter -Server $svConnection
-logThis -msg "-> Loading VMs"
-$vms = Get-VM -Server $svConnection
-logThis -msg "-> Loading datastores"
-$datastores = get-datastore -Server $svConnection
-logThis -msg "-> Loading VMHosts"
-$vmhosts = Get-VMHost -Server $svConnection
 
+#$srvConnection
+#$srvConnection = Connect-VIServer -Name $srvConnection
+
+logThis -msg "-> Loading clusters"
+$clusters = Get-Cluster -Server 
+logThis -msg "-> Loading Datacenters"
+$datacenters = Get-datacenter -Server $srvConnection
+logThis -msg "-> Loading VMs"
+$vms = Get-VM -Server $srvConnection
+logThis -msg "-> Loading datastores"
+$datastores = get-datastore -Server $srvConnection
+logThis -msg "-> Loading VMHosts"
+$vmhosts = Get-VMHost -Server $srvConnection
+
+Write-Output "ScriptName: $($global:scriptName)" | Out-File $runtimeLogFile
+Write-Output "vCenter: $($srvConnection.Name) $($srvConnection.gettype().Name)" | Out-File $runtimeLogFile -Append
+Write-Output "LogDir: $logDir" | Out-File $runtimeLogFile -Append
 
 $row  = New-Object System.Object
 $row | Add-Member -MemberType NoteProperty -Name "VMware vCenter Servers" -Value $srvConnection.Count
 $row | Add-Member -MemberType NoteProperty -Name "Datacenters" -Value $datacenters.Count
+
+$row | Out-File $runtimeLogFile -Append
+
 
 $vmsOn = ($vms | ?{$_.PowerState -eq "PoweredOn"}).Count
 $vmsOnPerc = "$(formatNumbers $(($vms | ?{$_.PowerState -eq ""PoweredOn""}).Count / $vms.Count * 100))%"

@@ -10,7 +10,7 @@
 #	Step 2) Run this script using examples below
 #			Datastore_Usage_report.ps1 -srvconnection $srvconnection
 #
-param([object]$srvConnection="",
+param(	[object]$srvConnection="",
 		[string]$logDir="output",
 		[string]$comment="",
 		[bool]$includeThisMonthEvenIfNotFinished=$true,
@@ -23,19 +23,22 @@ param([object]$srvConnection="",
 )
 
 #$([int]::MaxValue),
-Write-Host "Importing Module vmwareModules.psm1 (force) -In Here"
+logThis -msg "Importing Module vmwareModules.psm1 (force)"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
 
 Write-Host "vCenter Name: $($srvConnection.Name)"
+Write-Output "ScriptName: $($global:scriptName)" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt"
+Write-Output "vCenter: $($srvConnection.Name)" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt" -Append
+Write-Output "LogDir: $logDir" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt" -Append
 
-$global:logfile
-$global:outputCSV
+#$global:logfile
+#$global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule
+InitialiseModule -logDir $logDir -parentScriptName $($MyInvocation.MyCommand.name)
 
 $now = get-date #(get-date).AddMonths(-1) #use now but because we are half way thought the month, i only want up to the last day of the previous month
 

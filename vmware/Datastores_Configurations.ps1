@@ -47,10 +47,10 @@ $run1Report = $datastores | %{
 	    $usedMb = $datastore.CapacityMb - $datastore.FreeSpaceMB
 	    $usedPerc = [math]::ROUND( $usedMb / $datastore.CapacityMb * 100)
 		#$row | Add-Member -MemberType "NoteProperty" -Name "Cluster" -Value $clustername
-	    $row | Add-Member -MemberType "NoteProperty" -Name "BlockSize" -Value $datastore.ExtensionData.Info.Vmfs.BlockSizeMb
+	    #$row | Add-Member -MemberType "NoteProperty" -Name "BlockSize" -Value $datastore.ExtensionData.Info.Vmfs.BlockSizeMb
 	    	if ($datastore.Type -eq "VMFS")
 	    	{
-	    		$row | Add-Member -MemberType "NoteProperty" -Name "Type" -Value $datastore.Type
+	    		$row | Add-Member -MemberType "NoteProperty" -Name "Type" -Value "$datastore.Type ($($datastore.ExtensionData.Info.Vmfs.BlockSizeMb)MB)"
 		} else {
 			$row | Add-Member -MemberType "NoteProperty" -Name "Type" -Value $datastore.Type
 		}
@@ -62,12 +62,13 @@ $run1Report = $datastores | %{
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Accessible" -Value $datastore.Accessible
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Hosts" -Value ($datastore.ExtensionData.Host | measure).Count
 	    $row | Add-Member -MemberType "NoteProperty" -Name "VMs" -Value ($datastore.ExtensionData.Vm | measure).Count
-	    $row | Add-Member -MemberType "NoteProperty" -Name "Storage IO Enabled" -Value $datastore.ExtensionData.IormConfiguration.Enabled
-	    $row | Add-Member -MemberType "NoteProperty" -Name "Storage IO Threshold" -Value $datastore.ExtensionData.IormConfiguration.CongestionThreshold
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Vmfs Upgradable" -Value $datastore.ExtensionData.Info.Vmfs.VmfsUpgradable
-	    $row | Add-Member -MemberType "NoteProperty" -Name "Uuid" -Value $datastore.ExtensionData.Info.Vmfs.Uuid
-	 	$row | Add-Member -MemberType "NoteProperty" -Name "SAN_LunID" -Value $diskExtent.DiskName
-	    $row | Add-Member -MemberType "NoteProperty" -Name "Partition Extents" -Value $diskExtent.Partition      
+	    #$row | Add-Member -MemberType "NoteProperty" -Name "Storage IO Enabled" -Value $datastore.ExtensionData.IormConfiguration.Enabled
+	    #$row | Add-Member -MemberType "NoteProperty" -Name "Storage IO Threshold" -Value $datastore.ExtensionData.IormConfiguration.CongestionThreshold
+	    $row | Add-Member -MemberType "NoteProperty" -Name "Vmfs Upgradable" -Value $datastore.ExtensionData.Info.Vmfs.VmfsUpgradable
+	    #$row | Add-Member -MemberType "NoteProperty" -Name "Uuid" -Value $datastore.ExtensionData.Info.Vmfs.Uuid
+#	 	$row | Add-Member -MemberType "NoteProperty" -Name "SAN_LunID" -Value $diskExtent.DiskName
+	    #$row | Add-Member -MemberType "NoteProperty" -Name "Partition Extents" -Value $diskExtent.Partition      
 		
 		
 		if ($diskCanonicalName)

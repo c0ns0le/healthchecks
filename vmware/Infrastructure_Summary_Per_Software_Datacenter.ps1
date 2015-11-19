@@ -20,7 +20,7 @@ InitialiseModule
 $metaInfo = @()
 $metaInfo +="tableHeader=Total Capacity By Software Defined DataCenter"
 $metaInfo +="titleHeaderType=h$($headerType)"
-$metaInfo +="displayTableOrientation=Table" # options are List or Table
+$metaInfo +="displayTableOrientation=list" # options are List or Table
 $metaInfo +="introduction=Find below a breakdown of your capacity by data center(SDD)."
 $metaInfo +="chartable=false"
 #$metaAnalytics

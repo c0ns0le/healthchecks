@@ -36,9 +36,6 @@ param(
 )
 $scriptsLoc=$(Split-Path $($MyInvocation.MyCommand.Path))
 Set-Variable -Scope Global -Name silent -Value $silent
-Import-Module ".\generic\genericModule.psm1" -Force
-
-
 # Read in module
 Get-Content $inifile | Foreach-Object{
 	$var = $_.Split('=')
@@ -66,6 +63,7 @@ Get-Content $inifile | Foreach-Object{
 	#	logThis -msg "Found variable with HASH in it $($var[0])" -ForegroundColor Red
 	#}
 }
+
 #[Parameter(Mandatory=$true)][object]$srvConnection,
 #[object]$srvConnection,
 ###########################################################################
@@ -86,11 +84,13 @@ $defaultOutputReportDirectory="$(Split-Path $($MyInvocation.MyCommand.Path))\$cu
 ############### MAIN ###########
 if (!$outputDirectory)
 {
-	Set-Variable -Name logDir -Value "$defaultOutputReportDirectory\$runtimeDate" -Scope Global 
-	$outputDirectory=$global:logDir
+	#$logDir = "$defaultOutputReportDirectory\$runtimeDate"
+	$logDir="$defaultOutputReportDirectory\$runtimeDate"
+	$outputDirectory="$defaultOutputReportDirectory\$runtimeDate"
 } else {
-	Set-Variable -Name logDir -Value "$outputDirectory\$runtimeDate" -Scope Global 
-	$outputDirectory=$global:logDir
+	#$logDir="$outputDirectory\$runtimeDate"
+	$logDir = "$outputDirectory\$runtimeDate" 
+	$outputDirectory="$outputDirectory\$runtimeDate" 
 }
 
 if ((Test-Path -path $outputDirectory) -ne $true) {
@@ -102,13 +102,16 @@ $logfile="$outputDirectory\documentCustomer.log"
 
 if (!$global:silent)
 {
-	Invoke-Item $outputDirectory
+	#Invoke-Item $outputDirectory
 }
 
 if (Test-Path $logfile)
 {
 	Remove-Item $logFile
 }
+
+Import-Module ".\generic\genericModule.psm1" -Force
+#InitialiseGenericModule -parentScriptName -logDir $outputDirectory
 
 ###########################################################################
 #
@@ -158,12 +161,8 @@ if ($collectVMwareReports)
 	Import-Module -Name "$scriptsLoc\$vmwareScriptsHomeDir\vmwareModules.psm1" -Force
 	Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 	
-	#$global:logfile = $logfile
-	#$global:outputCSV
+	InitialiseModule -logDir $outputDirectory -parentScriptName $($MyInvocation.MyCommand.name)
 	
-	# Want to initialise the module and blurb using this 1 function
-	InitialiseModule
-
 	logThis -msg "Collecting VMware Reports ($outputDirectory)" -logfile $logfile 
 	#$scriptsLoc\$vmwareScriptsHomeDir="C:\admin\scripts\vmware" # requires interacting with VMware vCenter server
 	if ($srvconnection)
@@ -175,7 +174,7 @@ if ($collectVMwareReports)
 		###########################################################################
 		if ($capacity)
 		{
-			$thisReportLogdir="$logdir\Capacity_Reports" # Where all the CSVs are output by collectAll
+			$thisReportLogdir="$logDir\Capacity_Reports" # Where all the CSVs are output by collectAll
 			$reportHeader="VMware Infrastructure Capacity Reports for $customer"
 			$reportIntro="The objective of this document is to provide $customer with information about its VMware Infrastructure(s). The report was prepared by $itoContactName and generated on $(get-date). A total of $($srvconnection.count) x vCenter Servers were audited for this sreport."			
 			if (!$reportOnly)
@@ -190,6 +189,7 @@ if ($collectVMwareReports)
 					'runExtendedReports'=$runExtendedVMwareReports;
 					'vms'=$vmsToCheckPerformance;
 					'showPastMonths'=$previousMonths
+					'runJobsSequentially'=$runJobsSequentially;
 				}
 				
 				& "$scriptsLoc\$vmwareScriptsHomeDir\collectAll.ps1" @scriptParams
@@ -198,7 +198,7 @@ if ($collectVMwareReports)
 			}
 			
 			logThis -msg "`t-> Generating Capacity Report from input directory $thisReportLogdir to output directory $outputDirectory" -logfile $logfile 
-			
+
 			if ($emailReport)
 			{
 				$scriptParams = @{
@@ -213,13 +213,13 @@ if ($collectVMwareReports)
 					'verbose'=$false;
 					'itoContactName'=$itoContactName;
 				}
-				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $openReportOnCompletion -createHTMLFile $true -emailReport $true -verbose $false -itoContactName $itoContactName
-				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" @scriptParms
+				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $openReportOnCompletion -createHTMLFile $true -emailReport $true -verbose $false -itoContactName $itoContactName
+				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" @scriptParams
 			} 
 			if(!$stopReportGenerator)
 			{
 				$scriptParams = @{
-					'inDir'=$thisReportLogdir;
+					'inDir'="C:\admin\OUTPUT\AIT\19-11-2015";
 					'logDir'=$outputDirectory;
 					'reportHeader'=$reportHeader;
 					'reportIntro'=$reportIntro;
@@ -230,8 +230,10 @@ if ($collectVMwareReports)
 					'verbose'=$false;
 					'itoContactName'=$itoContactName;
 				}
-				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
-				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" @scriptParms
+				#$thisReportLogdir
+				#pause
+				& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
+				#& "$scriptsLoc\$vmwareScriptsHomeDir\generateInfrastructureReports.ps1" @scriptParams
 			}
 		}
 		
@@ -245,13 +247,25 @@ if ($collectVMwareReports)
 
 		if ($perfChecks)
 		{
-			$thisReportLogdir="$logdir\Performance_Reports" # Where all the CSVs are output by collectAll
+			$thisReportLogdir="$logDir\Performance_Reports" # Where all the CSVs are output by collectAll
 			$reportHeader="Performance Reports"
 			$reportIntro="Find below a list of comprehensive capacity report produced by $itoContactName for $customer. $($srvconnection.count) VMware Infrastructure(s) have been audited as part of this report."	
 			if (!$reportOnly)
 			{	
+				$scriptParams
+				$scriptParams = @{
+					'logProgressHere'=$logfile
+					'srvConnection'=$srvconnection
+					'logDir'=$thisReportLogdir
+					'runCapacityReports'=$false
+					'runPerformanceReports'=$true
+					'runExtendedReports'=$false
+					'vms'=$vmsToCheckPerformance
+					'showPastMonths'=$previousMonths
+					'runJobsSequentially'=$true
+				}
 				logThis -msg "`t-> Collecting Performance information to location: $thisReportLogdir"	 -logfile $logfile 
-				& "$scriptsLoc\$vmwareScriptsHomeDir\collectAll.ps1" -logProgressHere $logfile -srvConnection $srvconnection -logDir $thisReportLogdir -runCapacityReports $false -runPerformanceReports $true -runExtendedReports $false -vms $vmsToCheckPerformance -showPastMonths $previousMonths
+				& "$scriptsLoc\$vmwareScriptsHomeDir\collectAll.ps1" @scriptParams 
 			}
 			
 			logThis -msg "`t-> Generating Performance Checks Report" -logfile $logfile 
@@ -300,7 +314,7 @@ if ($collectVMwareReports)
 
 		if ($healthCheck -and !$reportOnly)
 		{
-			$thisReportLogdir="$logdir\Issues_Report" # Where all the CSVs are output by collectAll
+			$thisReportLogdir="$logDir\Issues_Report" # Where all the CSVs are output by collectAll
 			$reportHeader="Health Check & Issues Report"
 			$reportIntro="This report forms a Health Check report for $customer’s VMware infrastructure(s). $($srvconnection.count) VMware Infrastructure(s) have been audited as part of this report."
 			
@@ -333,7 +347,7 @@ if ($collectVMwareReports)
 		###########################################################################
 		if ($generatePerVMReport -and !$reportOnly)
 		{
-			$thisReportLogdir="$logdir\VMs_HealthChecks"
+			$thisReportLogdir="$logDir\VMs_HealthChecks"
 			$enable=$true
 			# check only VMs specified in vmsToCheck. vmsToCheck is set in the customer INI file (Comma delimited)
 			if ($vmsToCheckHealthCheck -and $vmsToCheckHealthCheck -ne "*")
@@ -381,7 +395,7 @@ if ($collectSANReports)
 	{
 		$reportHeader="Storage Health Check"
 		$reportIntro="This report was prepared by $itoContactName for $customer as a review of its Storage Systems."	
-		$thisReportLogdir="$logdir\Storage"
+		$thisReportLogdir="$logDir\Storage"
         
         if ($sanV7000User -and $sanV7000SecurePasswordFile -and !$sanV700password)
         {

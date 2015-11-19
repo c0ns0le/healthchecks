@@ -37,13 +37,13 @@ $report =  $srvConnection | %{
     $vcenterName = $_.Name
     if ($showOnlyTemplates) 
     {
-        logThis -msg "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor Red
+        logThis -msg "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor Yellow
         $vms = Get-Template -Server $_ | Sort-Object Name
         
         #logThis -msg "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor Red
         #$vmsViews = $vms | Get-View;
     } else {
-        logThis -msg "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor Red
+        logThis -msg "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor Yellow
         $vms = Get-VM -Server $_ | Sort-Object Name 
         
         #logThis -msg "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor Red
@@ -52,10 +52,10 @@ $report =  $srvConnection | %{
     
     if ($vms) 
     {
-        logThis -msg "Loading vcFolders from vCenter $_..." -ForegroundColor Red
+        logThis -msg "Loading vcFolders from vCenter $_..." -ForegroundColor Yellow
         $vcFolders = get-folder * -Server $_ | select -unique
     
-        logThis -msg "Loading Virtual Machine Creation Events from vCenter $_..." -ForegroundColor Red
+        logThis -msg "Loading Virtual Machine Creation Events from vCenter $_..." -ForegroundColor Yellow
         if (!$skipEvents)
         {
             # only load events for virtual machines which 

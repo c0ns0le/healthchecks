@@ -40,8 +40,8 @@ $fileNum = 1
 foreach ($file in $files) {	
 	Write-Host "Processing input file $file" -ForegroundColor  yellow;
 	$name,$extension = $file.Name.Split("-")
-	$sheetName = $name.replace("document","").Replace("compliance","")
-
+	$sheetName = $name.replace("document","").Replace("compliance","").Replace(".csv","")
+	
 	if ($fileNum -gt $book.Worksheets.Count) {
 		#Write-Host "$fileNum ###################################### "-BackgroundColor Cyan -ForegroundColor Red
 		$book.Worksheets.Add()
