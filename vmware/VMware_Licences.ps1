@@ -2,7 +2,7 @@
 #Version : 1.0
 #Updated : 24 March 2015
 #Author  : teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1)
+param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1,[bool]$showKeys=$false)
 Write-host "Importing Module vmwareModules.psm1 (force)" -ForegroundColor Yellow
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
@@ -22,7 +22,9 @@ $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=Table" # options are List or Table
 
-$Report = (Get-view $($srvConnection | select -First 1).ExtensionData.Content.LicenseManager | select -First 1).Licenses | %{
+# Select the -first 1 assumes that the vCenter are in linked mode. If they are in linked mode, then the results will report double the actual capacity.
+# if the 2 or more vcenter servers are not in a linked-mode configuration then this code needs to be revisited.
+$ReportPass1 = (Get-view $($srvConnection | select -First 1).ExtensionData.Content.LicenseManager | select -First 1).Licenses | %{
 	$row = New-Object System.Object
 	$row | add-member -type NoteProperty -Name "Name" -Value $_.Name
 	$row | add-member -type NoteProperty -Name "Key" -Value $_.LicenseKey
@@ -33,6 +35,19 @@ $Report = (Get-view $($srvConnection | select -First 1).ExtensionData.Content.Li
 	logThis -msg $row -ForegroundColor green
 	$row 
 }
+# will display by types instead of individual entries
+$report = $ReportPass1 | group Name | %{ 
+	$licenseType = $_
+	$individualLicenses = $_.Group
+	$row = New-Object System.Object
+	$row | add-member -type NoteProperty -Name "Name" -Value $licenseType.Name
+	$row | add-member -type NoteProperty -Name "Total" -Value $(($individualLicenses | measure -Property Total -Sum).Sum)
+	$row | add-member -type NoteProperty -Name "Available" -Value $(($individualLicenses | measure -Property Total -Sum).Sum - ($individualLicenses | measure -Property Used -Sum).Sum)
+	if ($showKeys) { $row | add-member -type NoteProperty -Name "Keys" -Value $([string]$individualLicenses.Key -replace ' ',', ') }
+	$row
+}
+#$report | fl
+$metaAnalytics = " A total of $(($Report.Used | measure -sum).Sum) licenses out of $(($Report.Total | measure -sum).Sum) are used."
 
 ############### THIS IS WHERE THE STUFF HAPPENS
 if ($returnReportOnly)

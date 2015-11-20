@@ -2,7 +2,7 @@
 #Version : 0.1
 #Updated : 3th Feb 2015
 #Author  : teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1)
+param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1,[bool]$showKeys=$false)
 Write-host "Importing Module vmwareModules.psm1 (force)" -ForegroundColor Yellow
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
@@ -38,18 +38,20 @@ $metaInfo +="displayTableOrientation=List" # options are List or Table
 
 $Report = $srvConnection | %{
 	$vcenter = $_
-	$lm = Get-view $vcenter.ExtensionData.Content.LicenseManager
+	$licenseMgr = Get-view $vcenter.ExtensionData.Content.LicenseManager
+	$licenseMgrAssignment = Get-View $licenseMgr.LicenseAssignmentManager	
+	$license=($licenseMgrAssignment.QueryAssignedLicenses($vcenter.ExtensionData.Content.About.InstanceUuid)).AssignedLicense.Name
+	#$licenseMgrAssignment
 	# define an object to capture all the information needed
 	#$row = "" | select "Name"
 	#$row.Name = $obj.Name
 	$row = New-Object System.Object
 	$row | add-member -type NoteProperty -Name "Name" -Value $vcenter.Name
-	$lm = Get-view $vcenter.ExtensionData.Content.LicenseManager
+	#$lm = Get-view $vcenter.ExtensionData.Content.LicenseManager
 	$row | add-member -type NoteProperty -Name "Version" -Value "$($vcenter.ExtensionData.Content.About.FullName) ($($vcenter.ExtensionData.Content.About.osType))"
-	#$srvconnection.ExtensionData.Content.About.OsType
-	$row | add-member -type NoteProperty -Name "Licence" -Value "$($lm.LicensedEdition)"
+	$row | add-member -type NoteProperty -Name "OS" -Value $srvconnection.ExtensionData.Content.About.OsType
+	$row | add-member -type NoteProperty -Name "Licence" -Value $license
 	# output
-	#logThis -msg $row -ForegroundColor green
 	$row 
 }
 

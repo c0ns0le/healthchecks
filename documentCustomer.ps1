@@ -358,9 +358,9 @@ if ($collectVMwareReports)
 				}
 			} else {
 				logThis -msg "`t-> Generating VM Checks for ALL VMs" -logfile $logfile 
-				Get-VM * | %{ 
-					& "$scriptsLoc\$vmwareScriptsHomeDir\exportVMDetails.ps1" -srvConnection $srvconnection -guestName $_ -includeSectionSysInfo $enable -includeSectionPerfStats $true -includeTasks $enable -includeErrors $enable -includeAlarms $enable -includeVMEvents $enable -includeVMSnapshots $enable -launchBrowser $false -showIndividualDevicesStats $false -logDir $thisReportLogdir -showPastMonths $previousMonths
-				}
+				#Get-VM * -Server $srvconnection | %{ 
+					& "$scriptsLoc\$vmwareScriptsHomeDir\exportVMDetails.ps1" -srvConnection $srvconnection -includeSectionSysInfo $enable -includeSectionPerfStats $true -includeTasks $enable -includeErrors $enable -includeAlarms $enable -includeVMEvents $enable -includeVMSnapshots $enable -launchBrowser $false -showIndividualDevicesStats $false -logDir $thisReportLogdir -showPastMonths $previousMonths
+				#}
 			}
 		}
 	}  else {

@@ -4,7 +4,7 @@
 # It exports 3 things: 1) VM Properties, 2) Performance Metrics, 3) Event logs
 #
 #
-# Example = .\exportVMDetails.ps1 -guestName VMNAME -srvConnection $($global:srvConnection) -verbose $true -includeSectionSysInfo $true -includeSectionPerfStats $true
+# Example = .\exportVMDetails.ps1 -guestName VMNAME -srvConnection $($srvConnection) -verbose $true -includeSectionSysInfo $true -includeSectionPerfStats $true
 #
 #
 param([object]$srvConnection,[string]$vcenters="",[string]$logDir="output",[string]$comment="",
@@ -21,7 +21,7 @@ Write-Host -msg "Importing Module vmwareModules.psm1 (force)"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-Set-Variable -Name vCenter -Value $($global:srvConnection) -Scope Global
+Set-Variable -Name vCenter -Value $($srvConnection) -Scope Global
 $global:logfile
 $global:outputCSV
 
@@ -34,7 +34,7 @@ InitialiseModule
 #	FUNCTIONS
 #
 ##########################################################################################################
-#$vcenterName = $($global:srvConnection).Name;
+#$vcenterName = $($srvConnection).Name;
 #$filename = ($($MyInvocation.MyCommand.Name)).TrimEnd('.ps1');
 #logThis -msg "$filename";
 #logThis -msg "Verbose Debugging [ON]";
@@ -70,18 +70,18 @@ $attachments = @("");
 $htmlColourArray = @("#ECE5B6","#C9C299","#827B60");
 
 $index=1;
-$vms = Get-VM -Name $guestName -Server $($global:srvConnection).Name | Sort-Object Name;
+$vms = Get-VM -Name $guestName -Server $($srvConnection).Name | Sort-Object Name;
 logThis -msg "[$($vms.Count)] found." -foreground green
 $vms | %{
 	$vm = $_;
 	$guestName = $vm.Name
 	$htmlPage = htmlHeader
 	$htmlPage += header1 "Health Check Report for $guestname"
-	$htmlPage += paragraph "This report presents a health check assessment for system <b>$guestname</b>. The assessment was performed on $(get-date) <i>$($global:srvConnection.Name)</i> ."
+	$htmlPage += paragraph "This report presents a health check assessment for system <b>$guestname</b>. The assessment was performed on $(get-date) <i>$($srvConnection.Name)</i> ."
 
 	#$of = $logDir + "\"+$guestName+$comment+$timeStampt+$fileExtension
 	$of = $logDir + "\"+$guestName+$comment+$fileExtension
-	logThis -msg "$index/$($vms.Count) :- $($($global:srvConnection).Name)/$($vm.host.name)/$($vm.name)" -ForegroundColor Yellow;
+	logThis -msg "$index/$($vms.Count) :- $($($srvConnection).Name)/$($vm.host.name)/$($vm.name)" -ForegroundColor Yellow;
 	
 	###############################################################################################################################
 	# PART 1 :- INCLUDE SYSTEM INFORMATION
@@ -120,7 +120,7 @@ $vms | %{
 		$GuestConfig | Add-Member -Type NoteProperty -Name "Guest Operating System / What VMware sees it as" -Value  "$($vmView.Guest.GuestFullName) / $($vm.ExtensionData.Config.GuestFullName)";
 		if ($vSphereRPO) { $GuestConfig | Add-Member -Type NoteProperty -Name "vSphere Replication RPO (minutes)" -Value $vSphereRPO }
 		$GuestConfig | Add-Member -Type NoteProperty -Name "Active Alarms" -Value $($vmView.TriggeredAlarmState.Count);
-		$GuestConfig | Add-Member -Type NoteProperty -Name "VMware vCenter Server" -Value $($global:srvConnection).Name;
+		$GuestConfig | Add-Member -Type NoteProperty -Name "VMware vCenter Server" -Value $($srvConnection).Name;
 		$GuestConfig | Add-Member -Type NoteProperty -Name "VMware Datacenter" -Value $dc;
 		$GuestConfig | Add-Member -Type NoteProperty -Name "VMware Cluster" -Value $clustername;	
 		$GuestConfig | Add-Member -Type NoteProperty -Name "Current VMware ESX Server" -Value $esxHost;
@@ -399,7 +399,7 @@ $vms | %{
 	if ($includeTasks -or $includeErrors -or $includeAlarms -or $includeVMEvents)
 	{
 		logThis -msg "`t-> Exporting Events"
-		$vmEvents = Get-VM -Name $guestName -Server $($global:srvConnection) | Get-VIEvent -MaxSamples $maxsamples -Finish (get-date) -Start $(get-date).AddDays(-$showOnlyRecentEventsFromDaysAgo)
+		$vmEvents = Get-VM -Name $guestName -Server $($srvConnection) | Get-VIEvent -MaxSamples $maxsamples -Finish (get-date) -Start $(get-date).AddDays(-$showOnlyRecentEventsFromDaysAgo)
 	}	
 	###############################################################################################################################
 	# PART 3 :- TASKS
@@ -677,18 +677,19 @@ $vms | %{
 		$objMetaInfo +="showTableCaption=false"
 		$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
 		$htmlTableHeader = "<table><th>Name</th><th>Issues/Actions</th>"
-
 		
 		# define all the Devices to query
+		#$srvConnection
+		#pause
 		$objectsArray = @(
-			@($global:srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | Get-Cluster -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-			#@($global:srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | Get-vmhost -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-			@($global:srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-			@($global:srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | get-datacenter -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-			@($global:srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | get-datastore -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} })
+			@($srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | Get-Cluster -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+			#@($srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | Get-vmhost -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+			@($srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+			@($srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | get-datacenter -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+			@($srvConnection | %{ $vcenterName=$_.Name; Get-VM $guestName -Server $_ | get-datastore -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} })
 		)
 		
-		$results = getIssues -objectsArray $objectsArray -returnDataOnly $true -performanceLastDays 7  -headerType $($headerType+2) -showPastMonths $lastMonths
+		$results = getIssues -objectsArray $objectsArray -srvconnection $srvConnection -returnDataOnly $true -performanceLastDays 7  -headerType $($headerType+2) -showPastMonths $lastMonths
 		
 		$htmlPage +=  header1 "$title"
 		$totalIssues = $(($results.Values.IssuesCount | measure -Sum).Sum)
@@ -706,45 +707,7 @@ $vms | %{
 	}
 	
 
-	###############################################################################################################################
-	# PART 4 :- INCLUDE VM EVENTS
-	###############################################################################################################################
-	#if ($includeVMEvents) 
-	#{
-#		logThis -msg "`t-> Exporting All Events"##
-		#$tmpreport=$vmEvents | select CreatedTime,FullFormattedMessage,UserName 
-		#if ($outputFormat -eq "html") {
-	#		
-#			$count=0
-			#if ($tmpreport)
-			#{
-		#		if ($tmpreport.Count)
-	#			{
-#					$count = $tmpreport.Count#
-				#} else {
-			#		$tmpreport = 1
-		#		}
-	#		} else { 
-#				#$count = 0
-#			}
-			#$htmlPage += header1 "All Events"
-			#$htmlPage += paragraph "This section lists all Events for this server for the reporting period. Review and spot any issues from this list"
-			#$htmlPage +=  paragraph "
-		#				  <tr><td>Reporting period:</td><td>$showOnlyRecentEventsFromDaysAgo Days</td></tr>
-	#					  <tr><td>Measure:</td><td>N/A</td></tr>
-#						  <tr><td>Number of Events:</td><td>$count</td></tr>
-#						  </table>"
-#            $htmlPage += $tmpreport | ConvertTo-html -Fragment
-			#if ($count -gt 0)
-			#{
-				#$htmlPage += paragraph "Unique rows: $count"
-			#}
-		#}
-	#}
-	#$htmlPage += "</div></body></html>"
 	$htmlPage += htmlFooter
-	#$htmlPage = ConvertTo-html -Head $a -Body $htmlPage
-	
 	$htmlPage > $of
 	
 	if ($launchBrowser)
@@ -755,119 +718,10 @@ $vms | %{
 	if ($emailReport)
 	{
 		###################################
-		# DEFINE THE IMPORTANT STUFF HERE
+		# DEFINE THE IMPORTANT STUFF HERE - TO COME
 		###################################
-		$smtpServer = "ausydmx01.anz.hsi.local"
-		$emailfqdn = "@andersenit.com.au" 
-		#$fromContactName="Teiva Rodiere"
-		#$fromAddress="teiva.rodiere@gms.ventyx.abb.com"
-		$farmname = "Henry Schein Hallas - VMware Infrastructure"
-		$reportHeader = "$farmname Capacity Report"
-		$itoContactName = "LogWatch Reporter"
-		$replyAddress="ausydsv01@henryschein.com.au"
-		$subject = $reportHeader
-		$fromContactName="VMware Infrastructure Reporting"
-		$fromAddress="ausydsv01@henryschein.com.au"
-		#$sendAllEmailsTo="Teiva Rodiere <teiva.rodiere@gmail.com>"
-		#$toContacts="logwatch@andersenit.com.au"
-		$toContacts="teiva.rodiere@andersenit.com.au"
-		$silenceAllReports=$false # $true to stop all reports
-
-		# Initialise the Report Variable
-		
-		# This routine sends the email
-		#function emailContact ([string] $smtpServer,  [string] $from, [string] $replyTo, [string] $toAddress ,[string] $subject, [string] $htmlPage) {
-				
-		if ($sendAllEmailsTo)
-		{
-			logThis -msg "Was emailing report to $sendAllEmailsTo but user choice to overide with $sendAllEmailsTo"
-			logThis -msg "Attachment: $attachments"
-			#-from "INF-VMWARE inf-vmware@ventyx.abb.com" `
-			#-replyTo "$itoContactName <$replyAddress>"  `
-			.\sendMail-Routine.ps1  -smtpServer $smtpServer `										
-									-from "$fromContactName <$fromAddress>" `
-									-replyTo "$itoContactName <$replyAddress>" `
-									-toAddress $sendAllEmailsTo `
-									-subject $subject `
-									-body $htmlPage `
-									-attachments $attachments
-		} else {
-			logThis -msg "Emailing report to $toContacts"
-			logThis -msg "Attachment: $attachments"
-			.\sendMail-Routine.ps1  -smtpServer $smtpServer `
-									-from "$fromContactName <$fromAddress>" `
-									-replyTo "$itoContactName <$replyAddress>" `
-									-toAddress $toContacts `
-									-subject $subject `
-									-body $htmlPage `
-									-attachments $attachments
-		}
 	}
 	
 	
 	$index++;
 }
-	
-	
-exit
-
-
-# Fix the object array, ensure all objects within the 
-# array contain the same members (required for Format-Table / Export-CSV)
-$loop = 1;
-$continue = $true;
-logThis -msg "-> Fixing the object arrays <-"
-while ($continue)
-{
-	logThis -msg "Loop index: " $loop;
-	$continue = $false;
-	
-	$Members = $sysInfoResults| Select-Object `
-	@{n='MemberCount';e={ ($_ | Get-Member).Count }}, `
-	@{n='Members';e={ $_.PsObject.Properties | %{ $_.Name } }}
-	$AllMembers = ($Members | Sort-Object MemberCount -Descending)[0].Members
-	
-	$sysInfoReport= $sysInfoResults| %{
-		ForEach ($Member in $AllMembers)
-		{
-			If (!($_ | Get-Member -Name $Member))
-			{ 
-				$_ | Add-Member -Type NoteProperty -Name $Member -Value "[N/A]"
-				$continue = $true;
-			}
-		}
-		Write-Output $_
-	}
-	
-	$sysInfoResults= $Report;
-	$loop++;
-}
-
-switch($outputFormat) {
-	"csv" {
-		FileOutput (`$sysInfoReport| Export-Csv $of -NoTypeInformation`)
-		FileOutput "" 
-		FileOutput ""
-		FileOutput "Collected on $(get-date)"
-	      }
-	"text" {
-		FileOutput "<h2>System information</h2>"
-		$sysInfoReport| fl | Out-File > $of
-		FileOutput "" 
-		FileOutput "" >> $of
-		FileOutput "Collected on $(get-date)" >> $of
-	      }		
-	"html" {
-		"HTML Output"
-	      }
-	default {
-		$sysInfoReport| fl
-	    }
-}
-
-if ($($global:srvConnection) -and $disconnectOnExist) {
-	Disconnect-VIServer $($global:srvConnection) -Confirm:$false;
-	logThis -msg "-> Disconnected from $($global:srvConnection) <-"
-}
-
-logThis -msg "Log file written to $of"

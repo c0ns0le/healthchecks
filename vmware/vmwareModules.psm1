@@ -328,8 +328,8 @@ function getIssues(
 											#}
 											$percExceeds=$peaks.Count/$objStats.count*100
 											if ((($performance.Average -ge $warningThreshold) -or ($performance.Maximum -ge $warningThreshold)) -and $percExceeds -gt 5)
-											{												
-												$objectIssuesRegister += "$($li)The system could be suffering from $((($objStats[0].MetricId) -split '\.')[0].ToUpper()) performance issues. It has been $whatIsBeenUpTo on average $(getsize -unit $($unit) -val $($performance.Average)) of its resources over the past $performanceLastDays days with peaks exceeding the warning threashold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time during the reporting period. The highest recorded peak was $highestPeaks.`n"
+											{
+												$objectIssuesRegister += "$($li)A potential $((($objStats[0].MetricId) -split '\.')[0].ToUpper()) bottleneck was identified which could cause poor performance. It has been $whatIsBeenUpTo on average $(getsize -unit $($unit) -val $($performance.Average)) of its resources over the past $performanceLastDays days with peaks exceeding the warning threshold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time during the reporting period. The highest recorded peak was $highestPeaks.`n"
 												$objectIssues++
 											}
 										}
@@ -528,7 +528,7 @@ function getIssues(
 											} else {
 												$whatIsBeenUpTo="consuming"
 											}
-											$objectIssuesRegister += "$($li)Could be suffering from $((($objStats[0].MetricId) -split '\.')[0].ToUpper()) performance issues. It as been $whatIsBeenUpTo on average $([math]::round($performance.Average,2)) $unit of its entitlements over the past $performanceLastDays days with peaks exceeding the warning threashold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time. The highest peak recorded was $([math]::round($performance.Maximum,2))%.`n"
+											$objectIssuesRegister += "$($li)A potential $((($objStats[0].MetricId) -split '\.')[0].ToUpper()) bottleneck was identified which could cause poor performance. It as been $whatIsBeenUpTo on average $([math]::round($performance.Average,2)) $unit of its entitlements over the past $performanceLastDays days with peaks exceeding the warning threshold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time. The highest peak recorded was $([math]::round($performance.Maximum,2))%.`n"
 											$objectIssues++
 										}
 									}
@@ -981,6 +981,7 @@ function getIssues(
 								{
 									$allVms = $($vms | ?{$_.ExtensionData.Config.MemoryAllocation.Reservation -ne 0} | Select "Name") + $($vms | ?{$_.ExtensionData.Config.CpuAllocation.Reservation -ne 0} | Select "Name") | select -Property Name -Unique | sort Name
 									$objectIssuesRegister += "$($li)There are $($allVms.Count) $types in this cluster with some form of Reservation of CPU [$cpuReservationsTotalGHz GHz] and Memory [$memReservationTotalGB GB]. The affected servers are: `n"
+									#$objectIssuesRegister += $allVms | ConvertTo-Html -Fragment
 									$objectIssuesRegister += $allVms | ConvertTo-Html -Fragment
 									$objectIssuesRegister += "$($li)`n"
 									$objectIssues++
@@ -1040,7 +1041,7 @@ function getIssues(
 										{
 											$percExceeds=$peaks.Count/$objStats.count*100
 											#$objectIssuesRegister += "$($li)Over the past $performanceLastDays days, this $type has using on average $([math]::round($performance.Average,2)) $unit of its $((($objStats[0].MetricId) -split '\.')[0].ToUpper()) entitlements, with peaks exceeding $warningThreshold% usage $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time. The highest peak recorded is $([math]::round($performance.Maximum,2)) %. If these peaks increase in frequency, consider adding more Compute to this cluster. `n"
-											$objectIssuesRegister += "$($li)Over the past $performanceLastDays days, this $type has consumed on average $([math]::round($performance.Average,2)) $unit of its resources, with peaks exceeding the warning threashold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time. The highest peak recorded was $([math]::round($performance.Maximum,2)) %. If these peaks increase in frequency, consider adding more resources to this Cluster.`n"
+											$objectIssuesRegister += "$($li)Over the past $performanceLastDays days, this $type has consumed on average $([math]::round($performance.Average,2)) $unit of its resources, with peaks exceeding the warning threshold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time. The highest peak recorded was $([math]::round($performance.Maximum,2)) %. If these peaks increase in frequency, consider adding more resources to this Cluster.`n"
 											$objectIssues++
 										}
 									}
