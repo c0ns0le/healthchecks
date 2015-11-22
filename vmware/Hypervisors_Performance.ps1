@@ -10,7 +10,8 @@ param([object]$srvConnection="",
 	[bool]$showIndividualDevicesStats=$false,
 	[int]$maxsamples=([int]::MaxValue),
 	[bool]$unleashAllStats=$false,
-	[int]$headerType=1
+	[int]$headerType=1,
+	[bool]$consolidateResults=$true
 )
 
 Write-Host -msg "Importing Module vmwareModules.psm1 (force)"
@@ -46,9 +47,14 @@ $now = get-date #(get-date).AddMonths(-1) #use now but because we are half way t
 #sys.uptime.latest
 #
 
+if ($consolidateResults) 
+{
+	$combineResults=@{}
+}
 
 $vmhosts = get-vmhost -Server $srvConnection
 logThis -msg "Collecting stats on a monthly basis for the past $showPastMonths Months..." -foregroundcolor Green
+
 $vmhosts | sort -Property Name | %{
     #$output = "" | Select "Server"
 	$outputString = New-Object System.Object
@@ -87,7 +93,17 @@ $vmhosts | sort -Property Name | %{
 	#$report = 
 	$metricsDefintions | %{
 		$metric = $_
-		$report = getStats -sourceVIObject $obj -metric $metric -filters $filters -maxsamples $maxsamples -showIndividualDevicesStats $showIndividualDevicesStats -previousMonths $showPastMonths -returnObjectOnly $true
+		$parameters= @{
+			'sourceVIObject'=$obj;
+			'metric'=$metric;
+			'maxsamples'=$maxsamples;
+			'filters'=$filters;
+			'showIndividualDevicesStats'=$showIndividualDevicesStats;
+			'previousMonths'=$showPastMonths;
+			'returnObjectOnly'=$true;
+		}
+		#$report = getStats -sourceVIObject $obj -metric $metric -filters $filters -maxsamples $maxsamples -showIndividualDevicesStats $showIndividualDevicesStats -previousMonths $showPastMonths -returnObjectOnly $true
+		$report = getStats @parameters		
 		$subheader = convertMetricToTitle $metric
 		$metricCSVFilename = $(getRuntimeCSVOutput).Replace(".csv","-$($obj.Name)-$metric.csv")
 		$metricNFOFilename = $(getRuntimeCSVOutput).Replace(".csv","-$($obj.Name)-$metric.nfo")
@@ -101,14 +117,64 @@ $vmhosts | sort -Property Name | %{
 		
 		#$results
 		#logThis -msg $report.Table
-		ExportCSV -table $report.Table -thisFileInstead $metricCSVFilename 
-		ExportMetaData -metadata $objMetaInfoPerMetric -thisFileInstead $metricNFOFilename
-		updateReportIndexer -string "$(split-path -path $metricCSVFilename -leaf)"
+		if ($consolidateResults) 
+		{
+			
+			$combineResults[$report.Name] = @{}
+			$combineResults[$report.Name].Add($metric,$table)
+		} else {
+			ExportCSV -table $report.Table -thisFileInstead $metricCSVFilename 
+			ExportMetaData -metadata $objMetaInfoPerMetric -thisFileInstead $metricNFOFilename
+			updateReportIndexer -string "$(split-path -path $metricCSVFilename -leaf)"
+		}
 		
 	}
 
 }
-
+$combineResults
+pause
+if ($consolidateResults) 
+{
+	$finalreport = @()
+	$servernames = @($combineResults.keys)
+	$metricName=$combineResults[$servernames[0]].Metric
+	$listOfMonths = $combineResults[$servernames[0]].Months
+	$row = New-Object System.Object
+	$row | Add-Member -Type NoteProperty -Name  $metricName -Value ""
+	$filerIndex=1
+	$listOfMonths | %{
+		$monthName = $_
+		$row | Add-Member -Type NoteProperty -Name "$monthName" -Value "Minimum"			
+		$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value "Maximum"
+		$filerIndex++
+		$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value "Average"
+		$filerIndex++
+	}
+	
+	$finalreport += $row
+	
+	$finalreport += $combineResults.keys | %{
+		$keyname=$_
+		$table = $combineResults[$keyname].Table
+		#$row | Add-Member -Type NoteProperty -Name "Servers" -Value $keyname
+		$row = New-Object System.Object
+		$row | Add-Member -Type NoteProperty -Name  $metricName -Value $keyname
+		$filerIndex=1
+		$listOfMonths | %{
+			$monthName = $_
+			$row | Add-Member -Type NoteProperty -Name "$monthName" -Value ($table | ?{$_.Measure -eq "Minimum"}).$monthName
+			$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Maximum"}).$monthName 
+			$filerIndex++
+			$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Average"}).$monthName
+			$filerIndex++
+		}
+		$row
+	}
+	ExportCSV -table $finalreport
+	#Write-Host "you need to output the table into a proper CSV file."
+	#pause
+}
+		
 # This is the global one -- pu 
 ExportMetaData -metadata $metaInfo
 

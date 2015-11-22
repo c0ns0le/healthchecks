@@ -2075,11 +2075,12 @@ function formatHeaders($text)
 {
 	reteurn ((Get-Culture).TextInfo.ToTitleCase(($text -replace "_"," " -replace '\.',' ').ToLower()))
 }
+
 function getStats(
 	[Parameter(Mandatory=$true)]$sourceVIObject, 
 	[Parameter(Mandatory=$true)]$metric, 
 	[Parameter(Mandatory=$false)][array]$filters,
-	[Parameter(Mandatory=$true)][int]$maxsamples,
+	[Parameter(Mandatory=$true)][int]$maxsamples=([int]::MaxValue),
 	[Parameter(Mandatory=$false)][bool]$showIndividualDevicesStats=$true,
 	[Parameter(Mandatory=$false)][int]$previousMonths=6,
 	[Parameter(Mandatory=$false)][int]$sampleIntevalsMinutes=5,
@@ -2102,6 +2103,7 @@ function getStats(
 	$outputHTML = ""
 	#$tableColumnHeaders = @("Last20minutes", "SofarThisMonth");#, "6-Last6Months");
 	$tableColumnHeaders = @();#, "6-Last6Months");
+	$months = @()
 	$requiredMeasures = @("Average","Minimum","Maximum");
 	
 	# CHECK IF THE METRIC HAS BEEN PASSED TO THIS FUNCTION
@@ -2125,6 +2127,7 @@ function getStats(
 				$lastDay = forThisdayGetLastDayOfTheMonth ( $(Get-Date $today).AddMonths(-$monthIndex) )
 				$nameofdate = getMonthYearColumnFormatted($firstDay)
 				$tableColumnHeaders += $nameofdate
+				$months += $nameofdate
 				logThis -msg "`t- For $nameofdate [$firstDay -> $lastDay]";
 				#New-Variable -Name $tableColumnHeaders[2] -Value ($sourceVIObject | Get-Stat -Stat $metric -Start (Get-Date).addMonths(-1) -Finish (Get-Date) -MaxSamples $maxsamples  -IntervalMins $sampleIntevalsMinutes | select *)
 				New-Variable -Name "stats$nameofdate" -Value ($sourceVIObject | Get-Stat -Stat $metric -Start $firstDay -Finish $lastDay -MaxSamples $maxsamples | select *)
@@ -2221,6 +2224,7 @@ function getStats(
 			$resultsObject["Measure"] = $measure
 			#$resultsObject["Frequency"] = @{}
 			$resultsObject["Frequency"] = $frequency
+			$resultsObject["Months"] = $months
 			#$resultsObject["Unit"] = @{}
 			if ($DEBUG)
 			{
