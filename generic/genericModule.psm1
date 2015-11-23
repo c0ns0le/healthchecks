@@ -13,7 +13,7 @@ function verboseThis ([Parameter(Mandatory=$true)][object] $msg, $errorColor="Cy
 	logThis ">> " -ForegroundColor $errorColor
 	logThis ">> $msg" -ForegroundColor $errorColor
 	logThis ">> " -ForegroundColor $errorColor
-	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
+	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
 }
 
 function logThis (
@@ -127,3 +127,59 @@ function Get-HashtableAsObject([Hashtable]$hashtable)
         $outputObject
     }
 }
+
+function sendEmail
+	(	[Parameter(Mandatory=$true)][string] $smtpServer,  
+		[Parameter(Mandatory=$true)][string] $from, 
+		[Parameter(Mandatory=$true)][string] $replyTo=$from, 
+		[Parameter(Mandatory=$true)][string] $toAddress,
+		[Parameter(Mandatory=$true)][string] $subject, 
+		[Parameter(Mandatory=$true)][string] $body="",
+		[Parameter(Mandatory=$false)][PSCredential] $credentials,
+		[Parameter(Mandatory=$false)][string]$fromContactName="",
+		[Parameter(Mandatory=$false)][object] $attachements # An array of filenames with their full path locations
+		
+	) 
+{
+	Write-Host "[$attachments]" -ForegroundColor Blue
+	if (!$smtpServer -or !$from -or !$replyTo -or !$toAddress -or !$subject -or !$body)
+	{
+		Write-Host "Cannot Send email. Missing parameters for this function. Note that All fields must be specified" -BackgroundColor Red -ForegroundColor Yellow
+		Write-Host "smtpServer = $smtpServer"
+		Write-Host "from = $from"
+		Write-Host "replyTo = $replyTo"
+		Write-Host "toAddress = $toAddress"
+		Write-Host "subject = $subject"
+		Write-Host "body = $body"
+	} else {		
+		if ($attachments)
+		{
+			$attachments | %{
+				#Write-Host $_ -ForegroundColor Blue
+				$attachment = new-object System.Net.Mail.Attachment($_,"Application/Octet")
+				$msg.Attachments.Add($attachment)
+			}
+			Write-Host "Sending email with attachments"
+			Send-MailMessage -SmtpServer $smtpServer -Credential $Credentials -From $from -Subject $subject -To $toAddress -BodyAsHtml $body -Attachments $attachments 
+		} else {
+			Write-Host "Sending email without attachments"
+			Send-MailMessage -SmtpServer $smtpServer -Credential $Credentials -From $from -Subject $subject -To $toAddress -BodyAsHtml $body -DeliveryNotificationOption OnFailure
+		}
+		
+		
+	}
+}
+
+$scriptParams = @{ 
+	'subject' = "My subject";
+	'smtpServer' = "192.168.10.112";
+	'replyTo' = "teiva.rodiere@andersenit.com.au";
+	'from' = "teiva.rodiere@andersenit.com.au";
+	'fromContactName' = "Teiva Rodiere";
+	'toAddress' = "teiva.rodiere@andersenit.com.au";
+	'body' = $htmlPage.Content;
+	'attachements' = [Object] $attachments;				
+	'credentials' = [PSCredential] $mailAuthentication
+	}
+sendEmail @scriptParams
+

@@ -259,31 +259,15 @@ function startProcess()
 					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
 					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" -logProgressHere $logfile -srvConnection $srvconnection -logDir $thisReportLogdir -runCapacityReports $true -runPerformanceReports $false -runExtendedReports $runExtendedVMwareReports -vms $vmsToCheckPerformance -showPastMonths $previousMonths
 					
+				} else {
+					# work in progress.. read from on disk report already.
+					$htmlReport = "No report"
 				}
 				
-				logThis -msg "`t-> Generating Capacity Report from input directory $thisReportLogdir to output directory $runtime_log_directory" -logfile $logfile 
-
-				if ($global:configs.emailReport)
-				{
-					if ($scriptParams) {remove-variable scriptParams}
-					$scriptParams = @{
-						'inDir' = $thisReportLogdir;
-						'logDir' = $global:configs.outputDirectory;
-						'reportHeader' = $global:configs.reportHeader;
-						'reportIntro' = $global:configs.reportIntro;
-						'farmName' = $global:configs.customer;
-						'openReportOnCompletion' = [bool]$global:configs.openReportOnCompletion;
-						'createHTMLFile' = [bool]$global:configs.createHTMLFile;
-						'emailReport' = [bool]$global:configs.emailReport;
-						'verbose' = [bool]$false;
-						'itoContactName' = $global:configs.itoContactName;
-					}
-					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $global:configs.openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $itoContactName
-					# its not working for some reason
-					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" @scriptParams
-				} 
+				
 				if(!$global:configs.stopReportGenerator)
 				{
+					logThis -msg "`t-> Generating Capacity Report from input directory $thisReportLogdir to output directory $runtime_log_directory" -logfile $logfile 
 					if ($scriptParams) {remove-variable scriptParams}
 					$scriptParams = @{
 						'inDir' = $thisReportLogdir;
@@ -299,10 +283,53 @@ function startProcess()
 					}
 					#$thisReportLogdir
 					#pause
-					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $itoContactName
+					$htmlReport = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $itoContactName
 					# its not working for some reason
 					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" @scriptParams
 				}
+				
+				if ($global:configs.emailReport)
+				{
+					if ($scriptParams) {remove-variable scriptParams}
+		
+					$scriptParams = @{
+						'inDir' = $thisReportLogdir;
+						'logDir' = $global:configs.outputDirectory;
+						'reportHeader' = $global:configs.reportHeader;
+						'reportIntro' = $global:configs.reportIntro;
+						'farmName' = $global:configs.customer;
+						'setTableStyle' = 'aITTablesytle';
+						'itoContactName' = $global:configs.itoContactName;						
+						'openReportOnCompletion' = [bool]$global:configs.openReportOnCompletion;
+						'createHTMLFile' = [bool]$global:configs.createHTMLFile;
+						'emailReport' = [bool]$global:configs.emailReport;
+						'verbose' = [bool]$false;
+					}
+					
+					$htmlReportFilename = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $global:configs.openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $itoContactName
+					
+					if ($scriptParams) {remove-variable scriptParams}
+					$scriptParams = @{ 
+						'subject' = $global:configs.subject;
+						'smtpServer' = $global:configs.smtpServer;
+						'smtpDomainFQDN' = $global:configs.smtpDomainFQDN;
+						'replyToRecipients' = $global:configs.replyToRecipients;
+						'fromRecipients' = $global:configs.fromRecipients;
+						'fromContactName'=Reporting Services
+						'toRecipients' = $global:configs.toRecipients;
+						'body' = (get-content $htmlReportFilename);
+						'attachements' = $null
+					}
+					
+					
+					# This routine sends the email
+					#function emailContact ([string] $smtpServer,  [string] $from, [string] $replyTo, [string] $toAddress ,[string] $subject, [string] $htmlPage) {
+					sendEmail @scriptParams
+					
+					# its not working for some reason
+					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" @scriptParams
+				} 
+				
 			}
 			
 			###########################################################################

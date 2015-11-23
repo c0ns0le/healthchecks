@@ -76,7 +76,7 @@ $Report = $srvConnection | %{
     Write-Host "Processing results..."
 	$index=1
     $vIEvents |  %{
-		Write-Progress -activity "Processing results" -status "% complete" -percentcomplete ($index/$vIEvents.Count*100)
+		Write-Progress -activity "Processing results" -status "% complete ($index/$($vIEvents.Count)" -percentcomplete ($index/$vIEvents.Count*100)
        	$events = "" | Select-Object "vCenterName";
         $events.vCenterName = $vCenter.Name;
        	$events | Add-Member -Type NoteProperty -Name "TicketType" -Value $_.TicketType;

@@ -329,7 +329,8 @@ function getIssues(
 											$percExceeds=$peaks.Count/$objStats.count*100
 											if ((($performance.Average -ge $warningThreshold) -or ($performance.Maximum -ge $warningThreshold)) -and $percExceeds -gt 5)
 											{
-												$objectIssuesRegister += "$($li)A potential $((($objStats[0].MetricId) -split '\.')[0].ToUpper()) bottleneck was identified which could cause poor performance. It has been $whatIsBeenUpTo on average $(getsize -unit $($unit) -val $($performance.Average)) of its resources over the past $performanceLastDays days with peaks exceeding the warning threshold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time during the reporting period. The highest recorded peak was $highestPeaks.`n"
+												#$objectIssuesRegister += "$($li)A potential $((($objStats[0].MetricId) -split '\.')[0].ToUpper()) bottleneck was identified which could cause poor performance. It has been $whatIsBeenUpTo on average $(getsize -unit $($unit) -val $($performance.Average)) of its resources over the past $performanceLastDays days with peaks exceeding the warning threshold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time during the reporting period. The highest recorded peak was $highestPeaks.`n"
+												$objectIssuesRegister += "$($li)A potential $((($objStats[0].MetricId) -split '\.')[0].ToUpper()) bottleneck was identified which could cause poor performance. It has been $whatIsBeenUpTo on average $($performance.Average) of its resources over the past $performanceLastDays days with peaks exceeding the warning threshold of $warningThreshold%, $('{0:N2} %' -f $($peaks.Count/$objStats.count*100)) of the time during the reporting period. The highest recorded peak was $highestPeaks.`n"
 												$objectIssues++
 											}
 										}
@@ -342,18 +343,19 @@ function getIssues(
 								$obj.ExtensionData.Guest.Net | %{
 									#$_.DeviceConfigId
 									#$obj.Id
-									if ($_.DeviceConfigId)
+									$guestAdapater = $_
+									if ($guestAdapater.DeviceConfigId)
 									{
-										$guestAdapater=$_.DeviceConfigId
+										$guestAdapaterId=$guestAdapater.DeviceConfigId
 									
-										$idToMatch="$($obj.Id)/$guestAdapater"
+										$idToMatch="$($obj.Id)/$guestAdapaterId"
 										#$idToMatch
 										$adapter=$obj.NetworkAdapters | ?{$_.id -eq $idToMatch }
 										$adapterMAC=$adapter.MacAddress.ToUpper()
-										$guestMAC=$($_.MacAddress.ToUpper())
+										$guestAdapterMAC=$($guestAdapater.MacAddress.ToUpper())
 										#logThis -msg "GuestMAC=$guestMAC, AdapterMAC=$adapterMAC"
-										if ($guestMAC -ne $adapterMAC) {
-											$objectIssuesRegister += "$($li)""$($adapter.Name)""'s MAC Address ""$adapterMAC"" differs from the Guest MAC address ""$guestMAC"".`n"
+										if ($guestAdapterMAC -ne $adapterMAC) {
+											$objectIssuesRegister += "$($li)""$($adapter.Name)""'s MAC Address ""$adapterMAC"" differs from the Guest MAC address ""$guestAdapterMAC"".`n"
 											$objectIssues++
 										}
 									}
@@ -2952,6 +2954,7 @@ function sendEmail
 		[Parameter(Mandatory=$true)][string] $toAddress,
 		[Parameter(Mandatory=$true)][string] $subject, 
 		[Parameter(Mandatory=$true)][string] $body="",
+		[Parameter(Mandatory=$false)][string]$fromContactName="",
 		[Parameter(Mandatory=$false)][object] $attachements # An array of filenames with their full path locations
 	)  
 {
@@ -2971,7 +2974,7 @@ function sendEmail
 		#Creating SMTP server object
 		$smtp = new-object Net.Mail.SmtpClient($smtpServer)
 		#Email structure
-		$msg.From = $from
+		$msg.From = "$fromContactName $from"
 		$msg.ReplyTo = $replyTo
 		$msg.To.Add($toAddress)
 		$msg.subject = $subject
