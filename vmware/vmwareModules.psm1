@@ -1722,9 +1722,9 @@ function SetmyCSVMetaFile(
 	[Parameter(Mandatory=$true)][string] $filename
 	)
 {
-	if($global:metaFile)
+	if($global:runtimeCSVMetaFile)
 	{
-		$global:metaFile = $filename
+		$global:runtimeCSVMetaFile = $filename
 	} else {
 		Set-Variable -Name metaFile -Value $filename -Scope Global
 	}
@@ -1798,12 +1798,12 @@ function ExportMetaData([Parameter(Mandatory=$true)][object[]] $metaData, [Param
 		$global:logDir = $childitem.FullName
 	}
 	
-	$tmpMetafile = $global:metaFile
+	$tmpMetafile = $global:runtimeCSVMetaFile
 	if( $thisFileInstead)
 	{
 		$tmpMetafile = $thisFileInstead
 	}
-	#if ($global:metaFile)
+	#if ($global:runtimeCSVMetaFile)
 	if ($tmpMetafile)
 	{
 		 $metadata | Out-File -FilePath $tmpMetafile
@@ -1811,17 +1811,17 @@ function ExportMetaData([Parameter(Mandatory=$true)][object[]] $metaData, [Param
 }
 function getRuntimeMetaFile()
 {
-	return "$global:metaFile"
+	return "$global:runtimeCSVMetaFile"
 }
 
 function setRuntimeMetaFile([string]$filename)
 {
-	$global:metaFile = $filename
+	$global:runtimeCSVMetaFile = $filename
 }
 
 function updateRuntimeMetaFile([object[]] $metaData)
 {
-	$metadata | Out-File -FilePath $global:metaFile -Append
+	$metadata | Out-File -FilePath $global:runtimeCSVMetaFile -Append
 }
 
 function getRuntimeCSVOutput()
@@ -3246,7 +3246,8 @@ function InitialiseModule
 	Set-Variable -Name "runtimeLogFile" -Value  $($global:logDir + "\"+$global:scriptName.Replace(".ps1",".log")) -Scope Global
 	#$global:logDir | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt"
 	Set-Variable -Name "runtimeCSVOutput" -Value  $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".csv")) -Scope Global
-	Set-Variable -Name "runtimeCSVMetaFile" -Value  $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo")) -Scope Global
+	setRuntimeMetaFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo"))
+	#Set-Variable -Name "runtimeCSVMetaFile" -Value  $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo")) -Scope Global
 	#$scriptsHomeDir = split-path -parent $global:scriptName
 	
 	SetmyLogFile -filename $global:runtimeLogFile

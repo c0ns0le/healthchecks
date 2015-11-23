@@ -1,8 +1,4 @@
-﻿#genericModule.psm1
-#$global:logDir=""
-#$global:runtimeLogFile=""
-
-function showError ([Parameter(Mandatory=$true)][string] $msg, $errorColor="Red")
+﻿function showError ([Parameter(Mandatory=$true)][string] $msg, $errorColor="Red")
 {
 	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
 	logThis ">> " -ForegroundColor $errorColor
@@ -20,7 +16,6 @@ function verboseThis ([Parameter(Mandatory=$true)][object] $msg, $errorColor="Cy
 	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
 }
 
-#Log To Screen and file
 function logThis (
 	[Parameter(Mandatory=$true)][string] $msg, 
 	[Parameter(Mandatory=$false)][string] $logFile,
@@ -66,10 +61,9 @@ function printToScreen([string]$msg,[string]$ForegroundColor="Yellow")
 	}
 }
 
-function get-mycredentials-fromFile (
+function getmycredentialsfromFile (
 	[Parameter(Mandatory=$true)][string]$User,
-	[Parameter(Mandatory=$true)][string]$SecureFileLocation
-) 
+	[Parameter(Mandatory=$true)][string]$SecureFileLocation) 
 {
 	#logThis -msg $SecureFileLocation
 	$password = Get-Content $SecureFileLocation | ConvertTo-SecureString 
@@ -82,6 +76,7 @@ function set-mycredentials ([string]$filename)
 	$Credential = Get-Credential -Message "Enter your credentials for this connection: "
 	$credential.Password | ConvertFrom-SecureString | Set-Content $filename
 }
+
 ########################################################################################
 # examples
 # $card = Get-HashtableAsObject @{

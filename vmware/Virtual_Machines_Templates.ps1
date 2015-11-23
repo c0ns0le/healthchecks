@@ -55,7 +55,7 @@ $continue = $true;
 LogThis -msg "-> Fixing the object arrays <-" -ForegroundColor Magenta
 while ($continue)
 {
-	LogThis -msg "Loop index: " $loop;
+	LogThis -msg "Loop index: $loop";
 	$continue = $false;
 	
 	$Members = $run1Report | Select-Object `

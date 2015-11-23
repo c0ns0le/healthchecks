@@ -25,7 +25,7 @@ InitialiseModule
 logThis -msg "Enumerating datacenters..." -ForegroundColor Cyan
 $run1Report = Get-Datacenter -Server $srvConnection | %{
 	$dc = $_.Name;
-	logThis -msg "Enumerating clusters in datacenter "$dc"..." -ForegroundColor Cyan
+	logThis -msg "Enumerating clusters in datacenter $dc..." -ForegroundColor Cyan
 	Get-Cluster -Location $dc | % { 
 		$clustername = $_.Name;
 		logThis -msg "Enumerating Hosts in cluster "$clustername"..." -ForegroundColor Cyan

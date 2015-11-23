@@ -8,8 +8,12 @@ param
 	[bool]$launchReport=$false,
 	[bool]$xmlOutput=$true,
 	[bool]$csvOutput=$true,
-	[bool]$chartFriendly=$false
+	[bool]$chartFriendly=$false,
+	[bool]$dailyChecks=$true,
+	[bool]$capacityChecks=$false,
+	[bool]$monthlyChecks=$false
 )
+
 #region Import-Modules
 Add-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
@@ -635,6 +639,7 @@ function Get-MonthlyBackupCapacity ([bool]$chartFriendly=$false,[object]$reporti
 	}
 	return $report
 }
+
 #############################################################################################################################- NOT OK
 function get-ondiskBackups()
 {
@@ -649,6 +654,348 @@ function get-ondiskBackups()
 		}
 	}
 }
+#############################################################################################################################- OK
+# Get expired tapes which are Not in the library
+function get-MediaPool ([bool]$force=$false)
+{
+	if ($global:mediapools -and !$force)
+	{
+		#logThis -msg "`t`t-> Re-using existing collection of Tape Media Pool"
+		return $global:mediapools
+	} else {	
+		logThis -msg "`t`t-> First time collection of Tape Media Pool"
+		Set-Variable -Scope "Global" -Name "mediapools" -Value $(Get-VBRTapeMediaPool | Select Name,Id | Sort Name)
+		return $global:mediapools
+	}
+}
+#############################################################################################################################- OK
+function getMediaPoolNameByID($id)
+{
+	$mediaPool = get-MediaPool
+	#Write-Host $id
+	#pause
+	return ($mediaPool | ?{$_.id -eq $id}).Name
+}
+#############################################################################################################################- OK
+function getMediaPoolIdByName($name)
+{
+	$mediaPool = get-MediaPool
+	#Write-Host $id
+	#pause
+	return ($mediaPool | ?{$_.name -eq $name}).Id
+}
+
+
+#############################################################################################################################- OK
+function getMissingExpiredTapes()
+{
+	$format = "dd-MM-yyyy"
+	$today = Get-Date -Format $format 
+	$tapes = Get-VBRTapeMedium |  select Barcode,Location,IsExpired,IsLocked,@{n='Expiry';e={get-date $_.ExpirationDate -Format $format}},@{n='Pool';e={getMediaPoolNameByID -id $_.MediaPoolId}}
+	$expired_tapes = $tapes | ?{ (get-date $_.Expiry) -le (Get-date $today) -and $_.Location -notlike "Slot"}
+	return ($expired_tapes | Select Barcode,Expiry,Pool)
+
+}
+
+
+#############################################################################################################################- NOT OK
+function Get-vPCProxyInfo {
+	$vPCObjAry = @()
+    function Build-vPCObj {param ([PsObject]$inputObj)
+            $ping = new-object system.net.networkinformation.ping
+            $pinginfo = $ping.send("$($inputObj.Host.RealName)")
+           
+            if ($pinginfo.Status -eq "Success") {
+                    $hostAlive = "Alive"
+            } else {
+                    $hostAlive = "Dead"
+            }
+           
+            $vPCFuncObject = New-Object PSObject -Property @{
+                    ProxyName = $inputObj.Name
+                    RealName = $inputObj.Host.RealName.ToLower()
+                    Disabled = $inputObj.IsDisabled
+                    Status  = $hostAlive
+                    IP = $pinginfo.Address
+                    Responce = $pinginfo.RoundtripTime
+            }
+            return $vPCFuncObject
+    }   
+    Get-VBRViProxy | %{$vPCObjAry = $vPCObjAry + $(Build-vPCObj $_)}
+	$vPCObjAry
+}
+
+#############################################################################################################################- NOT OK
+function Get-vPCRepoInfo {
+[CmdletBinding()]
+        param (
+                [Parameter(Position=0, ValueFromPipeline=$true)]
+                [PSObject[]]$Repository
+                )
+        Begin {
+                $outputAry = @()
+                [Reflection.Assembly]::LoadFile($veeamDllPath) | Out-Null
+                function Build-Object {param($name, $repohost, $path, $free, $total)
+                        $repoObj = New-Object -TypeName PSObject -Property @{
+                                        Target = $name
+										RepoHost = $repohost.ToLower()
+                                        Storepath = $path
+                                        StorageFree = [Math]::Round([Decimal]$free/1GB,2)
+                                        StorageTotal = [Math]::Round([Decimal]$total/1GB,2)
+                                        FreePercentage = [Math]::Round(($free/$total)*100)
+                                }
+                        return $repoObj | Select Target, RepoHost, Storepath, StorageFree, StorageTotal, FreePercentage
+                }
+        }
+        Process {
+                foreach ($r in $Repository) {
+                        if ($r.GetType().Name -eq [String]) {
+                                $r = Get-VBRBackupRepository -Name $r
+                        }
+                        if ($r.Type -eq "WinLocal") {
+                                $Server = $r.GetHost()
+                                $FileCommander = [Veeam.Backup.Core.CWinFileCommander]::Create($Server.Info)
+                                $storage = $FileCommander.GetDrives([ref]$null) | ?{$_.Name -eq $r.Path.Substring(0,3)}
+                                $outputObj = Build-Object $r.Name $server.RealName $r.Path $storage.FreeSpace $storage.TotalSpace
+                        }
+                        elseif ($r.Type -eq "LinuxLocal") {
+                                $Server = $r.GetHost()
+                                $FileCommander = new-object Veeam.Backup.Core.CSshFileCommander $server.info
+                                $storage = $FileCommander.FindDirInfo($r.Path)
+                                $outputObj = Build-Object $r.Name $server.RealName $r.Path $storage.FreeSpace $storage.TotalSize
+                        }
+                        elseif ($r.Type -eq "CifsShare") {
+                                $Server = $r.GetHost()
+								$fso = New-Object -Com Scripting.FileSystemObject
+                                $storage = $fso.GetDrive($r.Path)
+								# Catch shares with > 4TB space (not calculated correctly)
+								If (!($storage.TotalSize) -or (($storage.TotalSize -eq 4398046510080) -and ($storage.AvailableSpace -eq 4398046510080))){
+								    $outputObj = New-Object -TypeName PSObject -Property @{
+                                        Target = $r.Name
+										RepoHost = $server.RealName.ToLower()
+                                        Storepath = $r.Path
+                                        StorageFree = "Unknown"
+                                        StorageTotal = "Unknown"
+                                        FreePercentage = "Unknown"
+                                	}
+								} Else {	
+                                	$outputObj = Build-Object $r.Name $server.RealName $r.Path $storage.AvailableSpace $storage.TotalSize
+								}
+                        }
+                        $outputAry = $outputAry + $outputObj
+                }
+        }
+        End {
+                $outputAry
+        }
+}
+#############################################################################################################################- NOT OK
+function Get-vPCReplicaTarget {
+[CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipeline=$true)]
+        [PSObject[]]$InputObj
+    )
+    BEGIN {
+		$outputAry = @()
+        $dsAry = @()
+        if (($Name -ne $null) -and ($InputObj -eq $null)) {
+                $InputObj = Get-VBRJob -Name $Name
+        }
+    }
+    PROCESS {
+        foreach ($obj in $InputObj) {
+                        if (($dsAry -contains $obj.ViReplicaTargetOptions.DatastoreName) -eq $false) {
+                        $esxi = $obj.GetTargetHost()
+                            $dtstr =  $esxi | Find-VBRViDatastore -Name $obj.ViReplicaTargetOptions.DatastoreName    
+                            $objoutput = New-Object -TypeName PSObject -Property @{
+                                    Target = $esxi.Name
+                                    Datastore = $obj.ViReplicaTargetOptions.DatastoreName
+                                    StorageFree = [Math]::Round([Decimal]$dtstr.FreeSpace/1GB,2)
+                                    StorageTotal = [Math]::Round([Decimal]$dtstr.Capacity/1GB,2)
+                                    FreePercentage = [Math]::Round(($dtstr.FreeSpace/$dtstr.Capacity)*100)
+                            }
+                            $dsAry = $dsAry + $obj.ViReplicaTargetOptions.DatastoreName
+                            $outputAry = $outputAry + $objoutput
+                        }
+                        else {
+                                return
+                        }
+        }
+    }
+    END {
+                $outputAry | Select Target, Datastore, StorageFree, StorageTotal, FreePercentage
+    }
+}
+#############################################################################################################################- NOT OK
+function Get-VeeamVersion {	
+    $veeamExe = Get-Item $veeamExePath
+	$VeeamVersion = $veeamExe.VersionInfo.ProductVersion
+	Return $VeeamVersion
+} 
+#############################################################################################################################- NOT OK
+function Get-VeeamSupportDate {
+	#Get version and license info
+	
+	$regBinary = (Get-Item 'HKLM:\SOFTWARE\Veeam\Veeam Backup and Replication\license').GetValue('Lic1')
+	$veeamLicInfo = [string]::Join($null, ($regBinary | % { [char][int]$_; }))
+
+	if($script:VeeamVersion -like "5*"){
+		$pattern = "EXPIRATION DATE\=\d{1,2}\/\d{1,2}\/\d{1,4}"
+	}
+	elseif($script:VeeamVersion -like "6*"){
+		$pattern = "Expiration date\=\d{1,2}\/\d{1,2}\/\d{1,4}"
+	}
+	elseif($script:VeeamVersion -like "8*"){
+		$pattern = "expiration date\=\d{1,2}\/\d{1,2}\/\d{1,4}"
+	}
+
+	# Convert Binary key
+	if($script:VeeamVersion -like "5*" -OR $script:VeeamVersion -like "6*" -OR $script:VeeamVersion -like "8*"){
+		$expirationDate = [regex]::matches($VeeamLicInfo, $pattern)[0].Value.Split("=")[1]
+		$datearray = $expirationDate -split '/'
+		$expirationDate = Get-Date -Day $datearray[0] -Month $datearray[1] -Year $datearray[2]
+		$totalDaysLeft = ($expirationDate - (get-date)).Totaldays.toString().split(",")[0]
+		$totalDaysLeft = [int]$totalDaysLeft
+		$objoutput = New-Object -TypeName PSObject -Property @{
+			ExpDate = $expirationDate.ToShortDateString()
+            DaysRemain = $totalDaysLeft
+        }
+		$objoutput
+	}
+	else{
+		$objoutput = New-Object -TypeName PSObject -Property @{
+		    ExpDate = "Failed"
+		    DaysRemain = "Failed"
+		}
+		$objoutput
+	} 
+} 
+#############################################################################################################################- NOT OK
+function Get-VeeamServers {
+	$vservers=@{}
+	$outputAry = @()
+	$vservers.add($($script:vbrserver.realname),"VBRServer")
+	foreach ($srv in $script:viProxyList) {
+		If (!$vservers.ContainsKey($srv.Host.Realname)) {
+		  $vservers.Add($srv.Host.Realname,"ProxyServer")
+		}
+	}
+	foreach ($srv in $script:repoList) {
+		If (!$vservers.ContainsKey($srv.gethost().Realname)) {
+		  $vservers.Add($srv.gethost().Realname,"RepoServer")
+		}
+	}
+	$vservers = $vservers.GetEnumerator() | Sort-Object Name
+	foreach ($vserver in $vservers) {
+		$outputAry += $vserver.Name
+	}
+	return $outputAry
+}
+#############################################################################################################################- NOT OK
+function Get-VeeamServices {
+    param (
+	  [PSObject]$inputObj)
+	  
+    $outputAry = @()
+	foreach ($obj in $InputObj) {    
+		$output = Get-Service -computername $obj -Name "*Veeam*" -exclude "SQLAgent*" |
+	    Select @{Name="Server Name"; Expression = {$obj.ToLower()}}, @{Name="Service Name"; Expression = {$_.DisplayName}}, Status
+	    $outputAry = $outputAry + $output  
+    }
+$outputAry
+}
+#############################################################################################################################- NOT OK
+function Get-VMsBackupStatus {
+    param (
+	  [String]$vcenter)
+	  
+	# Convert exclusion list to simple regular expression
+	$excludevms_regex = ('(?i)^(' + (($script:excludeVMs | ForEach {[regex]::escape($_)}) -join "|") + ')$') -replace "\\\*", ".*"
+	$excludefolder_regex = ('(?i)^(' + (($script:excludeFolder | ForEach {[regex]::escape($_)}) -join "|") + ')$') -replace "\\\*", ".*"
+	$excludedc_regex = ('(?i)^(' + (($script:excludeDC | ForEach {[regex]::escape($_)}) -join "|") + ')$') -replace "\\\*", ".*"
+	
+	$outputary = @() 
+	$vcenterobj = Get-VBRServer -Name $vcenter
+	$vmobjs = Find-VBRObject -Server $vcenterobj | 
+		Where-Object {$_.Type -eq "VirtualMachine" -and $_.VMFolderName -notmatch $excludefolder_regex} |
+		Where-Object {$_.Name -notmatch $excludevms_regex} |
+		Where-Object {$_.GetParent("Datacenter") -notmatch $excludedc_regex}
+		
+		
+	$jobobjids = [Veeam.Backup.Core.CHierarchyObj]::GetObjectsOnHost($vcenterobj.id) | Where-Object {$_.Type -eq "Vm"}
+
+	foreach ($vm in $vmobjs) {
+		$jobobjid = ($jobobjids | Where-Object {$_.ObjectId -eq $vm.Id}).Id
+		if (!$jobobjid) {
+			$jobobjid = $vm.FindParent("Datacenter").Id + "\" + $vm.Id
+		}
+		$vm | Add-Member -MemberType NoteProperty "JobObjId" -Value $jobobjid
+	}    
+		
+	# Get a list of all VMs from vCenter and add to hash table, assume Unprotected
+	$vms=@{}
+	foreach ($vm in $vmobjs)  {
+		if(!$vms.ContainsKey($vm.JobObjId)) {
+			$vmdc = [string]$vm.GetParent("Datacenter")
+			Try {$vmclus = [string]$vm.GetParent("ClusterComputeResource")} Catch {$vmclus = ""}
+			$vms.Add($vm.JobObjId, @("!", $vmdc, $vmclus, $vm.Name))
+		}
+	}
+
+	# Find all backup job sessions that have ended in the last x hours
+	$vbrjobs = Get-VBRJob | Where-Object {$_.JobType -eq "Backup"}
+	$vbrsessions = Get-VBRBackupSession | Where-Object {$_.JobType -eq "Backup" -and $_.EndTime -ge (Get-Date).addhours(-$script:HourstoCheck)}
+
+	# Find all Successfuly backed up VMs in selected sessions (i.e. VMs not ending in failure) and update status to "Protected"
+	if ($vbrsessions) {
+		foreach ($session in $vbrsessions) {
+			foreach ($vm in ($session.gettasksessions() | Where-Object {$_.Status -ne "Failed"} | ForEach-Object { $_ })) {
+				if($vms.ContainsKey($vm.Info.ObjectId)) {
+					$vms[$vm.Info.ObjectId][0]=$session.JobName
+				}
+			}
+		}
+	}
+	$vms.GetEnumerator() | Sort-Object Value
+}
+#############################################################################################################################- NOT OK
+function Get-VMsMissingBackup {
+	param (
+		$vms)
+	
+	$outputary = @()  
+	foreach ($vm in $vms) {
+	  if ($vm.Value[0] -eq "!") {
+	    $objoutput = New-Object -TypeName PSObject -Property @{
+		Datacenter = $vm.Value[1]
+		Cluster = $vm.Value[2]
+		Name = $vm.Value[3]
+		}
+		$outputAry += $objoutput
+	  }
+	}
+	$outputAry | Select Datacenter, Cluster, Name
+}
+#############################################################################################################################- NOT OK
+function Get-VMsSuccessBackup {
+	param (
+		$vms)
+	
+	$outputary = @()  
+	foreach ($vm in $vms) {
+	  if ($vm.Value[0] -ne "!") {
+	    $objoutput = New-Object -TypeName PSObject -Property @{
+		Datacenter = $vm.Value[1]
+		Cluster = $vm.Value[2]
+		Name = $vm.Value[3]
+		}
+		$outputAry += $objoutput
+	  }
+	}
+	$outputAry | Select Datacenter, Cluster, Name
+}
+
 #endregion
 
 #region Main Routine
@@ -665,38 +1012,61 @@ $node=@{}
 $node["Name"]= $veeamServer.RealName
 $node["Report Properties"]=@{}
 $node["Report Properties"]["Report Ran on"]=$reportDate
+$node["Report Properties"]["Daily Checks"] = $dailyChecks
+$node["Report Properties"]["Capacity Checks"] = $capacityChecks
+$node["Report Properties"]["Monthly Checks"] = $monthlyChecks
 $node["Server Information"]=$veeamServer
-$node["Reporting Period (Months)"] = $showLastMonths
-logThis -msg  "`t-> Collecting Backup Repository Information"
-$node["Repositories"] = Get-VeeamBackupRepositoryies -chartFriendly $chartFriendly
-logThis -msg  "`t-> Collecting Backup Sessions"
-$node["Backup Sessions"] = Get-VeeamBackupSessions -chartFriendly $chartFriendly
-logThis -msg  "`t-> Collecting Individual Backup Tasks"
-$node["Backups by Clients"] = Get-VeeamClientBackups -chartFriendly $chartFriendly
 
-# Get first day, last day
-$firstRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort |  select -First 1
-$node["Report Properties"]["Sample Start Date"]=$firstRecordedBackupDay
-$lastRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort | select -Last 1
-$thisDate=(Get-Date -Format $dateFormat)
+if ($dailyChecks)
+{
+	logThis -msg  "`t-> Getting list of Missing Expired Tapes"
+	$node["Missing Tapes"]= getMissingExpiredTapes
+} 
 
-$node["Report Properties"]["Sample End Date"]=$lastRecordedBackupDay
-$reportingMonths = $node["Backup Sessions"].Month | %{ get-date $_ } | Select -Unique | Sort | %{ get-date $_ -format $dateFormat } | ?{$_ -ne $thisDate} | Select -Last $node["Reporting Period (Months)"]
-logThis -msg  "`t-> Creating Backup Jobs Summary"
-$node["Jobs Summary"] = Get-BackupJobsSummary -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+if ($capacityChecks)
+{
+	$node["Reporting Period (Months)"] = $showLastMonths
+	logThis -msg  "`t-> Collecting Backup Repository Information"
+	$node["Repositories"] = Get-VeeamBackupRepositoryies -chartFriendly $chartFriendly
+	logThis -msg  "`t-> Collecting Backup Sessions"
+	$node["Backup Sessions"] = Get-VeeamBackupSessions -chartFriendly $chartFriendly
+	logThis -msg  "`t-> Collecting Individual Backup Tasks"
+	$node["Backups by Clients"] = Get-VeeamClientBackups -chartFriendly $chartFriendly
 
-logThis -msg  "`t->Client Sizes"
-$node["Client Sizes"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+	# Get first day, last day
+	$firstRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort |  select -First 1
+	$node["Report Properties"]["Sample Start Date"]=$firstRecordedBackupDay
+	$lastRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort | select -Last 1
+	$thisDate=(Get-Date -Format $dateFormat)
 
-logThis -msg  "`t->Data Change Rate"
-$node["Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+	$node["Report Properties"]["Sample End Date"]=$lastRecordedBackupDay
+	$reportingMonths = $node["Backup Sessions"].Month | %{ get-date $_ } | Select -Unique | Sort | %{ get-date $_ -format $dateFormat } | ?{$_ -ne $thisDate} | Select -Last $node["Reporting Period (Months)"]
+	logThis -msg  "`t-> Creating Backup Jobs Summary"
+	$node["Jobs Summary"] = Get-BackupJobsSummary -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-logThis -msg  "`t->Data Transfered"
-$node["Data Transfered"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+	logThis -msg  "`t->Client Sizes"
+	$node["Client Sizes"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-logThis -msg  "`t-> Creating Monthly Capacity Summary"
-$node["Monthly Capacity"] = Get-MonthlyBackupCapacity -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+	logThis -msg  "`t->Data Change Rate"
+	$node["Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
+	logThis -msg  "`t->Data Transfered"
+	$node["Data Transfered"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+
+	logThis -msg  "`t-> Creating Monthly Capacity Summary"
+	$node["Monthly Capacity"] = Get-MonthlyBackupCapacity -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+
+	logThis -msg  "`t-> Getting list of Missing Expired Tapes"
+	$node["Missing Tapes"]= getMissingExpiredTapes
+
+}
+
+if ($monthlyChecks)
+{
+	
+}
+
+####################
 logThis -msg "Writing Report to Disks @ $logDir"
 #$prefix="$logDir\$reportDate-$($node['Name'])"
 $prefix="$logDir"
@@ -706,11 +1076,27 @@ if ($xmlOutput)
 }
 if ($csvOutput)
 {
-	"Server Information","Repositories","Backup Sessions","Backups by Clients","Jobs Summary","Client Sizes","Data Change Rate","Data Transfered","Monthly Capacity" | %{
-		$lable=$_
-		$node[$lable]  | Export-Csv -NoTypeInformation "$prefix\$lable.csv"
-		#$node[$lable]  | Export-Csv -NoTypeInformation "$lable.csv"
+	$exclusions="Report Properties","Name"
+	$node.keys | %{
+		#"Server Information","Repositories","Backup Sessions","Backups by Clients","Jobs Summary","Client Sizes","Data Change Rate","Data Transfered","Monthly Capacity","Missing Tapes" | %{
+		$label=$_
+		#$exclusions -notcontains "$label"
+		if ($exclusions -notcontains "$label")
+		{
+			$node[$label]  | Export-Csv -NoTypeInformation "$prefix\$label.csv"
+			#$node[$label]  | Export-Csv -NoTypeInformation "$label.csv"
+		}
 	}
 }
+if ($emailOutputInternal)
+{
+
+}
+
+if ($emailOutputThirdParty)
+{
+
+}
+
 logThis -msg  "Completed @ $(Get-date)"
 #endregion
