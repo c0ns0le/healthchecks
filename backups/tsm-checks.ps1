@@ -1,13 +1,13 @@
-﻿# This script is intended to collect information from IBM Tivoli Storage Manager using built in dsmadm.
+# This script is intended to collect information from IBM Tivoli Storage Manager using built in dsmadm.
 # Version: 0.3 - May 25th 2015
 # maintainer: teiva.rodiere@gmail.com
 # Syntax: .\tsm-checks.ps1 -logDir "C:\tsm-checks" -username admin -password "admin" -servers @("tsmserver1","tsmserver2")
 # Syntax: .\tsm-checks.ps1 -logDir "C:\tsm-checks" -servers @("tsmserver","admin","password")
 #
-# Prerequisites: 
+# Prerequisites:
 # 1) Install the IBM Tivoli Storage Manager Client (ONLY THE Administrative CLI) on the system you are running this report from AND running the powershell scripts.
-# 2) Make sure dsm.opt file is available locally in the same directory as this script. 
-# 
+# 2) Make sure dsm.opt file is available locally in the same directory as this script.
+#
 
 param([string]$logDir="output",
 	[string]$comment="",
@@ -21,11 +21,11 @@ param([string]$logDir="output",
 	[int]$logsCount=100,
 	[int]$topItemsOnly=10,
 	$useThisTSMServerObject,
-	[string]$dsmadm="C:\Program Files\Tivoli\TSM\baclient\dsmadmc.exe" 
+	[string]$dsmadm="C:\Program Files\Tivoli\TSM\baclient\dsmadmc.exe"
 )
-# This section will be replaced by content from the customer.ini file 
-$customerName="Customer A" 
-$itoContactName="andersentIT Pty Ltd"
+# This section will be replaced by content from the customer.ini file
+$customerName="Customer A"
+$itoContactName="ITO Guy"
 $reportHeader ="TSM Health Check"
 $reportIntro="This document presents a health check of IBM Tivoli Storage Manager infrasructure for $customerName, prepared by $itoContactName."
 
@@ -33,19 +33,19 @@ $reportIntro="This document presents a health check of IBM Tivoli Storage Manage
 # Include this section with every script to accelerate and standardise the process for reporting
 if ($global:reportIndex) { Remove-Variable reportIndex }
 if ($reportIndex) { Remove-Variable reportIndex }
-Write-Host "Importing Module gmsTeivaModules.psm1 (force)"
-Import-Module -Name ".\gmsTeivaModules.psm1" -Force -PassThru
+Write-Host "Importing Module genericModules.psm1 (force)"
+Import-Module -Name ".\genericModules.psm1" -Force -PassThru
 Import-Module -Name ".\ibmTsmModules.psm1" -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name reportIndex -Value "$logDir\index.txt" -Scope Global
 Set-Variable -Name dsmadm -Value $dsmadm -Scope Global
 
-echo "" | Out-file $reportIndex 
+echo "" | Out-file $reportIndex
 InitialiseModule
 
 ###########################################################################################
-# 
+#
 # START COLLECTING THE NECESSARY CONTENT FROM TSM
 #
 if (!$useThisTSMServerObject)
@@ -75,7 +75,7 @@ if ($tsmServers)
 	if ($showAuditedServers)
 	{
 		setSectionHeader -type "h1" -title "Audit"
-		
+
 		$tableHeader="Servers"
 		logThis -msg "Processing $tableHeader Report"
 		$tableData = $tsmServers | %{
@@ -87,9 +87,9 @@ if ($tsmServers)
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "List" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
+		}
 	}
-	
+
 	############################################################################################################
 	# SHOW SYSTEMS INFORMATION
 	$showSystemsSummary=$true
@@ -113,7 +113,7 @@ if ($tsmServers)
 			{
 				$installEdition = "TSM Basic Edition"
 			}
-			
+
 			if ($tsmServer.Licenses.COMPLIANCE -eq "Valid")
 			{
 				$compliance = "Valid"
@@ -121,14 +121,14 @@ if ($tsmServers)
 				$compliance = "Not valid"
 				$issuesRegister += "$($tsmServer.Name) has an invalid licence compliance"
 			}
-			
+
 			# Check for Activated Licences to show later
 			#Write-Host ">>>>>>> HERE <<<<<<<<"
 			#$tsmServer.Licences.Values
 			#Write-Host ">>>>>>> HERE <<<<<<<<"
 			$licenceTypes = ($tsmServer.Licenses | Get-Member -MemberType NoteProperty | Select Name).Name | ?{$_.Contains("_ACT")} | %{
 				if (
-					((isNumeric -x $tsmServer.Licenses."$_") -and $tsmServer.Licenses."$_" -gt 0) -or 
+					((isNumeric -x $tsmServer.Licenses."$_") -and $tsmServer.Licenses."$_" -gt 0) -or
 					(!(isNumeric -x $tsmServer.Licenses."$_") -and $tsmServer.Licenses."$_" -eq "Yes")
 				)
 				{
@@ -137,24 +137,24 @@ if ($tsmServers)
 						#Write-Host ">> $_" -ForegroundColor Yellow
 						$_ -replace "_ACT",""
 					}
-				}	
+				}
 			}
 			if ($tsmServer.Licenses.DATARET_LIC -eq "Yes" -and $tsmServer.Licenses.DATARET_ACT -eq $tsmServer.Licenses.DATARET_LIC)
 			{
 				$issuesRegister += "$($tsmServer.Name) is licensed for DATARET_LIC but not activated"
 			}
-			
+
 			# Check how long since the last License Audit
 			Write-Host $tsmServer.Licenses.AUDIT_DATE
-			$auditDate = Get-date $tsmServer.Licenses.AUDIT_DATE			
+			$auditDate = Get-date $tsmServer.Licenses.AUDIT_DATE
 			if ( ((get-date) - $auditDate).Days -gt 30 )
 			{
 				$issuesRegister += "$($tsmServer.Name)'s license was last audited more than 30 days ago"
 			}
-			
-			$obj | Add-Member -MemberType NoteProperty -Name "Edition" -Value $installEdition	
+
+			$obj | Add-Member -MemberType NoteProperty -Name "Edition" -Value $installEdition
 			$obj | Add-Member -MemberType NoteProperty -Name "License" -Value "$compliance as of $(get-date $auditDate -Format 'F')"
-			$obj | Add-Member -MemberType NoteProperty -Name "Licensed agents" -Value "$([string]$licenceTypes -replace '\s',', ')"	
+			$obj | Add-Member -MemberType NoteProperty -Name "Licensed agents" -Value "$([string]$licenceTypes -replace '\s',', ')"
 
 			# Client count
             $filter="CLIENT_OS_LEVEL"
@@ -189,7 +189,7 @@ if ($tsmServers)
 				$str +=" Average $Name backup size of $(formatNumbers -deci 2 -value $totalBKP) GB."
 			}
 			$obj | Add-Member -MemberType NoteProperty -Name "Backups" -Value $str
-			
+
 			#"Backup","Restore","Replication" | %{
 			"Restore","Replication" | %{
 				#$metric=$($_.ToUpper())
@@ -207,7 +207,7 @@ if ($tsmServers)
 				",$Name"
 			}
 			#$obj | Add-Member -MemberType NoteProperty -Name "Node Groups" -Value "$([string] $str)"
-			
+
 			# DATABASE SUMMARY
 			$usedDBSpace=[Math]::Round([double]$tsmServer.Database.USED_DB_SPACE_MB / [double]$tsmServer.Database.TOT_FILE_SYSTEM_MB * 100,2)
 			if ($usedDBSpace -gt 85) #if the usage is greater than 85% notify
@@ -216,7 +216,7 @@ if ($tsmServers)
 			}
 			$lastBackupDate = get-date $tsmServer.Database.LAST_BACKUP_DATE
 			$obj | Add-Member -MemberType NoteProperty -Name "Database" -Value "$usedDBSpace% used, $(formatNumbers -deci 2 -value $([double]$tsmServer.Database.FREE_SPACE_MB / 1024)) GB disk free space. Last backup on $(get-date $lastBackupDate -Format 'F')"
-			
+
 
 			# TSM LOG SUMMARY
 			$str = ""
@@ -274,7 +274,7 @@ if ($tsmServers)
 				$totalUsedSlots=($tsmServer.Libraries.Values.USED_SLOTS | measure -Sum).Sum
 				$obj | Add-Member -MemberType NoteProperty -Name "Tape Drives/Slots" -Value "$($totalDrives) drives, $($totalSlots) Slots in total ($($totalUsedSlots) Used, $($totalFreeSlots) Free)"
 			}
-			
+
 			# Volumes SUMMARY
 			$str=""
 			if ($tsmserver.Volumes.Count -gt 0)
@@ -294,7 +294,7 @@ if ($tsmServers)
 						$str +=", $($_.Count) $label"
 					}
 				}
-				
+
 				$tsmserver.Volumes | group STATUS | select Name,Count | %{
 					if ($_.Count)
 					{
@@ -304,7 +304,7 @@ if ($tsmServers)
 				}
 				$obj | Add-Member -MemberType NoteProperty -Name "Storage pool volumes" -Value "$str"
 			}
-			
+
 			# Unsuccessful jobs
 			$str = ""
 			$failedJobs = $tsmServer.Summary | ?{$_.SUCCESSFUL -eq "NO"} | group ACTIVITY #| group ENTITY
@@ -316,7 +316,7 @@ if ($tsmServers)
 					$str += ", $($_.Count) x $($_.Name)"
 				}
 			}
-			
+
 			# $obj | Add-Member -MemberType NoteProperty -Name "Failed Jobs" -Value "$($failedJobs.Count) (" #Failed$str
 
 			$str=""
@@ -335,14 +335,14 @@ if ($tsmServers)
             $obj | Add-Member -MemberType NoteProperty -Name "Activity Log retention" -Value "$($tsmServer.Status.Actlogretention) days"
             $obj | Add-Member -MemberType NoteProperty -Name "Summary data retention" -Value "$($tsmServer.Status.Summaryretention) days"
             $obj | Add-Member -MemberType NoteProperty -Name "Event data retention"   -Value "$($tsmServer.Status.Eventretention) days"
-            
-            # Data totals			
+
+            # Data totals
 			$obj | Add-Member -MemberType NoteProperty -Name "Total amount of backed-up data" -Value "$(formatNumbers -deci 2 -value $(($tsmServer.Auditocc.BACKUP_MB | measure -Sum).Sum/1024)) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "Total amount of backed-up data in copypools" -Value "$(formatNumbers -deci 2 -value $(($tsmServer.Auditocc.BACKUP_COPY_MB | measure -Sum).Sum/1024)) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "Total amount of archived data" -Value "$(formatNumbers -deci 2 -value $(($tsmServer.Auditocc.ARCHIVE_MB | measure -Sum).Sum/1024)) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "Total amount of archived data in copypools" -Value "$(formatNumbers -deci 2 -value $(($tsmServer.Auditocc.ARCHIVE_COPY_MB | measure -Sum).Sum/1024)) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "Total amount of data storage used by the TSM server" "$(formatNumbers -deci 2 -value $(($tsmServer.Auditocc.TOTAL_MB | measure -Sum).Sum/1024)) GB"
-			
+
 			#$obj | Add-Member -MemberType NoteProperty -Name "Total amount of backed-up data" -Value "$([math]::round(($tsmServer.Auditocc.BACKUP_MB | measure -Sum).Sum/1024,2)) GB"
 			#$obj | Add-Member -MemberType NoteProperty -Name "Total amount of backed-up data in copypools" -Value "$([math]::round(($tsmServer.Auditocc.BACKUP_COPY_MB | measure -Sum).Sum/1024,2)) GB"
 			#$obj | Add-Member -MemberType NoteProperty -Name "Total amount of archived data" -Value "$([math]::round(($tsmServer.Auditocc.ARCHIVE_MB | measure -Sum).Sum/1024,2)) GB"
@@ -355,7 +355,7 @@ if ($tsmServers)
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "List" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description "Presents a system summary of all TSM Servers assessed as part of this report."
-		} 
+		}
 	}
 
 
@@ -375,8 +375,8 @@ if ($tsmServers)
 			$obj = New-Object System.Object
 			#$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"
 			if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
-			
-			# Database 
+
+			# Database
 			$dbTotalFSGB=[Math]::Round([double]$tsmServer.Database.TOT_FILE_SYSTEM_MB / 1024,2)
 			$dbUsedSpaceGB=[Math]::Round([double]$tsmServer.Database.USED_DB_SPACE_MB / 1024,2)
 			#$dbUsedSpacePerc=[Math]::Round([double]$tsmServer.Database.USED_DB_SPACE_MB / [double]$tsmServer.Database.TOT_FILE_SYSTEM_MB * 100,2)
@@ -390,8 +390,8 @@ if ($tsmServers)
 			$obj | Add-Member -MemberType NoteProperty -Name "DB Filesystem size" -Value "$(formatNumbers -deci 2 -value $dbUsedSpaceGB) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "DB Filesystem usage" -Value "$(formatNumbers -deci 2 -value $dbUsedSpacePerc -unit 'P')"
 			$obj | Add-Member -MemberType NoteProperty -Name "Filesystem warning threshold" -Value "$(formatNumbers -deci 2 -value $($($tsmServer.Options | ?{$_.OPTION_NAME -eq 'FSUSEDTHRESHOLD'}).OPTION_VALUE)) %"
-			$obj | Add-Member -MemberType NoteProperty -Name "DB Health" -Value $dbHealth			
-			
+			$obj | Add-Member -MemberType NoteProperty -Name "DB Health" -Value $dbHealth
+
 			# Logs
 			#$logsTotalSizeGB= [Math]::Round(([double]$tsmServer.Logs.TOTAL_SPACE_MB + [double]$tsmServer.Logs.ARCHLOG_TOL_FS_MB + [double]$tsmServer.Logs.MIRLOG_TOL_FS_MB + [double]$tsmServer.Logs.AFAILOVER_TOL_FS_MB) / 1024,2)
 			#$logsTotalUsedGB= [Math]::Round(([double]$tsmServer.Logs.USED_SPACE_MB + [double]$tsmServer.Logs.ARCHLOG_USED_FS_MB + [double]$tsmServer.Logs.MIRLOG_USED_FS_MB + [double]$tsmServer.Logs.AFAILOVER_USED_FS_MB) / 1024,2)
@@ -405,22 +405,22 @@ if ($tsmServers)
 				$logsHealth="Good"
             }
 			$obj | Add-Member -MemberType NoteProperty -Name "Log filesystem size" -Value "$(formatNumbers -deci 2 -value $logsTotalSizeGB) GB"
-			$obj | Add-Member -MemberType NoteProperty -Name "Log filesystem usage" -Value "$(formatNumbers -deci 2 -value $logsUsedSpacePerc -unit P)"	
+			$obj | Add-Member -MemberType NoteProperty -Name "Log filesystem usage" -Value "$(formatNumbers -deci 2 -value $logsUsedSpacePerc -unit P)"
 			$obj | Add-Member -MemberType NoteProperty -Name "Archive log threshold" -Value "$(($tsmServer.Options | ?{$_.OPTION_NAME -eq 'ARCHLOGUSEDTHRESHOLD'}).OPTION_VALUE) %"
 			$obj | Add-Member -MemberType NoteProperty -Name "Log health" -Value $logsHealth
-			
+
 			$obj
 		}
 
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "List" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description "The condition of the TSM database and log is detailed below. TSM is configured to automatically run a database backup and clear the archived logs at $(($tsmServer.Options | ?{$_.OPTION_NAME -eq 'ARCHLOGUSEDTHRESHOLD'}).OPTION_VALUE) % usage."
-		} 
-		
+		}
+
 		############################################################################################################
 		# SHOW DATBASE DETAILS
 		#
-		$tableHeader="Database details"		
+		$tableHeader="Database details"
 		logThis -msg "Processing $tableHeader Report"
 		$tableData = $tsmServers | %{
 			$tsmServer = $_
@@ -429,7 +429,7 @@ if ($tsmServers)
 			if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 			$obj | Add-Member -MemberType NoteProperty -Name "Total filesystem space" -Value "$(formatNumbers -deci 2 -value $([double]$tsmServer.Database.TOT_FILE_SYSTEM_MB/1024)) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "Used DB" -Value "$(formatNumbers -deci 2 -value $([double]$tsmServer.Database.USED_DB_SPACE_MB/1024)) GB"
-			$obj | Add-Member -MemberType NoteProperty -Name "Free space" -Value "$(formatNumbers -deci 2 -value $([double]$tsmServer.Database.FREE_SPACE_MB/1024)) GB" 
+			$obj | Add-Member -MemberType NoteProperty -Name "Free space" -Value "$(formatNumbers -deci 2 -value $([double]$tsmServer.Database.FREE_SPACE_MB/1024)) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "Used" -Value "$([Math]::Round(([double]$tsmServer.Database.USED_DB_SPACE_MB / [double]$tsmServer.Database.TOT_FILE_SYSTEM_MB)*100,2)) %"
 			$obj | Add-Member -MemberType NoteProperty -Name "Buffer hit ratio" -Value "$($tsmserver.Database.BUFF_HIT_RATIO) %"
 			$obj | Add-Member -MemberType NoteProperty -Name "Last backup" -Value $(get-date $tsmServer.Database.LAST_BACKUP_DATE -Format "dddd, dd MMM yyyy, HH:mm:ss")
@@ -459,11 +459,11 @@ if ($tsmServers)
 				}
 				$obj | Add-Member -MemberType NoteProperty -Name "Average time for full database backup" -Value $timeTakenStr
 				$obj | Add-Member -MemberType NoteProperty -Name "Average size of full database backup" -Value "$(formatNumbers -deci 2 -value $avgGBFull) GB"
-			} else 
+			} else
 			{
 				#$obj | Add-Member -MemberType NoteProperty -Name "Full Database Backups" -Value "None"
 			}
-			
+
 			$incrementalDBBackups = $tsmServer.Summary | ?{$_.ACTIVITY -eq "INCR_DBBACKUP" -and $_.SUCCESSFUL -eq "YES"}
 			if ($incrementalDBBackups)
 			{
@@ -497,13 +497,13 @@ if ($tsmServers)
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "List" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
-		
+		}
+
 		############################################################################################################
 		#
 		# LOGS (COPY THIS ONE AS A TEMPLATE)
 		#
-		$tableHeader="Recovery log details"		
+		$tableHeader="Recovery log details"
 		logThis -msg "Processing $tableHeader Report"
 		$tableData = $tsmServers | %{
 			$tsmServer = $_
@@ -520,7 +520,7 @@ if ($tsmServers)
 			$obj | Add-Member -MemberType NoteProperty -Name "Archive log filesystem used" -Value "$(formatNumbers -deci 2 -value $([double]$($tsmServer.Logs.ARCHLOG_USED_FS_MB)/1024)) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "Archive log filesystem free" -Value "$(formatNumbers -deci 2 -value $([double]$($tsmServer.Logs.ARCHLOG_FREE_FS_MB)/1024)) GB"
 			$obj | Add-Member -MemberType NoteProperty -Name "Archive log compressed?" -Value $tsmServer.Logs.ARCH_LOG_COMPRESSED
-			
+
 			# Archive log failover location - not always set
 			if ($tsmServer.Logs.AFAILOVER_LOG_DIR -eq 0)
 			{
@@ -558,15 +558,15 @@ if ($tsmServers)
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "List" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
-		
-		
+		}
+
+
 		############################################################################################################
 		#
-		$tableHeader="Database Spaces"		
+		$tableHeader="Database Spaces"
 		logThis -msg "Processing $tableHeader Report"
 		$tableData = $tsmServers | %{
-			$tsmServer = $_	
+			$tsmServer = $_
 			$uniqueDriveLetters=$tsmServer.DBspace | %{ $driveLetter,$therest=$_.LOCATION -split '\\'; $driveLetter} | sort -Unique
 			$uniqueDriveLetters | %{
 				$driveLetter=$_
@@ -583,19 +583,19 @@ if ($tsmServers)
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "List" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
+		}
 	}
-	
+
 	#########################
 	# DEVICES SECTION
 	#
 	$showDevicesReport=$true
 	if ($tsmServers.Libraries.Count -gt 0 -and $showDevicesReport)
-	{		
+	{
 		$showDevicesReport=$true
 	} else {
 		$showDevicesReport=$false
-	}	
+	}
 	if ($showDevicesReport)
 	{
 		setSectionHeader -type "h1" -title "Devices"
@@ -611,8 +611,8 @@ if ($tsmServers)
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 				#$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value $tsmserver.Name
 				$obj | Add-Member -MemberType NoteProperty -Name "Name" -Value $library.LIBRARY_NAME
-				$obj | Add-Member -MemberType NoteProperty -Name "Product ID" -Value $library.ProductID	
-				$obj | Add-Member -MemberType NoteProperty -Name "Drives" -Value $library.Drives				
+				$obj | Add-Member -MemberType NoteProperty -Name "Product ID" -Value $library.ProductID
+				$obj | Add-Member -MemberType NoteProperty -Name "Drives" -Value $library.Drives
 				$obj | Add-Member -MemberType NoteProperty -Name "Changers" -Value "$($library.Changers) ($($library.Device))"
                 $obj | Add-Member -MemberType NoteProperty -Name "I/O Slots" -Value $library."Import/Exports"
 				$obj | Add-Member -MemberType NoteProperty -Name "Used slots" -Value $library.Used_Slots
@@ -629,8 +629,8 @@ if ($tsmServers)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "List" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
 		}
-		
-		
+
+
 		# SHOW LIB VOLUMES DETAILS
 		#$tableHeader="Tapes Devices"
 		#logThis -msg "Processing $tableHeader Report"
@@ -653,16 +653,16 @@ if ($tsmServers)
 		#if ($tableData)
 		#{
 			#export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		#} 
-		
+		#}
+
 	}
-	
+
 	############################################################################################################
 	# Disaster Recovery
 	$showDRPLanst=$true
 	if ($showDRPLanst)
 	{
-		setSectionHeader -type "h1" -title "Disaster Recovery"		
+		setSectionHeader -type "h1" -title "Disaster Recovery"
 		$tableData = $tsmServers | %{
 			$tsmServer=$_
 			if ($tsmServer.DRMStatus)
@@ -675,22 +675,22 @@ if ($tsmServers)
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 				if ($tsmServer.DRMStatus.PLANPREFIX -eq "0")
 				{
-					$obj | Add-Member -MemberType NoteProperty -Name "DR plan files location" -Value "Not configured"				
+					$obj | Add-Member -MemberType NoteProperty -Name "DR plan files location" -Value "Not configured"
 				} else {
 					$obj | Add-Member -MemberType NoteProperty -Name "DR plan files location" -Value $tsmServer.DRMStatus.PLANPREFIX
 				}
 				if ($tsmServer.DRMStatus.INSTRPREFIX -eq "0")
 				{
-					$obj | Add-Member -MemberType NoteProperty -Name "DR plan instructions location" -Value "Not configured"				
+					$obj | Add-Member -MemberType NoteProperty -Name "DR plan instructions location" -Value "Not configured"
 				} else {
 					$obj | Add-Member -MemberType NoteProperty -Name "DR plan instructions location" -Value $tsmServer.DRMStatus.INSTRPREFIX
 				}
-				
+
                 $obj | Add-Member -MemberType NoteProperty -Name "Offsite vault name" -Value $tsmServer.DRMStatus.VAULTNAME
                 $obj | Add-Member -MemberType NoteProperty -Name "DB backup series expiry (days)" -Value $tsmServer.DRMStatus.DBBEXPIREDAYS
                 $obj | Add-Member -MemberType NoteProperty -Name "Check tape labels on eject?" -Value $tsmServer.DRMStatus.CHECKLABEL
                 $obj | Add-Member -MemberType NoteProperty -Name "Process FILE-based volumes?" -Value $tsmServer.DRMStatus.FILEPROCESS
-				
+
                 $tsmServer.DRMMedia | group STATE | Select Name,Count | %{
 					$obj | Add-Member -MemberType NoteProperty -Name "$($_.Name) DR Media" -Value $_.Count
 				}
@@ -704,9 +704,9 @@ if ($tsmServers)
 		}
 	}
 
-	
-	
-	
+
+
+
 	############################################################################################################
 	# SHOW ENVIRONMENT ACTIVITY SECTION
 	#
@@ -715,7 +715,7 @@ if ($tsmServers)
 	{
 		setSectionHeader -type "h1" -title "Activity Summary"
 
-		# SHOW ACTIVITY SUMMARY		
+		# SHOW ACTIVITY SUMMARY
 		#$tableData = $tsmServers | %{
 		#	$tsmserver=$_
 			##$failedJobs = $tsmServer.Summary | ?{$_.SUCCESSFUL -eq "NO"} | group ACTIVITY | sort count -Descending | Select Count,Name
@@ -732,7 +732,7 @@ if ($tsmServers)
 			#if ($tableData)
 			#{
 				#export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-			#} 
+			#}
 		#}
 
 		############################################################################################################
@@ -745,12 +745,12 @@ if ($tsmServers)
 			if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 			$activities=$tsmserver.Summary | ?{$_.SUCCESSFUL -eq "NO"} | group ACTIVITY | Sort Count -Descending | select Name,Count
 			$activities | %{
-				$activityName=$_.Name				
-				$label=(Get-Culture).TextInfo.ToTitleCase(($activityName -replace "_"," " -replace "DB","Database ").ToLower())				
+				$activityName=$_.Name
+				$label=(Get-Culture).TextInfo.ToTitleCase(($activityName -replace "_"," " -replace "DB","Database ").ToLower())
 				#Write-Host "$($_.Name)"
 				#$obj | Add-Member -MemberType NoteProperty -Name "Activity" -Value "$($label)s"
 				#$obj | Add-Member -MemberType NoteProperty -Name "Count" -Value $(formatNumbers -value $_.Count)
-				
+
 				$totalCount=($tsmserver.Summary | ?{$_.ACTIVITY -eq $activityName }).Count
 				if ($totalCount)
 				{
@@ -761,33 +761,33 @@ if ($tsmServers)
 				#$obj | Add-Member -MemberType NoteProperty -Name "Failure Rate" -Value $perc
 				$obj | Add-Member -MemberType NoteProperty -Name "$($label)s" -Value "$(formatNumbers -value $_.Count) of $($totalCount) ($perc of $($label)s)"
 				#$obj | Add-Member -MemberType NoteProperty -Name "$($label)s" -Value $(formatNumbers -value $_.Count)
-				
+
 			}
 			$obj
-			
+
 		}
 		if ($tableData)
 		{
 			$analytics=""
-			#if ($tableData.Backups -gt 
+			#if ($tableData.Backups -gt
 			#$analytics=" Note that $($tableData.Backups.Count) are failing. "
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "List" -headerType "h2" -metaAnalytics $analytics -showTableCaption "false" -description "Table XXX below provides a summary of failing jobs for the preceding month. "
-		} 
+		}
 	}
-	
+
     # Show event status
 	$tableHeader="Event completion summary"
 	logThis -msg "Processing $tableHeader Report"
     # select @{Name="Version";Expression={$_."Name"}},Count
 	$tableData = $tsmservers.Event_stat | select @{Name="Status";Expression={$_."STATUS"}},@{Name="Count";Expression={$_."Num"}} | %{
 		$row=$_
-		$row				
+		$row
 	}
 	if ($tableData)
 	{
 		export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-	} 
-	
+	}
+
     ############################################################################################################
 	# TSM Client/Nodes
 	#
@@ -803,7 +803,7 @@ if ($tsmServers)
 			$tsmServer=$_
 			$tsmServer.Clients | sort NODE_NAME | %{
 				$tsmclient=$_
-				$node_name=$_.Node_name; 
+				$node_name=$_.Node_name;
 				$obj = New-Object System.Object
 				$obj | Add-Member -MemberType NoteProperty -Name "Node name" -Value $tsmclient.Node_name
 				$obj | Add-Member -MemberType NoteProperty -Name "OS" -Value $($tsmclient.CLIENT_OS_NAME -replace "WIN:","")
@@ -811,16 +811,16 @@ if ($tsmServers)
 				if ($tsmclient.PLATFORM_NAME.Contains("TDP"))
 				{
 					$tdpClient=$tsmclient.PLATFORM_NAME
-				} else 
+				} else
 				{
 					$tdpClient=""
 				}
 				$obj | Add-Member -MemberType NoteProperty -Name "TDP Agent" -Value $tdpClient
-				$obj | Add-Member -MemberType NoteProperty -Name "TSM client version" -Value "$($tsmclient.CLIENT_VERSION).$($tsmclient.CLIENT_RELEASE).$($tsmclient.CLIENT_LEVEL).$($tsmclient.CLIENT_SUBLEVEL)" #$($tsmclient.PLATFORM_NAME) ()				
+				$obj | Add-Member -MemberType NoteProperty -Name "TSM client version" -Value "$($tsmclient.CLIENT_VERSION).$($tsmclient.CLIENT_RELEASE).$($tsmclient.CLIENT_LEVEL).$($tsmclient.CLIENT_SUBLEVEL)" #$($tsmclient.PLATFORM_NAME) ()
 				$obj | Add-Member -MemberType NoteProperty -Name "Days since last logon" -Value "$(($(get-date) - $(get-date $tsmclient.LASTACC_TIME)).Days)"
 				$obj | Add-Member -MemberType NoteProperty -Name "Date of last logon" -Value "$(Get-date $($tsmclient.LASTACC_TIME) -format 'dd-MM-yyyy')"
 				#$num="-"
-				
+
 				$num=[double](($tsmServer.Occupancy | ?{$_.NODE_NAME -eq $tsmclient.Node_name}) | measure NUM_FILES -sum).Sum
 				if (!$num)
 				{
@@ -832,19 +832,19 @@ if ($tsmServers)
 				{
 					$sizeGB = 0
 				}
-				
+
 				$obj | Add-Member -MemberType NoteProperty -Name "Total data stored (GB)" -Value "$(formatNumbers -deci 2 -value $sizeGB)"
 				#$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value $tsmServer.NAME
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 				$obj
-			}	
+			}
 		}
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
-			
-	
+		}
+
+
 		# SHOW ALL CLIENT DETAILS - TABLE 2
 		$tableHeader="TSM Client Backups"
 		logThis -msg "Processing $tableHeader Report"
@@ -852,21 +852,21 @@ if ($tsmServers)
 		$index=1
 		$totalClients=$tsmServers.Clients.Count
 		$tableData = $tsmServers | %{
-			$tsmServer=$_			
+			$tsmServer=$_
 			#$tableHeader="Nodes on $($tsmServer.Name)"
 			#logThis -msg "Processing $tableHeader Report"
 			$tsmServer.Clients | sort NODE_NAME | %{
-				$tsmclient=$_				
-				$node_name=$_.Node_name; 
+				$tsmclient=$_
+				$node_name=$_.Node_name;
 				Write-Progress -Activity "Creating $tableHeader Report" -status " $index/$totalClients :- Processing node $($node_name) - $([math]::round($index/$totalClients*100,2)) %" -percentComplete $($index/$totalClients*100)
 				$obj = New-Object System.Object
 				$obj | Add-Member -MemberType NoteProperty -Name "Node Name" -Value $node_name
 				$obj | Add-Member -MemberType NoteProperty -Name "Date of last Logon" -Value "$(Get-date $($tsmclient.LASTACC_TIME) -format 'dd-MM-yyyy')"
-				
-				# Get the last backup		
+
+				# Get the last backup
 				$totalGB=[math]::round([double]($tsmServer.Summary | ?{$_.SUCCESSFUL -eq "Yes" -and $_.ACTIVITY -eq "BACKUP" -and $_.ENTITY -eq $node_name -and  !$_.ENTITY.Contains("($node_name)")} | sort START_TIME | Select -Last 1).BYTES/1024/1024/1024 ,2)
 				$obj | Add-Member -MemberType NoteProperty -Name "Size of last backup (GB)" -Value "$(formatNumbers -deci 2 -value $totalGB)"
-				
+
 				# Get Amount of data backed up over the following days - comma delimited
 				7,30 | %{
 					$lastDays=$_
@@ -881,14 +881,14 @@ if ($tsmServers)
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 				$obj
 				$index++
-			}	
-			
+			}
+
 		}
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
-		
+		}
+
 		# SHOW PROXUP BACKUPS CLIENT DETAILS - TABLE 2
 		$tableHeader="Proxy Backups"
 		logThis -msg "Processing $tableHeader Report"
@@ -897,13 +897,13 @@ if ($tsmServers)
 			$tsmServer=$_
 			$proxyBackups=$($tsmServer.Summary | ?{($_.ENTITY.Contains("(") -and $_.ENTITY.Contains(")")) -and $_.SUCCESSFUL -eq "Yes" -and ($_.ACTIVITY -eq "BACKUP" -or $_.ACTIVITY -eq 'ARCHIVE')} | select ENTITY -Unique).ENTITY
 			$proxyBackups | %{
-				$node_name=$_; 
+				$node_name=$_;
 				$obj = New-Object System.Object
-				$obj | Add-Member -MemberType NoteProperty -Name "Entity" -Value $node_name				
+				$obj | Add-Member -MemberType NoteProperty -Name "Entity" -Value $node_name
 				# Get the last backup
 				$totalGB=[math]::round([double]($tsmServer.Summary | ?{$_.SUCCESSFUL -eq "Yes" -and $_.ACTIVITY -eq "BACKUP" -and $_.ENTITY -eq $node_name -and  !$_.ENTITY.Contains("($node_name)")} | sort START_TIME | Select -Last 1).BYTES / 1024 / 1024 / 1024,2)
 				$obj | Add-Member -MemberType NoteProperty -Name "Size of last backup (GB)" -Value "$(formatNumbers -deci 2 -value $totalGB)"
-				
+
 				# Get Amount of data backed up over the following days - comma delimited
 				7,30 | %{
 					$lastDays=$_
@@ -917,15 +917,15 @@ if ($tsmServers)
 				#$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value $tsmServer.NAME
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 				$obj
-			}	
-			
+			}
+
 		}
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
-		
-		
+		}
+
+
 		# Show summary of "Nodes by Client Type Version 1
 		$tableHeader="Nodes by Client Type"
 		logThis -msg "Processing $tableHeader Report"
@@ -944,10 +944,10 @@ if ($tsmServers)
 					if (!$specialAgent)
 					{
 						if ($platform_name.Contains("TDP"))
-						{	
+						{
 							$obj | Add-Member -MemberType NoteProperty -Name "Agent Type" -Value "$($platform_name)"
 						} else {
-							$obj | Add-Member -MemberType NoteProperty -Name "Agent Type" -Value $tsmclient.CLIENT_OS_NAME 
+							$obj | Add-Member -MemberType NoteProperty -Name "Agent Type" -Value $tsmclient.CLIENT_OS_NAME
 						}
 					} else {
 						if ($specialAgent.Contains("MSSQL"))
@@ -962,7 +962,7 @@ if ($tsmServers)
 						}
 						$obj | Add-Member -MemberType NoteProperty -Name "Agent Type" -Value  $($newname -replace "WIN:","")
 					}
-					
+
 				} else {
 					$obj | Add-Member -MemberType NoteProperty -Name "Agent Type" -Value $tsmclient.CLIENT_OS_NAME
 				}
@@ -974,18 +974,18 @@ if ($tsmServers)
 					$num = 0
 				}
 				$obj | Add-Member -MemberType NoteProperty -Name "File Count" -Value "$(formatNumbers -value $num)"
-				
+
 				$sizeGB=([double](($tsmServer.Occupancy | ?{$_.NODE_NAME -eq $tsmclient.Node_name}) | measure LOGICAL_MB -sum).Sum/1024)
 				if (!$sizeGB)
 				{
 					$sizeGB = 0
 				}
 				$obj | Add-Member -MemberType NoteProperty -Name "Total data stored (GB)" -Value "$(formatNumbers -deci 2 -value $sizeGB)"
-				
+
 				$obj
 			}
 		}
-		
+
 		$tableData = $tableClient | group "Agent Type" | %{
 			$row=$_
 			$obj = New-Object System.Object
@@ -997,11 +997,11 @@ if ($tsmServers)
 			$obj | Add-Member -MemberType NoteProperty -Name "(DEBUG) Clients" -Value "$($row.Group.'Node Name')"
 			$obj
 		} | sort "Node Count" -Descending
-		
+
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
+		}
 
 
 
@@ -1035,7 +1035,7 @@ if ($tsmServers)
 						#{
 						#	$sizeGB = 0
 						#}
-#						
+#
 						#$obj = New-Object System.Object
 						#$obj | Add-Member -MemberType NoteProperty -Name "Agent Type" -Value $agentType
 						#$obj | Add-Member -MemberType NoteProperty -Name "Node Count" -Value $tsmSubClients.Count
@@ -1062,7 +1062,7 @@ if ($tsmServers)
 							#{
 								#$sizeGB = 0
 							#}
-#							
+#
 							#$obj = New-Object System.Object
 							#$obj | Add-Member -MemberType NoteProperty -Name "Agent Type" -Value $agentType
 							#$obj | Add-Member -MemberType NoteProperty -Name "Node Count" -Value $tsmSubClients.Count
@@ -1099,7 +1099,7 @@ if ($tsmServers)
 					#{
 						#$sizeGB = 0
 					#}
-#					
+#
 					#$obj = New-Object System.Object
 					#$obj | Add-Member -MemberType NoteProperty -Name "Agent Type" -Value $agentType
 					#$obj | Add-Member -MemberType NoteProperty -Name "Node Count" -Value $tsmclients.Count
@@ -1114,49 +1114,49 @@ if ($tsmServers)
 		#if ($tableData)
 		#{
 			#export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		#} 
-		
-		
-		
+		#}
+
+
+
 		# SHOW summary of Nodes By Client Versions
 		$tableHeader="Nodes By Client Version"
-		logThis -msg "Processing $tableHeader Report"		
+		logThis -msg "Processing $tableHeader Report"
 		$tableData = $tsmservers.Clients | %{ "$($_.CLIENT_VERSION).$($_.CLIENT_RELEASE).$($_.CLIENT_LEVEL).$($_.CLIENT_SUBLEVEL)" } | group | select @{Name="Version";Expression={$_."Name"}},Count | Sort Count -Descending | %{
 			$row=$_
 			#if ($row.Name -ne "0.0.0")
 			#{
-				$row				
+				$row
 			#}
 		}
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
-		} 
-		
+		}
+
 		# SHOW summary by Nodes definitions with Proxy
 		$tableHeader="Nodes backed up via proxy agents"
-		logThis -msg "Processing $tableHeader Report"		
+		logThis -msg "Processing $tableHeader Report"
 		$tableData = $tsmservers | %{
 			$tsmserver=$_
 			#$tsmserver.Clients | ?{$_.PROXY_TARGET -ne 0} | group PROXY_TARGET | select Name,Count | sort Count -Descending
-			$tsmserver.Clients  | ?{$_.PROXY_AGENT -ne 0}  | Select NODE_NAME,PROXY_AGENT | sort NODE_NAME | %{			
+			$tsmserver.Clients  | ?{$_.PROXY_AGENT -ne 0}  | Select NODE_NAME,PROXY_AGENT | sort NODE_NAME | %{
 				$obj = New-Object System.Object
 				$obj | Add-Member -MemberType NoteProperty -Name "Node Name" -Value "$($_.NODE_NAME)"
 				$obj | Add-Member -MemberType NoteProperty -Name "Proxy Agent" -Value "$($_.PROXY_AGENT)"
 				#$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmserver.Name)"
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
-				
+
 			}
 		}
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
 		}
-		
-		
+
+
 		# SHOW Top $topItemsOnly Consumers of Physical space
 		$tableHeader="Top $topItemsOnly space consumers"
-		logThis -msg "Processing $tableHeader Report"		
+		logThis -msg "Processing $tableHeader Report"
 		$tableData = $tsmServers |%{
 			$tsmserver=$_
 			$tsmserver.Occupancy  | ?{$_.NODE_NAME -ne "DELETED"} | group NODE_NAME | %{
@@ -1167,30 +1167,30 @@ if ($tsmServers)
 				#$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmserver.Name)"
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 				$obj
-			} 
+			}
 		} | Sort-Object {[decimal]$_."Amount (MB)"} -Descending | Select -First $topItemsOnly
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
 		}
-		
-		
+
+
 		# SHOW daily backups per day for the last 30 days
 		$tableHeader="Daily backup totals"
-		logThis -msg "Processing $tableHeader Report"		
+		logThis -msg "Processing $tableHeader Report"
 		$uniqueDates=($tsmServers.Summary | ?{$_.ACTIVITY -eq "BACKUP"}).START_TIME | Sort -Descending #Get-date  -F 'D' | Sort -Unique -Descending
-		
+
 		$dailyBackups=$tsmservers | %{
 			$tsmserver=$_
-			$tsmServer.Summary | ?{$_.ACTIVITY -eq "BACKUP"} | Sort START_TIME | %{ 
-				$date=$_.START_TIME | Get-date -f 'dd-MM-yyy'; 
-				$obj = New-Object System.Object 
+			$tsmServer.Summary | ?{$_.ACTIVITY -eq "BACKUP"} | Sort START_TIME | %{
+				$date=$_.START_TIME | Get-date -f 'dd-MM-yyy';
+				$obj = New-Object System.Object
 				$obj | Add-Member -MemberType NoteProperty -Name "Date" -Value $date
 				$obj | Add-Member -MemberType NoteProperty -Name "Amt" -Value $_.BYTES
 				$obj
 			}
 		} | group "Date"
-			
+
 		$lastDateOfReporting =  $dailyBackups.NAME | Get-date | sort -Descending | select -First 1
 		$firstDateOfReporting = (Get-Date $lastDateOfReporting).AddDays('-30')
 		$day=0
@@ -1209,14 +1209,14 @@ if ($tsmServers)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description "Total backups for each day of the past month."
 		}
-		
-		
-		
+
+
+
 	}
-	
+
 	$showStoragePools=$true
 	if ($showStoragePools)
-	{	
+	{
 		# Show storage pools capacity
 		$tableHeader="Storage Pools"
 		logThis -msg "Processing $tableHeader Report"
@@ -1240,7 +1240,7 @@ if ($tsmServers)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
 		}
-		
+
 		# Show Volumes with Errors ony Storage Pools capacity
 		$tableHeader="Storage pool volumes with errors or non-writable volumes"
 		logThis -msg "Processing $tableHeader Report"
@@ -1257,9 +1257,9 @@ if ($tsmServers)
 				$obj | Add-Member -MemberType NoteProperty -Name "Write errors" -Value $(formatNumbers -value $vol.write_errors)
 				$obj | Add-Member -MemberType NoteProperty -Name "Read errors" -Value $(formatNumbers -value $vol.read_errors)
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
-				$obj				
+				$obj
 			}
-		} 
+		}
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
@@ -1277,7 +1277,7 @@ if ($tsmServers)
 				#$group=$_.group
 				#$stgPrimaryPools | %{
 					#$poolName=$_
-					#$instances = ($group | ?{$_.STGPOOL_NAME -eq $poolName} | measure NUM_FILES -Sum).Sum				
+					#$instances = ($group | ?{$_.STGPOOL_NAME -eq $poolName} | measure NUM_FILES -Sum).Sum
 					#$obj | Add-Member -MemberType NoteProperty -Name "Number of Files in $poolName" $instances
 				#}
 				#if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
@@ -1289,7 +1289,7 @@ if ($tsmServers)
 			#export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
 		#}
 	}
-	
+
 	# Need to use the second collection (collectTSMInformation2) method to use this function -- This function is in Work In Progress mode
 	# This section should display the Runtime table for each TSM Server queried and give out Runtime Time stats for each query to determine if the change in queries
 	# make a difference in the collection time
@@ -1302,23 +1302,23 @@ if ($tsmServers)
 			$tsmserver=$_
 			$tsmserver | %{
 				$obj = New-Object System.Object
-				$obj = $_.Runtime				
+				$obj = $_.Runtime
 				if ($tsmservers.Name.Count -gt 1) {$obj | Add-Member -MemberType NoteProperty -Name "TSM Server" -Value "$($tsmServer.Name)"}
 				$obj
-			} 
+			}
 		}
 		if ($tableData)
 		{
 			export -title $tableHeader -dataTable $tableData -displayTableOrientation "Table" -headerType "h2" -metaAnalytics "" -showTableCaption "false" -description ""
 		}
 	}
-	
+
 	############################################################################################################
 	# List of Issues found throughout this report
 	#$tableHeader="Issues Report"
 	#logThis -msg "Processing $tableHeader Report (Coming soon)"
 	#$issuesRegister
-	
+
 	# GENERATE THE REPORT
 	# Now all the individuals TABLES are exported + the NFO Files, call the report generator against them to create the HTML Report.
 	$generateHTMLReport=$true

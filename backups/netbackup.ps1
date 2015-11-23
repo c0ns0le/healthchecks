@@ -3,11 +3,12 @@
 # everything has been converted to a netbackup command execution to retrieve the required information.
 param (
 	[int]$previousMonths=5,
-	[string]$logDir="C:\Users\trodiere\Documents\BMA Audit",
-	[string]$inDir="C:\Users\trodiere\Documents\BMA Audit\AUDIT2",
+	[string]$logDir="C:\admin\results\output",
+	[string]$inDir="C:\admin\results\inputdir",
 	[bool]$showUnitsWithValues=$true,
 	[bool]$showThisIncompleteMonth=$true,
-	[bool]$launchOnCSVCreation=$true
+	[bool]$launchOnCSVCreation=$true,
+	[string]$servername
 )
 ############################################################################################################################################
 #
@@ -21,7 +22,7 @@ function blah()
 	#$splitstr[1],$splitstr[6],$splitstr[12],$splitstr[18],$splitstr[51]
 	$backupPolicies=Invoke-Expression "bppllist.exe"
 	$clients=Invoke-Expression "bpplclients.exe"
-	$clientImages=Invoke-Expression "bpimagelist.exe -client bmabne-srv02 -L -d $startdate -e $endDate 2>&1"
+	$clientImages=Invoke-Expression "bpimagelist.exe -client $servername -L -d $startdate -e $endDate 2>&1"
 	$numberofImages= ($clientImages | select-string "^Client:").Count
 	
 	$headers = $clientImages | %{
@@ -440,7 +441,7 @@ $allpolicies=Import-Csv "$inDir\policies.csv"
 logthis -msg "Loading Policies v Schedules...."
 $allpolicies_and_schedules=Import-Csv "$inDir\policies_and_schedules.csv"
 logthis -msg "Loading Schedules...."
-$allSchedules = returnTableFromPoliciesOutput -output (Get-content "C:\Users\trodiere\Documents\BMA Audit\AUDIT2\all_policies.txt") | ?{$_."Policy Name"}
+$allSchedules = returnTableFromPoliciesOutput -output (Get-content "$inDir\all_policies.txt") | ?{$_."Policy Name"}
 logthis -msg "Loading Storage Lifecycle Policies"
 #$nbstl-output = Invoke-Expression "nbstl -L"
 $storageLifeCyclePolicies=returnTableFromSlpsOutput -output (Get-Content "$inDir\slp-longlist.txt") | ?{$_.Name}
@@ -559,7 +560,6 @@ if ($showClientBackupSummary)
 					for ($opNum=1;$opNum -le $totalOperationsCountForThisSchedule; $opNum++)
 					{		
 						$scheduleSummaryString=""
-						#$storageType="BMASDC-BKP05-HCART-STU-TOFIX"
 						$storageType=$slpObj."Operation-$opNum-Storage"
 						#$storageType2=$slpObj."Operation-$scheduleCount-Storage"
 						logthis -msg ">>$($client.Name)\$($policy.'Policy Name')\$($thisClientSchedule.'Schedule Name')\$($slpObj.Name)\Operation $opNum\$storageType"
@@ -1122,7 +1122,3 @@ if ($showReport)
 	}
 	
 }
-#
-
-
-#cd "C:\Users\trodiere\Documents\BMA Audit"

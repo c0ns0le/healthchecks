@@ -1,7 +1,7 @@
 $runas = $false
 if ($runas)
 {
-	$server="handel.ait.local"
+	$server=""
 	$cred = Get-Credential
 	$session = New-PSSession -Credential $cred -ComputerName $server
 	Enter-PSSession $session

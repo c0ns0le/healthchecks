@@ -1,4 +1,4 @@
-﻿#https://rubrik01.test.ait.local/swagger-ui/
+﻿#https://rubrik/swagger-ui/
 param ( 
 	[Parameter(Mandatory = $true,Position = 0,HelpMessage = 'Rubrik FQDN or IP address')]
      [ValidateNotNullorEmpty()]

@@ -1,7 +1,5 @@
 ﻿#rubrik-Module.psm1
 #
-# https://192.168.11.61/swagger-ui/
-
 function connect ( 
 	[Parameter(Mandatory = $true,Position = 0,HelpMessage = 'Rubrik FQDN or IP address')]
      [ValidateNotNullorEmpty()]
