@@ -2450,159 +2450,20 @@ function htmlFooter()
 }
 
 function htmlHeader()
-{
-	return @"
+{	
+	$content ="@
 	<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
-<html><head><title>Virtual Machine ""$guestName"" System Report</title>
-<style type="text/css">
-<!--
-body {
-	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
-}
+	<html><head><title>Virtual Machine ""$guestName"" System Report</title>
+	"@
+	$content += (Get-content $global:htmlHeaderCSS)
+	$content += "@
+	-->
+	</style>
+	</head>
+	<body>
+	"@
+	return $content
 
-#report { width: 835px; }
-.red td{
-	background-color: red;
-}
-.yellow  td{
-	background-color: yellow;
-}
-.green td{
-	background-color: green;
-}
-
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-p
-	{margin-top:0in;
-	margin-right:0in;
-	margin-bottom:8.5pt;
-	margin-left:0in;
-	line-height:13.0pt;
-	font-size:9.5pt;
-	font-family:"Century Gothic",sans-serif;}
-	
-h1
-	{mso-style-link:"Heading 1 Char";
-	padding-top:20px;
-	margin-top:24.0pt;
-	margin-right:0in;
-	margin-bottom:8.5pt;
-	margin-left:40.5pt;
-	text-indent:-.5in;
-	line-height:20.0pt;
-	page-break-after:avoid;
-	font-size:18.0pt;
-	font-family:"Century Gothic",sans-serif;
-	color:#ED1C24;
-	font-weight:normal;}
-h2
-	{mso-style-link:"Heading 2 Char";
-	padding-top:20px;
-	margin-top:.25in;
-	margin-right:0in;
-	margin-bottom:2.85pt;
-	margin-left:.5in;
-	text-indent:-.5in;
-	line-height:15.0pt;
-	page-break-after:avoid;
-	font-size:12.0pt;
-	font-family:"Century Gothic",sans-serif;
-	color:#ED1C24;
-	font-weight:bold;}
-h3
-	{mso-style-link:"Heading 3 Char";
-	padding-top:20px;
-	margin-top:.25in;
-	margin-right:0in;
-	margin-bottom:2.85pt;
-	margin-left:.5in;
-	text-indent:-.5in;
-	page-break-after:avoid;
-	font-size:11.0pt;
-	font-family:"Century Gothic",sans-serif;
-	color:#D7181E;
-	font-weight:normal;}
-h4 {
-	mso-style-link:"Heading 4 Char";
-	padding-top:20px;
-	margin-top:5.65pt;
-	margin-right:0in;
-	margin-bottom:2.85pt;
-	margin-left:.5in;
-	text-indent:-.5in;
-	line-height:10.8pt;
-	page-break-after:avoid;
-	font-size:9.5pt;
-	font-family:"Century Gothic",sans-serif;
-	color:#D7181E;
-	font-weight:normal;
-}
-
-li	{
-	margin-top:0in;
-	margin-right:0in;
-	margin-bottom:8.5pt;
-	margin-left:0in;
-	line-height:13.0pt;
-	font-size:9.5pt;
-	font-family:"Century Gothic",sans-serif;
-}
-ol	{margin-bottom:0in;}
-ul	{margin-bottom:0in;}
-table{
-   border-collapse: collapse;
-   border: 1px solid #cccccc;
-   font: 10pt Verdana, Geneva, Arial, Helvetica, sans-serif;
-   color: black;
-   margin-bottom: 10px;
-   width: auto;
-}
-table td{
-       font-size: 12px;
-       padding-left: 2px;padding-right: 2px;
-       text-align: left;
-	   width: auto;
-	   border: 1px solid #cccccc;
-}
-table th {
-       font-size: 12px;
-       font-weight: bold;
-       padding-left: 0px;
-       padding-right: 20px;
-       text-align: left;
-	   border: 1px solid #cccccc;
-	   width: auto;
-	   border: 1px solid #cccccc;
-}
-
-table.list td:nth-child(1){font-weight: bold; border-right: 1px grey solid; text-align: right;}
-table th {background: #ED1C24;font-size:10.0pt; color:white;padding-left: 2px;padding-right: 2px;}
-table.list td:nth-child(2){border-top:none;border-left:none;border-bottom:solid white 1.0pt; border-right:solid white 1.0pt;padding:0in 0in 0in 0in}
-table tr:nth-child(even) td:nth-child(even){ background: #CCCCCC; }
-table tr:nth-child(odd) td:nth-child(odd){ background: #F2F2F2; }
-table tr:nth-child(even) td:nth-child(odd){ background: #DDDDDD; }
-table tr:nth-child(odd) td:nth-child(even){ background: #E5E5E5; }
-div.column {width: 320px; float: left;}
-div.first{padding-right: 20px; border-right: 1px  grey solid; }
-div.second{margin-left: 30px; }
-caption {
-    display: table-caption;
-    text-align: right;
-	font-size: 10px;
-    font-weight: bold;
-	border: 1px solid #cccccc;
-}
--->
-</style>
-</head>
-<body>
-
-"@
 }
 function htmlHeaderPrev()
 {

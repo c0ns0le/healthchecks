@@ -169,17 +169,3 @@ function sendEmail
 		
 	}
 }
-
-$scriptParams = @{ 
-	'subject' = "My subject";
-	'smtpServer' = "192.168.10.112";
-	'replyTo' = "teiva.rodiere@andersenit.com.au";
-	'from' = "teiva.rodiere@andersenit.com.au";
-	'fromContactName' = "Teiva Rodiere";
-	'toAddress' = "teiva.rodiere@andersenit.com.au";
-	'body' = $htmlPage.Content;
-	'attachements' = [Object] $attachments;				
-	'credentials' = [PSCredential] $mailAuthentication
-	}
-sendEmail @scriptParams
-
