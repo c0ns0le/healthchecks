@@ -583,8 +583,8 @@ function startProcess()
 }
 
 # MAIN
-if ($configObj) {Remove-Variable configObj}
-if ($configs) {Remove-Variable configs}
+if ($configObj) {Remove-Variable configObj -Scope All }
+if ($global:configs) {Remove-Variable configs -Scope Global }
 $configObj = readConfiguration -inifile $inifile
 if ($configObj)
 {	

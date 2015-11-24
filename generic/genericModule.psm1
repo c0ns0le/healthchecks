@@ -73,7 +73,9 @@ function getmycredentialsfromFile (
 function set-mycredentials ([string]$filename)
 {
 
-	$Credential = Get-Credential -Message "Enter your credentials for this connection: "
+	#$Credential = Get-Credential -Message "Enter your credentials for this connection: "
+	# old versions of powershell can't display custom messages
+	$Credential = Get-Credential #-Message "Enter your credentials for this connection: "
 	$credential.Password | ConvertFrom-SecureString | Set-Content $filename
 }
 
@@ -169,3 +171,4 @@ function sendEmail
 		
 	}
 }
+
