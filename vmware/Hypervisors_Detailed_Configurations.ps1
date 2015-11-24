@@ -70,7 +70,7 @@ $run1Report = $srvConnection | %{
 			logThis -msg "`t`t-> Getting Datacenter"
 			$datacenter = Get-Datacenter -VMHost $vmhost
 			
-			logThis -msg "`t`t-> Getting ESXCLIE handle to the host for further queries"
+			logThis -msg "`t`t-> Getting ESXCLI handle to the host for further queries"
 			$esxcli = Get-ESXCli -VMhost $vmhost
 			
 			$HostConfig.VMHost = $vmhost.ExtensionData.Config.Network.DnsConfig.HostName

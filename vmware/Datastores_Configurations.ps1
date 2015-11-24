@@ -16,7 +16,7 @@ $global:outputCSV
 InitialiseModule
 
 $metaInfo = @()
-$metaInfo +="tableHeader=Datastoress"
+$metaInfo +="tableHeader=Datastores"
 $metaInfo +="introduction=The table below provides a comprehensive list of datastores in your environment as well as capacity information for each."
 $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
@@ -56,7 +56,7 @@ $run1Report = $datastores | %{
 		}
 	    $row | Add-Member -MemberType "NoteProperty" -Name "SizeGB" -Value "$([math]::ROUND($datastore.CapacityMB / 1024))"
 	    $row | Add-Member -MemberType "NoteProperty" -Name "FreeGB" -Value "$([math]::ROUND($datastore.FreeSpaceMB / 1024))"
-	    $row | Add-Member -MemberType "NoteProperty" -Name "UsedGB" -Value "$([math]::ROUND($usedMb / 1024))"
+	    #$row | Add-Member -MemberType "NoteProperty" -Name "UsedGB" -Value "$([math]::ROUND($usedMb / 1024))"
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Used%" -Value $usedPerc
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Mode" -Value $([string]($datastore.ExtensionData.Host.MountInfo.AccessMode | sort -Unique) -replace " ",",") #$datastore.ExtensionData.Host[0].MountInfo.AccessMode	   
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Accessible" -Value $datastore.Accessible
@@ -65,7 +65,7 @@ $run1Report = $datastores | %{
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Vmfs Upgradable" -Value $datastore.ExtensionData.Info.Vmfs.VmfsUpgradable
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "Storage IO Enabled" -Value $datastore.ExtensionData.IormConfiguration.Enabled
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "Storage IO Threshold" -Value $datastore.ExtensionData.IormConfiguration.CongestionThreshold
-	    $row | Add-Member -MemberType "NoteProperty" -Name "Vmfs Upgradable" -Value $datastore.ExtensionData.Info.Vmfs.VmfsUpgradable
+	    $row | Add-Member -MemberType "NoteProperty" -Name "Was Upgraded from VMFS3" -Value $wasVMFS3Volume
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "Uuid" -Value $datastore.ExtensionData.Info.Vmfs.Uuid
 #	 	$row | Add-Member -MemberType "NoteProperty" -Name "SAN_LunID" -Value $diskExtent.DiskName
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "Partition Extents" -Value $diskExtent.Partition      

@@ -14,25 +14,29 @@ $global:outputCSV
 # Want to initialise the module and blurb using this 1 function
 InitialiseModule
 
-
-$Report = Get-VDSwitch * -Server $srvConnection | %{
-	$dvSwitch = $_
+$metaInfo = @()
+$metaInfo +="tableHeader=Distributed Networks"
+$metaInfo +="introduction=The table below provides a comprehensive list of Distributed network switches."
+$metaInfo +="chartable=false"
+$metaInfo +="titleHeaderType=h$($headerType)"
+$Report = Get-VirtualSwitch -Distributed * -Server $srvConnection | Select -First 1 | %{
+	$vswitch = $_
 	
 	# define an object to capture all the information needed
 	$row = "" | select "Name"
-	$row.Name = $dvSwitch.Name
-	$row | Add-Member -Type NoteProperty -Name "Datacenter" -Value $dvSwitch.Datacenter
-	$row | Add-Member -Type NoteProperty -Name "NumPorts" -Value $dvSwitch.NumPorts
-	$row | Add-Member -Type NoteProperty -Name "Mtu" -Value $dvSwitch.Mtu
-	$row | Add-Member -Type NoteProperty -Name "Version" -Value $dvSwitch.Version
-	$row | Add-Member -Type NoteProperty -Name "Vendor" -Value $dvSwitch.Vendor
-	$row | Add-Member -Type NoteProperty -Name "PortGroups" -Value $dvSwitch.ExtensionData.Portgroup.Count
-	$row | Add-Member -Type NoteProperty -Name "Created" -Value $dvSwitch.ExtensionData.Config.CreateTime
-	$row | Add-Member -Type NoteProperty -Name "LinkDiscoveryProtocol" -Value $dvSwitch.ExtensionData.Config.LinkDiscoveryProtocolConfig.Protocol
-	$row | Add-Member -Type NoteProperty -Name "LinkDiscoveryProtocolSetting" -Value $dvSwitch.ExtensionData.Config.LinkDiscoveryProtocolConfig.Operation
-	$row | Add-Member -Type NoteProperty -Name "AllowPromiscuous" -Value $dvSwitch.ExtensionData.Config.DefaultPortConfig.SecurityPolicy.AllowPromiscuous.Value
-	$row | Add-Member -Type NoteProperty -Name "MacChanges" -Value $dvSwitch.ExtensionData.Config.DefaultPortConfig.SecurityPolicy.MacChanges.Value
-	$row | Add-Member -Type NoteProperty -Name "ForgedTransmits" -Value $dvSwitch.ExtensionData.Config.DefaultPortConfig.SecurityPolicy.ForgedTransmits.value
+	$row.Name = $vswitch.Name
+	$row | Add-Member -Type NoteProperty -Name "Datacenter" -Value $vswitch.Datacenter
+	$row | Add-Member -Type NoteProperty -Name "NumPorts" -Value $vswitch.NumPorts
+	$row | Add-Member -Type NoteProperty -Name "Mtu" -Value $vswitch.Mtu
+	$row | Add-Member -Type NoteProperty -Name "Version" -Value $vswitch.Version
+	$row | Add-Member -Type NoteProperty -Name "Vendor" -Value $vswitch.Vendor
+	$row | Add-Member -Type NoteProperty -Name "PortGroups" -Value $vswitch.ExtensionData.Portgroup.Count
+	$row | Add-Member -Type NoteProperty -Name "Created" -Value $vswitch.ExtensionData.Config.CreateTime
+	$row | Add-Member -Type NoteProperty -Name "LinkDiscoveryProtocol" -Value $vswitch.ExtensionData.Config.LinkDiscoveryProtocolConfig.Protocol
+	$row | Add-Member -Type NoteProperty -Name "LinkDiscoveryProtocolSetting" -Value $vswitch.ExtensionData.Config.LinkDiscoveryProtocolConfig.Operation
+	$row | Add-Member -Type NoteProperty -Name "AllowPromiscuous" -Value $vswitch.ExtensionData.Config.DefaultPortConfig.SecurityPolicy.AllowPromiscuous.Value
+	$row | Add-Member -Type NoteProperty -Name "MacChanges" -Value $vswitch.ExtensionData.Config.DefaultPortConfig.SecurityPolicy.MacChanges.Value
+	$row | Add-Member -Type NoteProperty -Name "ForgedTransmits" -Value $vswitch.ExtensionData.Config.DefaultPortConfig.SecurityPolicy.ForgedTransmits.value
 	
 	# output
 	logThis -msg $row -ForegroundColor green
@@ -40,7 +44,17 @@ $Report = Get-VDSwitch * -Server $srvConnection | %{
 }
 
 ############### THIS IS WHERE THE STUFF HAPPENS
-ExportCSV -table $Report 
+if ($Report)
+{
+	ExportCSV -table $Report
+}
+# Post Creation of Report
+if ($metaAnalytics)
+{
+	$metaInfo += "analytics="+$metaAnalytics
+}
+ExportMetaData -meta $metaInfo
+
 
 logThis -msg "Logs written to " $of -ForegroundColor  yellow;
 if ($srvConnection -and $disconnectOnExist) {

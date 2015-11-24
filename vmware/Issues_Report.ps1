@@ -37,7 +37,8 @@ param(
 	[string]$clustersToCheck,
 	[string]$clustersToExclude,
 	[string]$datastoresToCheck,
-	[string]$datastoresToExclude
+	[string]$datastoresToExclude,
+	[bool]$reportThinDisksAsAnIssue=$true
 	#[Parameter(Mandatory=$true)][string]$farmName
 )
 Write-Host "Importing Module vmwareModules.psm1 (force)"
@@ -91,7 +92,8 @@ $objectsArray = @(
 		}
 	}),
 	@($srvConnection | %{ $vcenterName=$_.Name; get-datacenter * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
-	@($srvConnection | %{ $vcenterName=$_.Name; get-datastore * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} })
+	@($srvConnection | %{ $vcenterName=$_.Name; get-datastore * -server $_ | ?{$_.type -eq "NFS"} | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} }),
+	@($srvConnection | %{ $vcenterName=$_.Name; get-datastore * -server $_ | ?{$_.type -ne "NFS"} | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} })
 )
 
 #$objectsArray = @(@(get-cluster * -server $srvConnection), @(get-datastore * -Server $srvConnection))
@@ -107,22 +109,35 @@ updateReportIndexer -string $global:scriptName
 
 #$objectsArray
 
-$results = getIssues -objectsArray $objectsArray -srvconnection $srvconnection -returnDataOnly $true -performanceLastDays $performanceLastDays  -headerType $($headerType+2) -showPastMonths $lastMonths -ensureTheseFieldsAreFieldIn $ensureTheseFieldsAreFieldIn
+#$reportThinDisksAsAnIssue
+$parameters = @{
+	'objectsArray' = [Object]$objectsArray ;
+	'srvconnection' = [Object]$srvconnection ;
+	'returnDataOnly' = [bool]$true ;
+	'performanceLastDays' = [int]$performanceLastDays  ;
+	'headerType' = [int]$($headerType+2) ;
+	'showPastMonths' = [int]$lastMonths ;
+	'ensureTheseFieldsAreFieldIn' = [Object]$ensureTheseFieldsAreFieldIn;
+	'reportThinDisksAsAnIssue' = [bool]$reportThinDisksAsAnIssue
+}
 
+#$results = getIssues -objectsArray $objectsArray -srvconnection $srvconnection -returnDataOnly $true -performanceLastDays $performanceLastDays  -headerType $($headerType+2) -showPastMonths $lastMonths -ensureTheseFieldsAreFieldIn $ensureTheseFieldsAreFieldIn
+$results = getIssues @parameters 
+#$results #| Export-Csv -NoTypeinformation "C:\admin\healthchecks-reports\test\file.csv"
+#pause
 $totalIssues = $(($results.Values.IssuesCount | measure -Sum).Sum)
 #if ($totalIssues) { $analysis =  "A total of $totalIssues issues were found affecting this system.`n" }
 $results.Keys | %{
 	$name = $_
-	$htmlPage +=  header2 "$($results.$name.title)"
-	$htmlPage +=  paragraph "$($results.$name.introduction). $analysis"
-	$htmlPage +=  $results.$name.DataTable  | ConvertTo-Html -Fragment
-	$metricCSVFilename = "$logdir\$($results.$name.title -replace '\s','_').csv"
-	$metricNFOFilename = "$logdir\$($results.$name.title -replace '\s','_').nfo"
-	ExportCSV -table $results.$name.DataTable -thisFileInstead $metricCSVFilename 
-	ExportMetaData -metadata $results.$name.NFO -thisFileInstead $metricNFOFilename
+	#$htmlPage +=  header2 "$($results.$name.title)"
+	#$htmlPage +=  paragraph "$($results.$name.introduction). $analysis"
+	#$htmlPage +=  $results.$name.DataTable  | ConvertTo-Html -Fragment
+	$metricCSVFilename = "$logdir\$($results.$($name).title -replace '\s','_').csv"
+	$metricNFOFilename = "$logdir\$($results.$($name).title -replace '\s','_').nfo"
+	ExportCSV -table $results.$($name).DataTable -thisFileInstead $metricCSVFilename 
+	ExportMetaData -metadata $results.$($name).NFO -thisFileInstead $metricNFOFilename
 	updateReportIndexer -string "$(split-path -path $metricCSVFilename -leaf)"
 }
-		
 		
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;

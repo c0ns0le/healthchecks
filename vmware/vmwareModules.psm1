@@ -66,8 +66,8 @@ function getIssues(
 	[int]$maxsamples = [int]::MaxValue,
 	[int]$headerType=1,
 	[string]$li="",
-	$ensureTheseFieldsAreFieldIn
-	
+	[Object]$ensureTheseFieldsAreFieldIn,
+	[bool]$reportThinDisksAsAnIssue=$false
 )		
 {
 	if ($lastDayOfReportOveride)
@@ -100,6 +100,7 @@ function getIssues(
 				$objArray = $_
 				
 				$firstObj = $objArray | select -First 1
+				#write-host $firstObj.Name
 				$type = $firstObj.GetType().Name.Replace("Impl","")				
 				Write-Progress -Activity "Processing report" -Id 1 -Status "$deviceTypeIndex/$($objectsArray.Count) :- $type..." -PercentComplete  (($deviceTypeIndex/$($objectsArray.Count))*100)
 				$index=0;
@@ -270,17 +271,15 @@ function getIssues(
 							
 							
 							# Check VMs with Thin disks
-							if ($excludeThinDisks)
+							$hasThinDisks = $obj.ExtensionData.Config.Hardware.Device | ?{$_.ControllerKey -eq "1000"} | ?{$_.Backing.ThinProvisioned -eq $true}
+							if ($hasThinDisks -and $reportThinDisksAsAnIssue)
 							{
-							} else {
-								$hasThinDisks = $obj.ExtensionData.Config.Hardware.Device | ?{$_.ControllerKey -eq "1000"} | ?{$_.Backing.ThinProvisioned -eq $true}
-								if ($hasThinDisks)
-								{
-									$objectIssuesRegister += "$($li)This VM has $($hasThinDisks.Count) thinly deployed disks. Reconsider using Thick disks instead.`n"
-									$objectIssues++
-								}
+								$objectIssuesRegister += "$($li)This VM has $($hasThinDisks.Count) thinly deployed disks. Reconsider using Thick disks instead.`n"
+								$objectIssues++
+							} elseif ($hasThinDisks -and !$reportThinDisksAsAnIssue)
+							{
+								logThis -msg "`t-> Server has thin disks but the user specified not to report it as an issue"
 							}
-
 							
 							# CHECK HW Version
 							$hwvMatrix = Import-csv .\packages.vmware.com.vmw.hardware.versions.csv
@@ -674,6 +673,9 @@ function getIssues(
 					
 					
 					########################
+					"NasDatastore" {
+						Write-Host "This type of device is not yet supported by this health check" -BackgroundColor Cyan -ForegroundColor Red
+					}
 					"VmfsDatastore" {
 						#if ($objectIssuesRegister) { Remove-Variable objectIssuesHTMLText }
 						#if ($sectionIssuesHTMLText) { Remove-Variable sectionIssuesHTMLText }
@@ -751,9 +753,9 @@ function getIssues(
 							$searchSpec.sortFoldersFirst = $true
 							$dsBrowser = Get-View $dsView.browser -Server $myvCenter
 							$rootPath = "[" + $dsView.Name + "]"
-							logthis -msg "Searching for Folders - BEFORE"
+							#logthis -msg "Searching for Folders - BEFORE"
 							#$searchResult = $dsBrowser.SearchDatastoreSubFolders($rootPath, $searchSpec)
-							logthis -msg "Searching for Folders - AFTER"
+							#logthis -msg "Searching for Folders - AFTER"
 							if ($orphanDisksOutput) { Remove-variable orphanDisksOutput }
 							$orphanDisksOutput = @()
 							foreach ($folder in $searchResult)
@@ -1204,7 +1206,7 @@ function getIssues(
 					}
 					########################
 					default {
-						return
+						Write-Host "This type of device is not yet supported by this health check" -BackgroundColor Cyan -ForegroundColor Red
 					}
 				}
 				$deviceTypeIndex++
@@ -1582,7 +1584,7 @@ function setSectionHeader (
 		[Parameter(Mandatory=$false)][object]$text
 	)
 {
-	$csvFilename=$global:outputCSV -replace ".csv","-$($title -replace ' ','_').csv"
+	$csvFilename=(getRuntimeCSVOutput) -replace ".csv","-$($title -replace ' ','_').csv"
 	$metaFilename=$csvFilename -replace '.csv','.nfo'
 	$metaInfo = @()
 	$metaInfo +="tableHeader=$title $SHOWCOMMANDS"	
@@ -1723,7 +1725,7 @@ function convertValue($unit,$val)
 function SetmyCSVMetaFile(
 	[Parameter(Mandatory=$true)][string] $filename
 	)
-{
+{	
 	if($global:runtimeCSVMetaFile)
 	{
 		$global:runtimeCSVMetaFile = $filename
@@ -2792,13 +2794,15 @@ function SetmyCSVOutputFile(
 		[Parameter(Mandatory=$true)][string] $filename
 	)
 {
-	if($global:outputCSV)
-	{
-		$global:outputCSV = $filename
-	} else {
-		Set-Variable -Name outputCSV -Value $filename -Scope Global
-	}
-	logThis -msg "This script will log all data output to CSV file called $global:outputCSV"
+	logThis -msg "[SetmyCSVOutputFile] This script will log all data output to CSV file called $global:runtimeCSVOutput"
+	$global:runtimeCSVOutput = $filename
+	#if(!(getRuntimeCSVOutput))
+	#{
+		#$global:runtimeCSVOutput = $filename
+	#} else {
+		#Set-Variable -Name outputCSV -Value $filename -Scope Global
+	#}
+	#
 }
 
 	
@@ -2811,7 +2815,7 @@ function AppendToCSVFile (
 		$childitem = Get-Item -Path $global:logDir
 		$global:logDir = $childitem.FullName
 	}
-	Write-Output $msg >> $global:outputCSV
+	Write-Output $msg >> $global:runtimeCSVOutput
 }
 
 function ExportCSV (
@@ -2828,7 +2832,7 @@ function ExportCSV (
 		$childitem = Get-Item -Path $global:logDir
 		$global:logDir = $childitem.FullName
 	}
-	$filename=$global:outputCSV
+	$filename=$global:runtimeCSVOutput
 	if ($thisFileInstead)
 	{
 		$filename = $thisFileInstead
@@ -2849,7 +2853,7 @@ function ExportCSV (
 
 function launchReport()
 {
-	Invoke-Expression $global:outputCSV
+	Invoke-Expression $global:runtimeCSVOutput
 }
 
 
@@ -3197,16 +3201,13 @@ function InitialiseModule
 	#[Parameter(Mandatory=$true)][string]$logDir
 )
 {
+	loadSessionSnapings
 	$global:runtime="$(date -f dd-MM-yyyy)"	
-	#Set-Variable -Name "logDir" -Value  $logDir -Scope 1
-	Set-Variable -Name "runtimeLogFile" -Value  $($global:logDir + "\"+$global:scriptName.Replace(".ps1",".log")) -Scope Global
-	#$global:logDir | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt"
-	Set-Variable -Name "runtimeCSVOutput" -Value  $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".csv")) -Scope Global
-	setRuntimeMetaFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo"))
-	#Set-Variable -Name "runtimeCSVMetaFile" -Value  $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo")) -Scope Global
-	#$scriptsHomeDir = split-path -parent $global:scriptName
 	
-	SetmyLogFile -filename $global:runtimeLogFile
+	SetmyCSVOutputFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".csv"))
+	SetmyCSVMetaFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo"))
+	SetmyLogFile -filename $($global:logDir + "\"+$global:scriptName.Replace(".ps1",".log"))
+
 	logThis -msg " ****************************************************************************" -foregroundColor Cyan
 	logThis -msg " Script Started @ $(get-date)" -ForegroundColor Cyan
 	logThis -msg " Executing script: $global:scriptName " -ForegroundColor Cyan
@@ -3217,8 +3218,6 @@ function InitialiseModule
 	logThis -msg " vCenter Server: $global:vCenter" -ForegroundColor  Cyan	
 	logThis -msg " ****************************************************************************" -foregroundColor Cyan
 	logThis -msg "Loading Session Snapins.."
-	loadSessionSnapings
-	SetmyCSVOutputFile -filename $global:runtimeCSVOutput
-	SetmyCSVMetaFile -filename $global:runtimeCSVMetaFile	
+		
 	test2
 }
