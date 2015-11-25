@@ -11,7 +11,20 @@ param
 	[bool]$chartFriendly=$false,
 	[bool]$dailyChecks=$true,
 	[bool]$capacityChecks=$false,
-	[bool]$monthlyChecks=$false
+	[bool]$monthlyChecks=$false,
+	[bool]$tapeExpiryOnly=$false,
+	[bool]$emailReport=$false,
+	[string]$site="",
+	[string]$smtpServer,
+	[string]$from,
+	[string]$fromContactName,
+	[string]$toName,
+	[string]$replyTo,
+	[string]$toAddresses,
+	[string]$siteAddress,
+	[string]$contactNumber,
+	[string]$logProgressHere
+
 )
 
 #region Import-Modules
@@ -19,6 +32,14 @@ Add-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name dateFormat -Value $dateFormat -Scope Global
+if ($logProgressHere)
+{
+	Set-Variable -Name logfile -Value $logProgressHere -Scope Global
+} else {
+	Set-Variable -Name logfile -Value $($($MyInvocation.MyCommand.name) -replace '.csv','.log') -Scope Global
+}
+Get-Date | Out-File $global:logFile
+
 $global:logfile
 $global:outputCSV
 $global:backupSpecs=$null
@@ -35,6 +56,7 @@ $global:backupSessions=$null
 function logThis ([string]$msg)
 {
 	Write-Host $msg
+	$msg | Out-file $global:logfile -Append
 }
 
 ############################################################################################################################# - OK
@@ -692,7 +714,7 @@ function getMissingExpiredTapes()
 	$format = "dd-MM-yyyy"
 	$today = Get-Date -Format $format 
 	$tapes = Get-VBRTapeMedium |  select Barcode,Location,IsExpired,IsLocked,@{n='Expiry';e={get-date $_.ExpirationDate -Format $format}},@{n='Pool';e={getMediaPoolNameByID -id $_.MediaPoolId}}
-	$expired_tapes = $tapes | ?{ (get-date $_.Expiry) -le (Get-date $today) -and $_.Location -notlike "Slot"}
+	$expired_tapes = $tapes | ?{ $_.Expiry -and (get-date $_.Expiry) -le (Get-date $today) -and $_.Location -notlike "Slot"}
 	return ($expired_tapes | Select Barcode,Expiry,Pool)
 
 }
@@ -995,6 +1017,57 @@ function Get-VMsSuccessBackup {
 	}
 	$outputAry | Select Datacenter, Cluster, Name
 }
+#############################################################################################################################- NOT OK
+function sendEmail
+	(	[Parameter(Mandatory=$true)][string] $smtpServer,  
+		[Parameter(Mandatory=$true)][string] $from, 
+		[Parameter(Mandatory=$true)][string] $replyTo=$from, 
+		[Parameter(Mandatory=$true)][string] $toAddresses,
+		[Parameter(Mandatory=$true)][string] $subject, 
+		[Parameter(Mandatory=$true)][string] $body="",
+		[Parameter(Mandatory=$false)][string]$fromContactName="",
+		[Parameter(Mandatory=$false)][object] $attachements # An array of filenames with their full path locations
+	)  
+{
+	Write-Host "[$attachments]" -ForegroundColor Blue
+	if (!$smtpServer -or !$from -or !$replyTo -or !$toAddresses -or !$subject -or !$body)
+	{
+		Write-Host "Cannot Send email. Missing parameters for this function. Note that All fields must be specified" -BackgroundColor Red -ForegroundColor Yellow
+		Write-Host "smtpServer = $smtpServer"
+		Write-Host "from = $from"
+		Write-Host "replyTo = $replyTo"
+		Write-Host "toAddress = $toAddresses"
+		Write-Host "subject = $subject"
+		Write-Host "body = $body"
+	} else {
+		#Creating a Mail object
+		$msg = new-object Net.Mail.MailMessage
+		#Creating SMTP server object
+		$smtp = new-object Net.Mail.SmtpClient($smtpServer)
+		#Email structure
+		$msg.From = "$fromContactName $from"
+		$msg.ReplyTo = $replyTo
+		$msg.To.Add($toAddresses)
+		$msg.subject = $subject
+		$msg.IsBodyHtml = $true
+		$msg.body = $body.ToString();
+		$msg.DeliveryNotificationOptions = "OnFailure"
+		
+		if ($attachments)
+		{
+			$attachments | %{
+				#Write-Host $_ -ForegroundColor Blue
+				$attachment = new-object System.Net.Mail.Attachment($_,"Application/Octet")
+				$msg.Attachments.Add($attachment)
+			}
+		} else {
+			#Write-Host "No $attachments"
+		}
+		
+		Write-Host "Sending email from iwthin this routine"
+		$smtp.Send($msg)
+	}
+}
 
 #endregion
 
@@ -1008,95 +1081,169 @@ logThis -msg  "Being @ $(Get-date)"
 $reportDate = Get-Date -Format "dd-MM-yy"
 $veeamServer=Get-VBRLocalhost
 
-$node=@{}
-$node["Name"]= $veeamServer.RealName
-$node["Report Properties"]=@{}
-$node["Report Properties"]["Report Ran on"]=$reportDate
-$node["Report Properties"]["Daily Checks"] = $dailyChecks
-$node["Report Properties"]["Capacity Checks"] = $capacityChecks
-$node["Report Properties"]["Monthly Checks"] = $monthlyChecks
-$node["Server Information"]=$veeamServer
-
-if ($dailyChecks)
+if ($tapeExpiryOnly)
 {
-	logThis -msg  "`t-> Getting list of Missing Expired Tapes"
-	$node["Missing Tapes"]= getMissingExpiredTapes
-} 
+	logThis -msg  "`t-> Getting list of Missing Expired Tapes"	
+	$node=@{}
+	$node["Name"]= $veeamServer.RealName
+	$node["Report Properties"]=@{}
+	$node["Report Properties"]["Report Ran on"]=$reportDate
+	$node["Server Information"]=$veeamServer
+	$node["Report Properties"]["Type"] = "Henry Schein Halas - Expired Tape List for Recall"
+	$list = getMissingExpiredTapes
+	if ($list)
+	{
+		$node["Missing Tapes"] = $list
+		$list | Output-file $global:logFile
+		if ($emailReport)
+		{
+			#$node["Email Properties"]=
+			$style = "<style>BODY{font-family: Arial; font-size: 10pt;}"
+			$style = $style + "TABLE{border: 1px solid black; border-collapse: collapse;}"
+			$style = $style + "TH{border: 1px solid black; background: #dddddd; padding: 5px; }"
+			$style = $style + "TD{border: 1px solid black; padding: 5px; }"
+			$style = $style + "</style>"
+			$precontent = @"
+				<p>Hi $toName,</p>
+				<p></p>
+				<p>Please find below a list of Tapes (barcodes) marked for recall. There is a total of $($list.Count) tapes in the list.</p>
+				<p></p>
+				<p>Please send back the below tapes to the following address: <i><b>$siteAddress</b></i></p>
+				<p></p>
+"@
+			$postContent = @"
+				<p></p>
+				<p>Regards</p>
+				<p></p>
+				<p>$fromContactName</p>
+				<p>$from | $contactNumber | $siteAddress </p>
+"@
+			$mail = @{
+				'smtpServer' = $smtpServer;
+				'from' = $from;
+				'replyTo' = $replyTo;
+				'toAddresses' = $toAddresses;
+				'subject' = $node["Report Properties"]["Type"];
+				'body' = [string]$($node.'Missing Tapes' | ConvertTo-Html -Head $style -PreContent $precontent -PostContent $postContent);
+				'fromContactName' = $fromContactName
+			}	
+			sendEmail  @mail
+			$isgood=$true
+		}
+	} else {
+		logThis -msg "`t`tThere are no expired Tapes found for recall"
+		$isgood=$false
+	}	
+} else {
+	$node=@{}
+	$node["Name"]= $veeamServer.RealName
+	$node["Report Properties"]=@{}
+	$node["Report Properties"]["Report Ran on"]=$reportDate
+	$node["Server Information"]=$veeamServer
+	if ($dailyChecks)
+	{
+		$node["Report Properties"]["Type"] = "Daily Checks"
+		$node["Reporting Period (Months)"] = $showLastMonths
+		logThis -msg  "`t-> Collecting Backup Repository Information"
+		$node["Repositories"] = Get-VeeamBackupRepositoryies -chartFriendly $chartFriendly
+		logThis -msg  "`t-> Collecting Backup Sessions"
+		$node["Backup Sessions"] = Get-VeeamBackupSessions -chartFriendly $chartFriendly
+		logThis -msg  "`t-> Collecting Individual Backup Tasks"
+		$node["Backups by Clients"] = Get-VeeamClientBackups -chartFriendly $chartFriendly
 
-if ($capacityChecks)
-{
-	$node["Reporting Period (Months)"] = $showLastMonths
-	logThis -msg  "`t-> Collecting Backup Repository Information"
-	$node["Repositories"] = Get-VeeamBackupRepositoryies -chartFriendly $chartFriendly
-	logThis -msg  "`t-> Collecting Backup Sessions"
-	$node["Backup Sessions"] = Get-VeeamBackupSessions -chartFriendly $chartFriendly
-	logThis -msg  "`t-> Collecting Individual Backup Tasks"
-	$node["Backups by Clients"] = Get-VeeamClientBackups -chartFriendly $chartFriendly
+		# Get first day, last day
+		$firstRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort |  select -First 1
+		$node["Report Properties"]["Sample Start Date"]=$firstRecordedBackupDay
+		$lastRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort | select -Last 1
+		$thisDate=(Get-Date -Format $dateFormat)
 
-	# Get first day, last day
-	$firstRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort |  select -First 1
-	$node["Report Properties"]["Sample Start Date"]=$firstRecordedBackupDay
-	$lastRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort | select -Last 1
-	$thisDate=(Get-Date -Format $dateFormat)
+		$node["Report Properties"]["Sample End Date"]=$lastRecordedBackupDay
+		$reportingMonths = $node["Backup Sessions"].Month | %{ get-date $_ } | Select -Unique | Sort | %{ get-date $_ -format $dateFormat } | ?{$_ -ne $thisDate} | Select -Last $node["Reporting Period (Months)"]
+		logThis -msg  "`t-> Creating Backup Jobs Summary"
+		$node["Jobs Summary"] = Get-BackupJobsSummary -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-	$node["Report Properties"]["Sample End Date"]=$lastRecordedBackupDay
-	$reportingMonths = $node["Backup Sessions"].Month | %{ get-date $_ } | Select -Unique | Sort | %{ get-date $_ -format $dateFormat } | ?{$_ -ne $thisDate} | Select -Last $node["Reporting Period (Months)"]
-	logThis -msg  "`t-> Creating Backup Jobs Summary"
-	$node["Jobs Summary"] = Get-BackupJobsSummary -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+		logThis -msg  "`t->Client Sizes"
+		$node["Client Sizes"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-	logThis -msg  "`t->Client Sizes"
-	$node["Client Sizes"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+		logThis -msg  "`t->Data Change Rate"
+		$node["Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-	logThis -msg  "`t->Data Change Rate"
-	$node["Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+		logThis -msg  "`t->Data Transfered"
+		$node["Data Transfered"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-	logThis -msg  "`t->Data Transfered"
-	$node["Data Transfered"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+		logThis -msg  "`t-> Creating Monthly Capacity Summary"
+		$node["Monthly Capacity"] = Get-MonthlyBackupCapacity -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
-	logThis -msg  "`t-> Creating Monthly Capacity Summary"
-	$node["Monthly Capacity"] = Get-MonthlyBackupCapacity -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+		logThis -msg  "`t-> Getting list of Missing Expired Tapes"
+		$node["Missing Tapes"]= getMissingExpiredTapes
 
-	logThis -msg  "`t-> Getting list of Missing Expired Tapes"
-	$node["Missing Tapes"]= getMissingExpiredTapes
+	}
 
+	if ($monthlyChecks)
+	{
+		$node["Report Properties"]["Type"] = "Monthly Checks"
+		$node["Reporting Period (Months)"] = $showLastMonths
+		logThis -msg  "`t-> Collecting Backup Repository Information"
+		$node["Repositories"] = Get-VeeamBackupRepositoryies -chartFriendly $chartFriendly
+		logThis -msg  "`t-> Collecting Backup Sessions"
+		$node["Backup Sessions"] = Get-VeeamBackupSessions -chartFriendly $chartFriendly
+		logThis -msg  "`t-> Collecting Individual Backup Tasks"
+		$node["Backups by Clients"] = Get-VeeamClientBackups -chartFriendly $chartFriendly
+
+		# Get first day, last day
+		$firstRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort |  select -First 1
+		$node["Report Properties"]["Sample Start Date"]=$firstRecordedBackupDay
+		$lastRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort | select -Last 1
+		$thisDate=(Get-Date -Format $dateFormat)
+
+		$node["Report Properties"]["Sample End Date"]=$lastRecordedBackupDay
+		$reportingMonths = $node["Backup Sessions"].Month | %{ get-date $_ } | Select -Unique | Sort | %{ get-date $_ -format $dateFormat } | ?{$_ -ne $thisDate} | Select -Last $node["Reporting Period (Months)"]
+		logThis -msg  "`t-> Creating Backup Jobs Summary"
+		$node["Jobs Summary"] = Get-BackupJobsSummary -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+
+		logThis -msg  "`t->Client Sizes"
+		$node["Client Sizes"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+
+		logThis -msg  "`t->Data Change Rate"
+		$node["Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+
+		logThis -msg  "`t->Data Transfered"
+		$node["Data Transfered"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+
+		logThis -msg  "`t-> Creating Monthly Capacity Summary"
+		$node["Monthly Capacity"] = Get-MonthlyBackupCapacity -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+
+		logThis -msg  "`t-> Getting list of Missing Expired Tapes"
+		$node["Missing Tapes"]= getMissingExpiredTapes
+	}
 }
 
-if ($monthlyChecks)
-{
-	
-}
 
 ####################
-logThis -msg "Writing Report to Disks @ $logDir"
-#$prefix="$logDir\$reportDate-$($node['Name'])"
-$prefix="$logDir"
-if ($xmlOutput)
+if ($isgood)
 {
-	$node | Export-Clixml "$logDir\$reportDate-$($node['Name']).xml"
-}
-if ($csvOutput)
-{
-	$exclusions="Report Properties","Name"
-	$node.keys | %{
-		#"Server Information","Repositories","Backup Sessions","Backups by Clients","Jobs Summary","Client Sizes","Data Change Rate","Data Transfered","Monthly Capacity","Missing Tapes" | %{
-		$label=$_
-		#$exclusions -notcontains "$label"
-		if ($exclusions -notcontains "$label")
-		{
-			$node[$label]  | Export-Csv -NoTypeInformation "$prefix\$label.csv"
-			#$node[$label]  | Export-Csv -NoTypeInformation "$label.csv"
+	logThis -msg "Writing Report to Disks @ $logDir"
+	#$prefix="$logDir\$reportDate-$($node['Name'])"
+	$prefix="$logDir"
+	if ($xmlOutput)
+	{
+		$node | Export-Clixml "$logDir\$reportDate-$($node['Name']).xml"
+	}
+	if ($csvOutput)
+	{
+		$exclusions="Report Properties","Name"
+		$node.keys | %{
+			#"Server Information","Repositories","Backup Sessions","Backups by Clients","Jobs Summary","Client Sizes","Data Change Rate","Data Transfered","Monthly Capacity","Missing Tapes" | %{
+			$label=$_
+			#$exclusions -notcontains "$label"
+			if ($exclusions -notcontains "$label")
+			{
+				$node[$label]  | Export-Csv -NoTypeInformation "$prefix\$label.csv"
+				#$node[$label]  | Export-Csv -NoTypeInformation "$label.csv"
+			}
 		}
 	}
 }
-if ($emailOutputInternal)
-{
-
-}
-
-if ($emailOutputThirdParty)
-{
-
-}
-
+logThis -msg  ""
 logThis -msg  "Completed @ $(Get-date)"
 #endregion

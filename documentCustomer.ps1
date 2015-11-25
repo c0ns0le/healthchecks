@@ -78,6 +78,7 @@ function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
 		}
 	}
 	
+	
 	if ($configurations)
 	{
 		# Perform post processing by replace all strings with  $ sign in them with the content of their respective Content.
@@ -90,7 +91,7 @@ function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
 			$updatedValue=""
 			$updatedField = $configurations.$keyname | %{
 				$curr_string = $_				
-				if ($curr_string -match '$')
+				if ($curr_string.count -gt 1 -and $curr_string -match '$')
 				{
 					# replace the string with a $ sign in it with the content of the variable it is expected
 					$newstring=""
@@ -100,16 +101,18 @@ function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
 						if ($word -like '*$*')
 						{
 							$key=$word -replace '\$'
-							$configurations.$key							
-						} elseif ($word -eq "True") {
-							$true
-						} elseif ($word -eq "False") {
-							$false
+							$configurations.$key
 						} else {
 							$word
 						}
 					}
 					$updatedValue = [string]$newstring_array
+				} elseif ($curr_string -eq $true)
+				{
+					$updatedValue = $true
+				} elseif ($curr_string -eq $false)
+				{
+					$updatedValue = $false
 				} else {
 					$updatedValue = $curr_string
 				}
@@ -119,7 +122,8 @@ function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
 		}
 		$postProcessConfigs.Add("inifile",$inifile)
 		#return $configurations,$postProcessConfigs
-		return $postProcessConfigs
+	
+		return $postProcessConfigs,$configurations
 	} else {
 		return $null
 	}
@@ -196,13 +200,13 @@ function startProcess()
 			
 			$passwordFile = "$($($filepath).Path)"	
 			#$passwordFile
-			#pause
+			
 		} Catch {		
 			#$ErrorMessage = $_.Exception.Message
 	    		#$FailedItem = $_.Exception.ItemName
 			#showError -msg $ErrorMessage
 			$global:configs.vcCredentialsFile
-			#pause
+			
 			set-mycredentials -Filename $global:configs.vcCredentialsFile
 			$passwordFile = $global:configs.vcCredentialsFile
 			#break
@@ -248,12 +252,12 @@ function startProcess()
 						'logProgressHere'=$logfile;
 						'srvconnection'=$srvconnection;
 						'logDir'=$thisReportLogdir;
-						'runCapacityReports' = [bool]$global:configs.capacity;
+						'runCapacityReports' = $global:configs.capacity;
 						'runPerformanceReports' = $false;
-						'runExtendedReports' = [bool]$global:configs.runExtendedVMwareReports;
-						'vms' = [bool]$global:configs.vmsToCheckPerformance;
+						'runExtendedReports' = $global:configs.runExtendedVMwareReports;
+						'vms' = $global:configs.vmsToCheckPerformance;
 						'showPastMonths' = [int]$global:configs.previousMonths;
-						'runJobsSequentially' = [bool]$global:configs.runJobsSequentially
+						'runJobsSequentially' = $global:configs.runJobsSequentially
 					}
 					
 					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
@@ -275,9 +279,9 @@ function startProcess()
 						'reportHeader' = $global:configs.reportHeader;
 						'reportIntro' = $global:configs.reportIntro;
 						'farmName' = $global:configs.customer;
-						'openReportOnCompletion'= [bool]$global:configs.openReportOnCompletion;
-						'createHTMLFile' = [bool]$global:configs.createHTMLFile;
-						'emailReport' = [bool]$global:configs.emailReport;
+						'openReportOnCompletion'= $global:configs.openReportOnCompletion;
+						'createHTMLFile' = $global:configs.createHTMLFile;
+						'emailReport' = $global:configs.emailReport;
 						'verbose' = $false;
 						'itoContactName' = $global:configs.itoContactName;
 					}
@@ -300,9 +304,9 @@ function startProcess()
 						'farmName' = $global:configs.customer;
 						'setTableStyle' = 'aITTablesytle';
 						'itoContactName' = $global:configs.itoContactName;						
-						'openReportOnCompletion' = [bool]$global:configs.openReportOnCompletion;
-						'createHTMLFile' = [bool]$global:configs.createHTMLFile;
-						'emailReport' = [bool]$global:configs.emailReport;
+						'openReportOnCompletion' = $global:configs.openReportOnCompletion;
+						'createHTMLFile' = $global:configs.createHTMLFile;
+						'emailReport' = $global:configs.emailReport;
 						'verbose' = [bool]$false;
 					}
 					
@@ -352,9 +356,9 @@ function startProcess()
 						'runCapacityReports' = $false;
 						'runPerformanceReports' = $true;
 						'runExtendedReports' = $false;
-						'vms' = [bool]$global:configs.vmsToCheckPerformance;
+						'vms' = $global:configs.vmsToCheckPerformance;
 						'showPastMonths' = [int]$global:configs.previousMonths;
-						'runJobsSequentially' = [bool]$global:configs.runJobsSequentially
+						'runJobsSequentially' = $global:configs.runJobsSequentially
 					}
 					logThis -msg "`t-> Collecting Performance information to location: $thisReportLogdir" -logfile $logfile 
 					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams 
@@ -370,9 +374,9 @@ function startProcess()
 						'reportHeader' = $global:configs.reportHeader;
 						'reportIntro' = $global:configs.reportIntro;
 						'farmName' = $global:configs.customer;
-						'openReportOnCompletion' = [bool]$global:configs.openReportOnCompletion;
-						'createHTMLFile' = [bool]$global:configs.createHTMLFile;
-						'emailReport' = [bool]$global:configs.emailReport;
+						'openReportOnCompletion' = $global:configs.openReportOnCompletion;
+						'createHTMLFile' = $global:configs.createHTMLFile;
+						'emailReport' = $global:configs.emailReport;
 						'verbose' = $false;
 						'itoContactName' = $global:configs.itoContactName;
 					}
@@ -388,9 +392,9 @@ function startProcess()
 						'reportHeader' = $global:configs.reportHeader;
 						'reportIntro' = $global:configs.reportIntro;
 						'farmName' = $global:configs.customer;
-						'openReportOnCompletion' = [bool]$global:configs.openReportOnCompletion;
-						'createHTMLFile' = [bool]$global:configs.createHTMLFile;
-						'emailReport' = [bool]$global:configs.emailReport;
+						'openReportOnCompletion' = $global:configs.openReportOnCompletion;
+						'createHTMLFile' = $global:configs.createHTMLFile;
+						'emailReport' = $global:configs.emailReport;
 						'verbose' = $false;
 						'itoContactName' = $global:configs.itoContactName;
 					}
@@ -423,9 +427,9 @@ function startProcess()
 						'reportHeader' = $global:configs.reportHeader;
 						'reportIntro' = $global:configs.reportIntro;
 						'farmName' = $global:configs.customer;
-						'openReportOnCompletion' = [bool]$global:configs.openReportOnCompletion;
-						'createHTMLFile' = [bool]$global:configs.createHTMLFile;
-						'emailReport' = [bool]$global:configs.emailReport;
+						'openReportOnCompletion' = $global:configs.openReportOnCompletion;
+						'createHTMLFile' = $global:configs.createHTMLFile;
+						'emailReport' = $global:configs.emailReport;
 						'verbose' = $false;
 						'itoContactName' = $global:configs.itoContactName;
 					}
@@ -585,7 +589,13 @@ function startProcess()
 # MAIN
 if ($configObj) {Remove-Variable configObj -Scope All }
 if ($global:configs) {Remove-Variable configs -Scope Global }
-$configObj = readConfiguration -inifile $inifile
+if ($preconfig) {Remove-Variable preconfig -Scope All }
+$configObj,$preconfig = readConfiguration -inifile $inifile
+Write-Host "AFTER"
+$configObj
+Write-Host "BEFORE"
+$preconfig 
+pause
 if ($configObj)
 {	
 	#$configObj

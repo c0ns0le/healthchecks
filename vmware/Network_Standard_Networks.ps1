@@ -37,11 +37,9 @@ $Report = $srvConnection | %{
 		if ($srvConnection.Count -gt 1)
 		{
 			$row | Add-Member -Type NoteProperty -Name "vCenter" -Value $vcenter.Name
-		}
-		
-		$pgs = (([string]((Get-VirtualPortGroup -VMHost $vswitch.VMHost | Select @{n='Name';e={"$($_.Name) ($($_.VlanId))" -replace ' ','>>'}}).Name)) -replace ' ',', ') -replace '>>',' '
-		
-		$row | Add-Member -Type NoteProperty -Name "Port Groups" -Value $pgs
+		}		
+
+		$row | Add-Member -Type NoteProperty -Name "Port Groups" -Value $((([string]((Get-VirtualPortGroup -VMHost $vswitch.VMHost | Select @{n='Name';e={"$($_.Name) ($($_.VlanId))" -replace ' ','>>'}}).Name)) -replace ' ',', ') -replace '>>',' ')
 		"AllowPromiscuous","MacChanges","ForgedTransmits" | %{
 			$row | Add-Member -Type NoteProperty -Name "$_" -Value $vswitch.ExtensionData.Spec.Policy.Security.$_
 		}

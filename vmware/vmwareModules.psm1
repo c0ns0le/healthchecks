@@ -749,12 +749,14 @@ function getIssues(
 							$fileQueryFlags.Modification = $true
 							$searchSpec = New-Object VMware.Vim.HostDatastoreBrowserSearchSpec
 							$searchSpec.details = $fileQueryFlags
+							# Note for the future release
+							# try to find vmx and vmtx as well.
 							$searchSpec.matchPattern = "*.vmdk"
 							$searchSpec.sortFoldersFirst = $true
 							$dsBrowser = Get-View $dsView.browser -Server $myvCenter
 							$rootPath = "[" + $dsView.Name + "]"
 							#logthis -msg "Searching for Folders - BEFORE"
-							#$searchResult = $dsBrowser.SearchDatastoreSubFolders($rootPath, $searchSpec)
+							$searchResult = $dsBrowser.SearchDatastoreSubFolders($rootPath, $searchSpec)
 							#logthis -msg "Searching for Folders - AFTER"
 							if ($orphanDisksOutput) { Remove-variable orphanDisksOutput }
 							$orphanDisksOutput = @()
@@ -795,7 +797,7 @@ function getIssues(
 								{
 									$themTxt="There is 1 orphan VMDK on this datastore consuming $($orphanDisksTotalSizeGB) GB. Consider removing it."
 								} else {
-									$themTxt="There is $($orphanDisksOutput.Count) orphan VMDKs on this datastore consuming $(getsize -unit 'GB' -val $orphanDisksTotalSizeGB). Consider removing them."
+									$themTxt="There are $($orphanDisksOutput.Count) potential orphan VMDKs on this datastore consuming $(getsize -unit 'GB' -val $orphanDisksTotalSizeGB). Consider removing them."
 								}
 								$objectIssuesRegister += "$($li)$themTxt`n"
 								$objectIssuesRegister += $orphanDisksOutput # | ConvertTo-Html -Fragment
@@ -975,6 +977,13 @@ function getIssues(
 								$objectIssuesRegister += "$($li)Although HA is Enabled on this cluster, Admission Control is disabled. Consider re-enabling.`n"
 								$objectIssues++
 							}
+							
+							if ($obj.HAEnabled -and ($obj.ExtensionData.Summary.CurrentFailoverLevel -lt $obj.HAFailoverLevel))
+							{
+								$objectIssuesRegister += "$($li)The cluster's failover levels are below the levels configured. The configured level is $($obj.HAFailoverLevel) whilst the actual is $($obj.ExtensionData.Summary.CurrentFailoverLevel).`n"
+								$objectIssues++
+							}
+							
 							# Check if Reservations and Limits are set
 							$vms = Get-VM * -Location $obj  -Server $myvCenter
 							if ($vms)
