@@ -706,19 +706,46 @@ function getMediaPoolIdByName($name)
 	#pause
 	return ($mediaPool | ?{$_.name -eq $name}).Id
 }
-
-
-#############################################################################################################################- OK
-function getMissingExpiredTapes()
+############################################################################################################################- OK
+function getTapeJobs ([int]$pastDays=7,[bool]$force=$false)
 {
-	$format = "dd-MM-yyyy"
-	$today = Get-Date -Format $format 
-	$tapes = Get-VBRTapeMedium |  select Barcode,Location,IsExpired,IsLocked,@{n='Expiry';e={get-date $_.ExpirationDate -Format $format}},@{n='Pool';e={getMediaPoolNameByID -id $_.MediaPoolId}}
-	$expired_tapes = $tapes | ?{ $_.Expiry -and (get-date $_.Expiry) -le (Get-date $today) -and $_.Location -notlike "Slot"}
-	return ($expired_tapes | Select Barcode,Expiry,Pool)
-
+	if ($global:tapeJobs -and !$force)
+	{
+		#logThis -msg "`t`t-> Re-using existing collection of Tape Media Pool"
+		return $global:tapeJobs
+	} else {	
+		logThis -msg "`t`t-> First time collection of Tape Media Pool"
+		Set-Variable -Scope "Global" -Name "tapeJobs" -Value (Get-VBRTapeJobs )
+		return $global:tapeJobs
+	}
 }
 
+#############################################################################################################################- OK
+function getExpiredTapes([int]$daysAhead=0)
+{
+	$format = "dd-MM-yyyy"
+	$cutoffday = get-date $(Get-Date).AddDays($daysAhead) -Format $format
+	$tapes = Get-VBRTapeMedium |  select Barcode,Location,IsExpired,IsLocked,@{n='Expiry';e={get-date $_.ExpirationDate -Format $format}},@{n='Pool';e={getMediaPoolNameByID -id $_.MediaPoolId}}
+	$expiring_tapes = $tapes | ?{ $_.Expiry -and (get-date $_.Expiry) -le (Get-date $cutoffday) -and $_.Location -notlike "Slot"}
+	return ($expiring_tapes | Select Barcode,Expiry,Pool)
+}
+#############################################################################################################################- OK
+function getExpiringTapes([int]$daysAhead=1)
+{
+	#return (getExpiredTapes -daysAhead 1)
+	$format = "dd-MM-yyyy"
+	$cutoffday = get-date $(Get-Date).AddDays($daysAhead) -Format $format
+	$tapes = Get-VBRTapeMedium |  select Barcode,Location,IsExpired,IsLocked,@{n='Expiry';e={get-date $_.ExpirationDate -Format $format}},@{n='Pool';e={getMediaPoolNameByID -id $_.MediaPoolId}}
+	$expiring_tapes = $tapes | ?{ $_.Expiry -and (get-date $_.Expiry) -gt (Get-date $cutoffday) -and $_.Location -notlike "Slot"}
+	return ($expiring_tapes | Select Barcode,Expiry,Pool)
+}
+
+#############################################################################################################################- NO OK
+function getListOfTapestoSendOffsite ()
+{
+	$tapeJobs = Get-VBRTapeJobs | ?{$_.JobTargetType -eq "Tape"} | Sort  | select -Last 1
+	
+}
 
 #############################################################################################################################- NOT OK
 function Get-vPCProxyInfo {
@@ -925,7 +952,7 @@ function Get-VeeamServices {
 	    Select @{Name="Server Name"; Expression = {$obj.ToLower()}}, @{Name="Service Name"; Expression = {$_.DisplayName}}, Status
 	    $outputAry = $outputAry + $output  
     }
-$outputAry
+	$outputAry
 }
 #############################################################################################################################- NOT OK
 function Get-VMsBackupStatus {
@@ -1090,7 +1117,8 @@ if ($tapeExpiryOnly)
 	$node["Report Properties"]["Report Ran on"]=$reportDate
 	$node["Server Information"]=$veeamServer
 	$node["Report Properties"]["Type"] = "Henry Schein Halas - Expired Tape List for Recall"
-	$list = getMissingExpiredTapes
+	#$list = getExpiredTapes
+	$list = getExpiringTapes -daysAhead 1 | sort Barcode
 	if ($list)
 	{
 		$node["Missing Tapes"] = $list
@@ -1126,7 +1154,7 @@ if ($tapeExpiryOnly)
 				'subject' = $node["Report Properties"]["Type"];
 				'body' = [string]$($node.'Missing Tapes' | ConvertTo-Html -Head $style -PreContent $precontent -PostContent $postContent);
 				'fromContactName' = $fromContactName
-			}	
+			}
 			sendEmail  @mail
 			$isgood=$true
 		}
@@ -1145,38 +1173,26 @@ if ($tapeExpiryOnly)
 		$node["Report Properties"]["Type"] = "Daily Checks"
 		$node["Reporting Period (Months)"] = $showLastMonths
 		logThis -msg  "`t-> Collecting Backup Repository Information"
-		$node["Repositories"] = Get-VeeamBackupRepositoryies -chartFriendly $chartFriendly
-		logThis -msg  "`t-> Collecting Backup Sessions"
-		$node["Backup Sessions"] = Get-VeeamBackupSessions -chartFriendly $chartFriendly
-		logThis -msg  "`t-> Collecting Individual Backup Tasks"
-		$node["Backups by Clients"] = Get-VeeamClientBackups -chartFriendly $chartFriendly
-
-		# Get first day, last day
-		$firstRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort |  select -First 1
-		$node["Report Properties"]["Sample Start Date"]=$firstRecordedBackupDay
-		$lastRecordedBackupDay = $node["Backup Sessions"]."Creation Time" | sort | select -Last 1
-		$thisDate=(Get-Date -Format $dateFormat)
-
-		$node["Report Properties"]["Sample End Date"]=$lastRecordedBackupDay
-		$reportingMonths = $node["Backup Sessions"].Month | %{ get-date $_ } | Select -Unique | Sort | %{ get-date $_ -format $dateFormat } | ?{$_ -ne $thisDate} | Select -Last $node["Reporting Period (Months)"]
-		logThis -msg  "`t-> Creating Backup Jobs Summary"
-		$node["Jobs Summary"] = Get-BackupJobsSummary -chartFriendly $chartFriendly -reportingMonths $reportingMonths
-
-		logThis -msg  "`t->Client Sizes"
-		$node["Client Sizes"] = Get-VeeamClientBackupsSummary-ClientInfrastructureSize -chartFriendly $chartFriendly -reportingMonths $reportingMonths
-
-		logThis -msg  "`t->Data Change Rate"
-		$node["Data Change Rate"] = Get-VeeamClientBackupsSummary-ChangeRate -chartFriendly $chartFriendly -reportingMonths $reportingMonths
-
-		logThis -msg  "`t->Data Transfered"
-		$node["Data Transfered"] = Get-VeeamClientBackupsSummary-DataIngested -chartFriendly $chartFriendly -reportingMonths $reportingMonths
-
-		logThis -msg  "`t-> Creating Monthly Capacity Summary"
-		$node["Monthly Capacity"] = Get-MonthlyBackupCapacity -chartFriendly $chartFriendly -reportingMonths $reportingMonths
+		
+		
+		logThis -msg  "`t-> Getting list of Active Backups "
+		#$node["Active Backups"] = showActiveBackups
 
 		logThis -msg  "`t-> Getting list of Missing Expired Tapes"
-		$node["Missing Tapes"]= getMissingExpiredTapes
+		$node["Expiring Missing Tapes"] = getExpiredTapes
 
+		#logThis -msg  "`t-> Getting list of Missing Expiring Tapes"
+		#$node["Missing Expired Tapes"] = getExpiredTapes -daysAhead 0
+				
+		logThis -msg  "`t-> Getting list of Tapes in drive"
+		#$node["Tapes in use"] = getTapesInUse
+				
+		logThis -msg  "`t-> Getting list of Tapes used in the last backups"
+		$node["Tapes to Recall"] = getExpiredTapes  -daysAhead 1
+		
+		logThis -msg  "`t-> Getting Veeam Services Status"
+		$node["Veeam Status"] = Get-VeeamServices -inputObj ausydsv07
+		
 	}
 
 	if ($monthlyChecks)
@@ -1214,7 +1230,7 @@ if ($tapeExpiryOnly)
 		$node["Monthly Capacity"] = Get-MonthlyBackupCapacity -chartFriendly $chartFriendly -reportingMonths $reportingMonths
 
 		logThis -msg  "`t-> Getting list of Missing Expired Tapes"
-		$node["Missing Tapes"]= getMissingExpiredTapes
+		$node["Missing Tapes"]= getExpiredTapes
 	}
 }
 

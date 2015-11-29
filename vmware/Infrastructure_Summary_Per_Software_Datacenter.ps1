@@ -3,15 +3,21 @@
 # Last updated: 8 March 2012
 # Author: teiva.rodiere@gmail.com
 #
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1)
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$showDate=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true
+)
 logThis -msg "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-
+#$global:logfile
+#$global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
 InitialiseModule
@@ -26,7 +32,7 @@ $metaInfo +="chartable=false"
 #$metaAnalytics
 
 logThis -msg "Enumerating datacenters..."
-$report = Get-Datacenter -Server $srvConnection | %{
+$dataTable = Get-Datacenter -Server $srvConnection | %{
 	$dc = $_
 	#$svConnection
 	logThis -msg "-> Processing datacenter $($dc.Name)"
@@ -79,21 +85,28 @@ $report = Get-Datacenter -Server $srvConnection | %{
 	#$row | Add-Member -MemberType NoteProperty -Name "Storage" -Value "$($datastores.Count)"
 	$row | Add-Member -MemberType NoteProperty -Name "Storage Capacity (TB)" -Value " $(formatNumbers $dtCapacity)"
 	$row | Add-Member -MemberType NoteProperty -Name "Free Capacity (TB)" -Value "$(formatNumbers $dtFreespace)"
-	logThis -msg $row
-	
+	logThis -msg $row	
 	$row
 }
 
 # Perform some analytics
 
 
-# Post Creation of Report
-ExportCSV -table $report
-if ($metaAnalytics)
+if ($dataTable)
 {
-	$metaInfo += "analytics="+$metaAnalytics
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
 }
-ExportMetaData -meta $metaInfo
 
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;

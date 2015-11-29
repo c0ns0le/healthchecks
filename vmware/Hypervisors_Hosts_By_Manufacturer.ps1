@@ -2,18 +2,21 @@
 # The results is used as an input into a Capacity Review Report
 # Last updated: 23 March 2015
 # Author: teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1)
-Write-Host "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true
+)
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
 InitialiseModule
-
 
 # Report Meta Data
 $metaInfo = @()
@@ -25,7 +28,7 @@ $metaInfo +="chartable=false"
 
 $vmhosts = Get-VMhost -Server $srvconnection
 $stats = $vmhosts | Group-Object -property Manufacturer | select-Object -property "Name","Count"
-$Report = $stats | %{
+$dataTable = $stats | %{
 	$row  = New-Object System.Object
 	$row | Add-Member -MemberType NoteProperty -Name "System Type" -Value $_.Name
 	$row | Add-Member -MemberType NoteProperty -Name "Count" -Value $_.Count
@@ -33,12 +36,22 @@ $Report = $stats | %{
 	$row
 }
 
-ExportCSV -table  $Report 
-if ($metaAnalytics)
+if ($dataTable)
 {
-	$metaInfo += "analytics="+$metaAnalytics
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
 }
-ExportMetaData -meta $metaInfo
+
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;
 }

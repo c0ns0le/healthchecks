@@ -2,16 +2,19 @@
 #Version : 0.1
 #Updated : 3th Feb 2015
 #Author  : teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false)
-logThis -msg "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true,
+	[bool]$showDate=$false
+)
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-
-# Want to initialise the module and blurb using this 1 function
 InitialiseModule
 
 $metaInfo = @()
@@ -19,9 +22,8 @@ $metaInfo +="tableHeader=Distributed Networks"
 $metaInfo +="introduction=The table below provides a comprehensive list of Distributed network switches."
 $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
-$Report = Get-VirtualSwitch -Distributed * -Server $srvConnection | Select -First 1 | %{
+$dataTable = Get-VirtualSwitch -Distributed * -Server $srvConnection | Select -First 1 | %{
 	$vswitch = $_
-	
 	# define an object to capture all the information needed
 	$row = "" | select "Name"
 	$row.Name = $vswitch.Name
@@ -43,18 +45,21 @@ $Report = Get-VirtualSwitch -Distributed * -Server $srvConnection | Select -Firs
 	$row
 }
 
-############### THIS IS WHERE THE STUFF HAPPENS
-if ($Report)
+if ($dataTable)
 {
-	ExportCSV -table $Report
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
 }
-# Post Creation of Report
-if ($metaAnalytics)
-{
-	$metaInfo += "analytics="+$metaAnalytics
-}
-ExportMetaData -meta $metaInfo
-
 
 logThis -msg "Logs written to " $of -ForegroundColor  yellow;
 if ($srvConnection -and $disconnectOnExist) {

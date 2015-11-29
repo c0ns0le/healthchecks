@@ -2,14 +2,19 @@
 #Version : 1.0
 #Updated : 24 March 2015
 #Author  : teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[int]$headerType=1,[bool]$showKeys=$false)
-Write-host "Importing Module vmwareModules.psm1 (force)" -ForegroundColor Yellow
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$showDate=$false,
+	[int]$headerType=1,
+	[bool]$showKeys=$false,
+	[bool]$returnResults=$true
+)
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
 InitialiseModule
@@ -36,7 +41,7 @@ $ReportPass1 = (Get-view $($srvConnection | select -First 1).ExtensionData.Conte
 	$row 
 }
 # will display by types instead of individual entries
-$report = $ReportPass1 | group Name | %{ 
+$dataTable = $ReportPass1 | group Name | %{ 
 	$licenseType = $_
 	$individualLicenses = $_.Group
 	$row = New-Object System.Object
@@ -50,21 +55,22 @@ $report = $ReportPass1 | group Name | %{
 $metaAnalytics = " A total of $(($Report.Used | measure -sum).Sum) licenses out of $(($Report.Total | measure -sum).Sum) are used."
 
 ############### THIS IS WHERE THE STUFF HAPPENS
-if ($returnReportOnly)
-{ 
-	return $Report
-} else {
-	#ExportCSV -table ($Report | sort -Property VMs -Descending) 
-	ExportCSV -table $Report -sortBy "Count"
-}
 
-# Post Creation of Report
-if ($metaAnalytics)
+if ($dataTable)
 {
-	$metaInfo += "analytics="+$metaAnalytics
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
 }
-ExportMetaData -meta $metaInfo
-
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;
 }

@@ -10,32 +10,27 @@
 #	Step 2) Run this script using examples below
 #			\./get-Performance-Clusters.ps1 \-srvconnection $srvconnection
 #
-param([object]$srvConnection="",
-		[string]$logDir="output",
-		[string]$comment="",
-		[bool]$showDate=$false,
-		[bool]$showSummary=$false,
-		[string]$clusterName="*",
-		[bool]$includeThisMonthEvenIfNotFinished=$true,
-		[int]$showPastMonths=6,
-		[bool]$showIndividualDevicesStats=$false,
-		[int]$maxSampling=1800,
-		[bool]$unleashAllStats=$false,
-		[int]$headerType=1
-)
 
-#$([int]::MaxValue),
-Write-Host -msg "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true,
+	[bool]$showDate=$false,
+	[string]$clusterName="*",		
+	[int]$showPastMonths=6,
+	[bool]$showIndividualDevicesStats=$false,
+	[int]$maxSampling=1800,
+	[bool]$unleashAllStats=$false
+)
+LogThis -msg"Importing Module vmwareModules.psm1 (force)"
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-
-# Want to initialise the module and blurb using this 1 function
 InitialiseModule
-
 
 $now = get-date #(get-date).AddMonths(-1) #use now but because we are half way thought the month, i only want up to the last day of the previous month
 

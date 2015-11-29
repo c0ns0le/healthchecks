@@ -129,10 +129,9 @@ $vmhosts | sort -Property Name | %{
 		}
 		
 	}
-
 }
-$combineResults
-pause
+#$combineResults
+#pause
 if ($consolidateResults) 
 {
 	$finalreport = @()

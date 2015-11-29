@@ -45,7 +45,6 @@
 #		@($srvConnection | %{ $vcenterName=$_.Name; get-datastore * -server $_ | %{ $obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterName; $obj} })
 #	)
 #	$results = getIssues -objectsArray $objectsArray -returnDataOnly $true -performanceLastDays 7  -headerType 2 -showPastMonths 3
-
 function setLoggingDirectory([string]$dirPath)
 {
 	if (!$dirPath)
@@ -100,7 +99,7 @@ function getIssues(
 				$objArray = $_
 				
 				$firstObj = $objArray | select -First 1
-				#write-host $firstObj.Name
+				#logThis -msg  $firstObj.Name
 				$type = $firstObj.GetType().Name.Replace("Impl","")				
 				Write-Progress -Activity "Processing report" -Id 1 -Status "$deviceTypeIndex/$($objectsArray.Count) :- $type..." -PercentComplete  (($deviceTypeIndex/$($objectsArray.Count))*100)
 				$index=0;
@@ -674,7 +673,7 @@ function getIssues(
 					
 					########################
 					"NasDatastore" {
-						Write-Host "This type of device is not yet supported by this health check" -BackgroundColor Cyan -ForegroundColor Red
+						logThis -msg "This type of device is not yet supported by this health check"
 					}
 					"VmfsDatastore" {
 						#if ($objectIssuesRegister) { Remove-Variable objectIssuesHTMLText }
@@ -1215,7 +1214,7 @@ function getIssues(
 					}
 					########################
 					default {
-						Write-Host "This type of device is not yet supported by this health check" -BackgroundColor Cyan -ForegroundColor Red
+						logThis -msg "This type of device is not yet supported by this health check"
 					}
 				}
 				$deviceTypeIndex++
@@ -1411,7 +1410,7 @@ function getVirtualMachinesCapacityBy([Object]$srvConnection,
 	$metaInfo +="chartable=false"
 	$metaInfo +="titleHeaderType=h$($headerType)"
 
-	Write-Host $metaInfo
+	#logThis -msg $metaInfo
 
 	$objects = $srvConnection | %{
 		$vCenter = $_
@@ -1435,7 +1434,7 @@ function getVirtualMachinesCapacityBy([Object]$srvConnection,
 		$object=$_
 		$row = "" | Select-Object $propertyDisplayName
 		$row.$propertyDisplayName = $object.Name
-		Write-Host "$($object.Name)"
+		logThis -msg "$($object.Name)"
 		$row | Add-Member -MemberType NoteProperty -Name "$totalCountDisplayName" -Value  $object.Count;
 		if ($uniqueEnvironments.Count)
 		{
@@ -1455,7 +1454,7 @@ function getVirtualMachinesCapacityBy([Object]$srvConnection,
 		$row = "" | Select-Object $propertyDisplayName
 		$row.$propertyDisplayName = $object.Name
 		$devices=$_.Group
-		Write-Host "$($object.Name)"
+		logThis -msg  "$($object.Name)"
 		#$row | Add-Member -MemberType NoteProperty -Name "$totalCountDisplayName" -Value  $object.Count;
 		if ($uniqueEnvironments.Count)
 		{
@@ -1543,7 +1542,7 @@ function getVMhostCapacityBy([Object]$srvConnection,
 		$object=$_
 		$row = "" | Select-Object $propertyDisplayName
 		$row.$propertyDisplayName = $object.Name
-		Write-Host "$($object.Name)"
+		logThis -msg  "$($object.Name)"
 		$row | Add-Member -MemberType NoteProperty -Name "$totalCountDisplayName" -Value  $object.Count;
 		if ($uniqueEnvironments.Count)
 		{
@@ -1667,7 +1666,7 @@ function getSize($TotalKB,$unit,$val)
     }
 	If ($bytes -ge 1PB) 
   	 { 
-		#Write-Host $bytes
+		#logThis -msg  $bytes
 		#pause
     	 	$value = "{0:N} PB" -f $($bytes/1PB) # TeraBytes 
     }
@@ -1739,7 +1738,7 @@ function SetmyCSVMetaFile(
 	{
 		$global:runtimeCSVMetaFile = $filename
 	} else {
-		Set-Variable -Name metaFile -Value $filename -Scope Global
+		Set-Variable -Name runtimeCSVMetaFile -Value $filename -Scope Global
 	}
 }
 
@@ -1817,7 +1816,7 @@ function ExportMetaData([Parameter(Mandatory=$true)][object[]] $metaData, [Param
 		$tmpMetafile = $thisFileInstead
 	}
 	#if ($global:runtimeCSVMetaFile)
-	if ($tmpMetafile)
+	if ($global:logTofile -and $tmpMetafile)
 	{
 		 $metadata | Out-File -FilePath $tmpMetafile
 	}
@@ -1834,7 +1833,7 @@ function setRuntimeMetaFile([string]$filename)
 
 function updateRuntimeMetaFile([object[]] $metaData)
 {
-	$metadata | Out-File -FilePath $global:runtimeCSVMetaFile -Append
+	if ($global:logTofile) { $metadata | Out-File -FilePath $global:runtimeCSVMetaFile -Append }
 }
 
 function getRuntimeCSVOutput()
@@ -1854,7 +1853,7 @@ function getReportIndexer()
 
 function updateReportIndexer($string)
 {
-	$string -replace ".csv",".nfo" -replace ".ps1",".nfo" -replace ".log",".nfo" | Out-file -Append -FilePath $global:reportIndex
+	if ($global:logTofile) { $string -replace ".csv",".nfo" -replace ".ps1",".nfo" -replace ".log",".nfo" | Out-file -Append -FilePath $global:reportIndex }
 }
 
 function downloadVMwareToolsPackagesVersions()
@@ -2029,12 +2028,12 @@ function recurseThruObject(
 		#if (!$type.Contains("string") -and !$type.Contains("type") -and !$type.Contains("System.Reflection"))
 		if ($type.Contains("System.Object"))
 		{
-			Write-Host "Recursing ...$property " -ForegroundColor Yellow
+			logThis -msg  "Recursing ...$property " -ForegroundColor Yellow
 			#$table += return recurseThruObject $obj.$field
 		} elseif ($type -eq "string") 
 		{
 			#$row += $obj.$($_.Definition)
-			Write-Host $type $field
+			logThis -msg  $type $field
 			$table = $col | Add-Member -MemberType NoteProperty -Name $field -Value $($obj.$field)
 		}
 	}
@@ -2144,7 +2143,7 @@ function getStats(
 				logThis -msg "`t- For $nameofdate [$firstDay -> $lastDay]";
 				#New-Variable -Name $tableColumnHeaders[2] -Value ($sourceVIObject | Get-Stat -Stat $metric -Start (Get-Date).addMonths(-1) -Finish (Get-Date) -MaxSamples $maxsamples  -IntervalMins $sampleIntevalsMinutes | select *)
 				New-Variable -Name "stats$nameofdate" -Value ($sourceVIObject | Get-Stat -Stat $metric -Start $firstDay -Finish $lastDay -MaxSamples $maxsamples | select *)
-				#Write-Host (Get-Variable "stats$nameofdate" -Valueonly)
+				#logThis -msg  (Get-Variable "stats$nameofdate" -Valueonly)
 				$monthIndex--
 			}
 		}
@@ -2256,7 +2255,7 @@ function getStats(
 		# Print the reporting periods
 		######################################################
 		#$tableColumnHeaders | %{
-		#	Write-Host $((Get-Variable -Name "$($_)" -ValueOnly)[0])  -ForegroundColor Green
+		#	logThis -msg  $((Get-Variable -Name "$($_)" -ValueOnly)[0])  -ForegroundColor Green
 		#}
 		$table = foreach ($currMeasure in $requiredMeasures) 
 		{
@@ -2716,7 +2715,7 @@ function formatNumbers (
 	[Parameter(Mandatory=$true)]$var
 )
 {
-	#Write-Host $("{0:n2}" -f $val)
+	#logThis -msg  $("{0:n2}" -f $val)
 	#logThis -msg $($var.gettype().Name)
 	if ($(isNumeric $var))
 	{
@@ -2751,36 +2750,48 @@ function logThis (
 	[Parameter(Mandatory=$false)][string] $logFile,
 	[Parameter(Mandatory=$false)][string] $ForegroundColor = "yellow",
 	[Parameter(Mandatory=$false)][string] $BackgroundColor = "black",
-	[Parameter(Mandatory=$false)][bool]$logToScreen = $true,
-	[Parameter(Mandatory=$false)][bool]$NoNewline = $false
+	[Parameter(Mandatory=$false)][bool]$logToScreen = $false,
+	[Parameter(Mandatory=$false)][bool]$NoNewline = $false,
+	[Parameter(Mandatory=$false)][bool]$keepLogInMemoryAlso=$false
 	)
 {
-	if ($logToScreen -and !$global:silent)
+	if ($global:logToScreen -or $logToScreen -and !$global:silent)
 	{
 		# Also verbose to screent
 		if ($NoNewline)
 		{
-			Write-Host $msg -ForegroundColor $ForegroundColor -NoNewline;
+			Write-host $msg -ForegroundColor $ForegroundColor -NoNewline;
 		} else {
-			Write-Host $msg -ForegroundColor $ForegroundColor;
+			Write-host $msg -ForegroundColor $ForegroundColor;
 		}
 	} 
-	if ($logFile)
+	if ($global:logTofile)
 	{
-		$msg  | out-file -filepath $logFile -append
-	} else 
-	{
+		#logThis -msg "Also writing message to file.log"
+		
+		if ($logFile) { $msg  | out-file -filepath $logFile -append}
 		if ((Test-Path -path $global:logDir) -ne $true) {
 					
 			New-Item -type directory -Path $global:logDir
 			$childitem = Get-Item -Path $global:logDir
 			$global:logDir = $childitem.FullName
-		}
+		}	
 		if ($global:runtimeLogFile)
 		{
 			$msg  | out-file -filepath $global:runtimeLogFile -append
 		} 
+	}	
+	if ($global:logInMemory -or $keepLogInMemoryAlso)
+	{
+		$global:runtimeLogFileInMemory += $msg
 	}
+}
+
+function getRuntimeLogFileContent()
+{
+	if ($global:logTofile -and $global:runtimeLogFile) { return get-content $global:runtimeLogFile }
+	if ($global:logInMemory ) { return $global:runtimeLogFileInMemory }
+	#Get-Content $logFile
 }
 
 function SetmyLogFile(
@@ -2795,7 +2806,7 @@ function SetmyLogFile(
 	}
 	
 	# Empty the file
-	"" | out-file -filepath $global:runtimeLogFile
+	#"" | out-file -filepath $global:runtimeLogFile
 	logThis -msg "This script will be logging to $global:runtimeLogFile"
 }
 
@@ -2879,7 +2890,7 @@ function GetmyCredentialsFromFile(
 	
 	$password = Get-Content $File | ConvertTo-SecureString 
 	$credential = New-Object System.Management.Automation.PsCredential($user,$password)
-	Write-Host "Am i in here [$($credential.Username)]" -BackgroundColor Red -ForegroundColor Yellow
+	logThis -msg  "Am i in here [$($credential.Username)]" -BackgroundColor Red -ForegroundColor Yellow
 	return $credential
 }
 #######################################################################
@@ -2925,16 +2936,16 @@ function sendEmail
 		[Parameter(Mandatory=$false)][object] $attachements # An array of filenames with their full path locations
 	)  
 {
-	Write-Host "[$attachments]" -ForegroundColor Blue
+	logThis -msg  "[$attachments]" -ForegroundColor Blue
 	if (!$smtpServer -or !$from -or !$replyTo -or !$toAddress -or !$subject -or !$body)
 	{
-		Write-Host "Cannot Send email. Missing parameters for this function. Note that All fields must be specified" -BackgroundColor Red -ForegroundColor Yellow
-		Write-Host "smtpServer = $smtpServer"
-		Write-Host "from = $from"
-		Write-Host "replyTo = $replyTo"
-		Write-Host "toAddress = $toAddress"
-		Write-Host "subject = $subject"
-		Write-Host "body = $body"
+		logThis -msg  "Cannot Send email. Missing parameters for this function. Note that All fields must be specified" -BackgroundColor Red -ForegroundColor Yellow
+		logThis -msg  "smtpServer = $smtpServer"
+		logThis -msg  "from = $from"
+		logThis -msg  "replyTo = $replyTo"
+		logThis -msg  "toAddress = $toAddress"
+		logThis -msg  "subject = $subject"
+		logThis -msg  "body = $body"
 	} else {
 		#Creating a Mail object
 		$msg = new-object Net.Mail.MailMessage
@@ -2952,15 +2963,15 @@ function sendEmail
 		if ($attachments)
 		{
 			$attachments | %{
-				#Write-Host $_ -ForegroundColor Blue
+				#logThis -msg  $_ -ForegroundColor Blue
 				$attachment = new-object System.Net.Mail.Attachment($_,"Application/Octet")
 				$msg.Attachments.Add($attachment)
 			}
 		} else {
-			#Write-Host "No $attachments"
+			#logThis -msg  "No $attachments"
 		}
 		
-		Write-Host "Sending email from iwthin this routine"
+		logThis -msg  "Sending email from iwthin this routine"
 		$smtp.Send($msg)
 	}
 }
@@ -2993,13 +3004,13 @@ function ChartThisTable( [Parameter(Mandatory=$true)][array]$datasource,
 
 	$headers = $datasource | Get-Member -membertype NoteProperty | select -Property Name
 
-	Write-Host "+++++++++++++++++++++++++++++++++++++++++++" -ForegroundColor Yellow
-	Write-Host "Output image: $outputImageName" -ForegroundColor Yellow
+	logThis -msg  "+++++++++++++++++++++++++++++++++++++++++++" -ForegroundColor Yellow
+	logThis -msg  "Output image: $outputImageName" -ForegroundColor Yellow
 
-	Write-Host "Table to chart:" -ForegroundColor Yellow
-	Write-Host "" -ForegroundColor Yellow
-	Write-Host $datasource  -ForegroundColor Yellow
-	Write-Host "+++++++++++++++++++++++++++++++++++++++++++ " -ForegroundColor Yellow
+	logThis -msg  "Table to chart:" -ForegroundColor Yellow
+	logThis -msg  "" -ForegroundColor Yellow
+	logThis -msg  $datasource  -ForegroundColor Yellow
+	logThis -msg  "+++++++++++++++++++++++++++++++++++++++++++ " -ForegroundColor Yellow
 
 	# chart object
 	$chart1 = New-object System.Windows.Forms.DataVisualization.Charting.Chart
@@ -3038,14 +3049,14 @@ function ChartThisTable( [Parameter(Mandatory=$true)][array]$datasource,
 		$header = $_.Name
 		if ($index -ge $startChartingFromColumnIndex)# -and $index -lt $headers.Count)
 	    {
-			Write-Host "Creating new series: $($header)"
+			logThis -msg  "Creating new series: $($header)"
 			[void]$chart1.Series.Add($header)
 			$chart1.Series[$header].ChartType = $chartType #Line,Column,Pie
 			$chart1.Series[$header].BorderWidth  = 3
 			$chart1.Series[$header].IsVisibleInLegend = $true
 			$chart1.Series[$header].chartarea = "ChartArea1"
 			$chart1.Series[$header].Legend = "Legend1"
-			Write-Host "Colour choice is $($colorChoices[$index])"
+			logThis -msg  "Colour choice is $($colorChoices[$index])"
 			$chart1.Series[$header].color = "$($colorChoices[$index])"
 		#   $datasource | ForEach-Object {$chart1.Series["VMCount"].Points.addxy( $_.date , ($_.VMCountorySize / 1000000)) }
 			$datasource | %{
@@ -3200,8 +3211,8 @@ param(
 
 function test2()
 {
-	Write-Host " Output Dir = $global:logDir" -ForegroundColor Green
-	Write-Host " RuntimeLogFile = $global:runtimeLogFile" -ForegroundColor Green
+	logThis -msg  " Output Dir = $global:logDir" -ForegroundColor Green
+	logThis -msg  " RuntimeLogFile = $global:runtimeLogFile" -ForegroundColor Green
 }
 
 function InitialiseModule 
@@ -3212,7 +3223,7 @@ function InitialiseModule
 {
 	loadSessionSnapings
 	$global:runtime="$(date -f dd-MM-yyyy)"	
-	
+	$global:runtimeLogFileInMemory=""
 	SetmyCSVOutputFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".csv"))
 	SetmyCSVMetaFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo"))
 	SetmyLogFile -filename $($global:logDir + "\"+$global:scriptName.Replace(".ps1",".log"))
@@ -3224,6 +3235,7 @@ function InitialiseModule
 	logThis -msg " Runtime log file = $global:runtimeLogFile" -ForegroundColor Cyan
 	logThis -msg " Runtime CSV File = $global:runtimeCSVOutput" -ForegroundColor Cyan
 	logThis -msg " Runtime Meta File = $global:runtimeCSVMetaFile" -ForegroundColor Cyan
+	logThis -msg " Runtime Meta File (In Memory) = $global:runtimeLogFileInMemory" -ForegroundColor Cyan
 	logThis -msg " vCenter Server: $global:vCenter" -ForegroundColor  Cyan	
 	logThis -msg " ****************************************************************************" -foregroundColor Cyan
 	logThis -msg "Loading Session Snapins.."

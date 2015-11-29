@@ -2,14 +2,18 @@
 # Version : 1.2
 # Last updated: 23 March 2015
 #Author : teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$false,[int]$headerType=1)
-logThis -msg "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true
+)
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
 InitialiseModule
@@ -33,7 +37,7 @@ $choice_PatchGroups="1/2/3/4"
 $choice_Memtested="Yes/No"
 $defaults_NA="[N/A]"
 
-$report = $srvConnection | %{
+$dataTable = $srvConnection | %{
     $vCenterServer = $_;	
     logThis -msg "Processing VMHosts from vCenter server ""$($vCenterServer.Name)""..." -ForegroundColor Cyan
     $vmhosts = Get-VMHost -Server $vCenterServer | sort Name #| Get-View
@@ -75,12 +79,21 @@ $report = $srvConnection | %{
     }
 }
 
-ExportCSV -table $report
-if ($metaAnalytics)
+if ($dataTable)
 {
-	$metaInfo += "analytics="+$metaAnalytics
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
 }
-ExportMetaData -meta $metaInfo
 
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;

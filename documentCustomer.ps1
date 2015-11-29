@@ -32,18 +32,19 @@ documentCustomer.ps1 -initFile "C:\admin\scripts\Customer_Settings\customer1.ini
 param(
 	[Parameter(Mandatory=$true)][string]$inifile,
 	[bool]$stopReportGenerator=$false,
-	[bool]$silent=$false
+	[bool]$silent=$false	
 )
+[bool]$global:logTofile = $true
+[bool]$global:logInMemory = $true
+[bool]$global:logToScreen = $true
 $script=$MyInvocation.MyCommand.Path
 $scriptsLoc=$(Split-Path $script)
-#Set-Variable -Scope Global -Name silent -Value $silent
-Import-Module ".\generic\genericModule.psm1" -Force
 
 function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
 {
-	logThis -msg "Reading in configurations from file $inifile"
+	#logThis -msg "Reading in configurations from file $inifile"
 	$configurations = @{}
-	Get-Content $inifile | Foreach-Object{
+	Get-Content $inifile | %{
 		if ($_ -notlike "#*")
 		{
 			$var = $_.Split('=')
@@ -143,6 +144,8 @@ function startProcess()
 	# $false to no launch on completion
 	# $false, should set to false if you are emailing using a cron job or something alike to avoid opening Web Browser
 	$runtimeDate="$(get-date -f dd-MM-yyyy)" # Get today's date to create the correct directory and file names -- Don't change this if you don't know what you are doing
+	
+	
 	#$logDir="$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\output\TEMP\$runtimeDate" # Where you want the final HTML reports to exist
 	$defaultOutputReportDirectory="$($global:configs.scriptsLoc)\$($global:configs.customer -replace ' ','_')" # Where you want the final HTML reports to exist
 	#$runtimeDate="23-03-2015" # Uncomment this line if you are generating reports from a previous audit with overwriteRuntimeDate as the date "Day-Month-Year"
@@ -152,25 +155,29 @@ function startProcess()
 		$global:logDir = "$defaultOutputReportDirectory\$runtimeDate"
 		#$logDir="$defaultOutputReportDirectory\$runtimeDate"
 		#$outputDirectory="$defaultOutputReportDirectory\$runtimeDate"
-		$global:configs.Add("runtime_log_directory","$($global:configs.outputDirectory)\$runtimeDate")
+		$global:configs.Add("runtime_log_directory","$($global:configs.outputDirectory)\$runtimeDate")		
 	} else {
 		# keeping this around whilst I am resolving the cross-script issue wth this variable changing un-predictably
 		$global:logDir="$($global:configs.outputDirectory)\$runtimeDate"
 		#$logDir = "$($global:configs.outputDirectory)\$runtimeDate" 
 		#$outputDirectory="$($global:configs.outputDirectory)\$runtimeDate" 
 		$global:configs.Add("runtime_log_directory","$($global:configs.outputDirectory)\$runtimeDate")
+		
 	}
+	Import-Module ".\generic\genericModule.psm1" -Force	
+
 	if ((Test-Path -path $global:configs.runtime_log_directory) -ne $true) {
 		New-Item -type directory -Path $global:configs.runtime_log_directory
 		#$childitem = Get-Item -Path $global:configs.runtime_log_directory
 		#$global:configs.runtime_log_directory = $childitem.FullName
 	}
+	$global:report["Runtime"]["LogDirectory"]=$global:configs.runtime_log_directory	
 	$logfile="$($global:configs.runtime_log_directory)\documentCustomer.log"
+	$global:report["Runtime"]["Logfile"]=$logfile
 	
-
 	if (!$global:configs.Silent)
 	{
-		Invoke-Item $global:configs.runtime_log_directory
+		#Invoke-Item $global:configs.runtime_log_directory
 	}
 
 	if (Test-Path $logfile)
@@ -187,7 +194,10 @@ function startProcess()
 	###########################################################################
 	if ($global:configs.collectVMwareReports)
 	{
-		
+		$type="VMware"
+		$global:report["$type"] = @{}
+		$global:report["$type"]["Runtime"]=@{}
+		$global:report["$type"]["DataTable"]=@{}
 		$vcCredentialsFileDirectory = Split-Path $global:configs.vcCredentialsFile
 		if (!$vcCredentialsFileDirectory)
 		{
@@ -210,7 +220,7 @@ function startProcess()
 			set-mycredentials -Filename $global:configs.vcCredentialsFile
 			$passwordFile = $global:configs.vcCredentialsFile
 			#break
-		}	
+		}
 
 		Set-Location "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)"
 		
@@ -222,246 +232,37 @@ function startProcess()
 			#$credentials = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\get-mycredentials-fromFile.ps1" -User $vcUser -SecureFileLocation  $passwordFile
 			$credentials = getmycredentialsfromFile -User $global:configs.vcUser -SecureFileLocation $passwordFile
 			$global:configs.vCenterServers=$global:configs.vCenterServers -split ','
-			$srvconnection= Connect-VIServer -Server @($global:configs.vCenterServers) -Credential $credentials
-			
+			$srvconnection= Connect-VIServer -Server @($global:configs.vCenterServers) -Credential $credentials			
 		}
+		
+		$global:report["$type"]["Runtime"]["vCenters"]=$global:configs.vCenterServers
 		Import-Module -Name "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\vmwareModules.psm1" -Force
+		
 		#Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 		
 		InitialiseModule -logDir $global:configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
 		
 		logThis -msg "Collecting VMware Reports ($runtime_log_directory)" -logfile $logfile 
+		$global:report["$type"]["Runtime"]["Lofile"]=$logfile
 		#$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)="C:\admin\scripts\vmware" # requires interacting with VMware vCenter server
 		if ($srvconnection)
-		{
-			###########################################################################
-			#
-			# REPORT 1 :- The main collector - simplified for reporting
-			#
-			###########################################################################
-			if ($global:configs.capacity)
-			{
-				$thisReportLogdir="$($global:configs.runtime_log_directory)\Capacity_Reports" # Where all the CSVs are output by collectAll
-				$reportHeader="VMware Infrastructure Capacity Reports for $($global:configs.customer)"
-				$reportIntro="The objective of this document is to provide $($global:configs.customer) with information about its VMware Infrastructure(s). The report was prepared by $itoContactName and generated on $(get-date). A total of $($srvconnection.count) x vCenter Servers were audited for this report."
-				if (!$reportOnly)
-				{
-					logThis -msg "`t-> Collecting capacity information to location: $thisReportLogdir" -logfile $logfile 
-					if ($scriptParams) {remove-variable scriptParams}
-					$scriptParams = @{
-						'logProgressHere'=$logfile;
-						'srvconnection'=$srvconnection;
-						'logDir'=$thisReportLogdir;
-						'runCapacityReports' = $global:configs.capacity;
-						'runPerformanceReports' = $false;
-						'runExtendedReports' = $global:configs.runExtendedVMwareReports;
-						'vms' = $global:configs.vmsToCheckPerformance;
-						'showPastMonths' = [int]$global:configs.previousMonths;
-						'runJobsSequentially' = $global:configs.runJobsSequentially
-					}
-					
-					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
-					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" -logProgressHere $logfile -srvConnection $srvconnection -logDir $thisReportLogdir -runCapacityReports $true -runPerformanceReports $false -runExtendedReports $runExtendedVMwareReports -vms $vmsToCheckPerformance -showPastMonths $previousMonths
-					
-				} else {
-					# work in progress.. read from on disk report already.
-					$htmlReport = "No report"
-				}
-				
-				
-				if(!$global:configs.stopReportGenerator)
-				{
-					logThis -msg "`t-> Generating Capacity Report from input directory $thisReportLogdir to output directory $runtime_log_directory" -logfile $logfile 
-					if ($scriptParams) {remove-variable scriptParams}
-					$scriptParams = @{
-						'inDir' = $thisReportLogdir;
-						'logDir' = $global:configs.outputDirectory;
-						'reportHeader' = $global:configs.reportHeader;
-						'reportIntro' = $global:configs.reportIntro;
-						'farmName' = $global:configs.customer;
-						'openReportOnCompletion'= $global:configs.openReportOnCompletion;
-						'createHTMLFile' = $global:configs.createHTMLFile;
-						'emailReport' = $global:configs.emailReport;
-						'verbose' = $false;
-						'itoContactName' = $global:configs.itoContactName;
-					}
-					#$thisReportLogdir
-					#pause
-					$htmlReport = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $itoContactName
-					# its not working for some reason
-					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" @scriptParams
-				}
-				
-				if ($global:configs.emailReport)
-				{
-					if ($scriptParams) {remove-variable scriptParams}
-		
-					$scriptParams = @{
-						'inDir' = $thisReportLogdir;
-						'logDir' = $global:configs.outputDirectory;
-						'reportHeader' = $global:configs.reportHeader;
-						'reportIntro' = $global:configs.reportIntro;
-						'farmName' = $global:configs.customer;
-						'setTableStyle' = 'aITTablesytle';
-						'itoContactName' = $global:configs.itoContactName;						
-						'openReportOnCompletion' = $global:configs.openReportOnCompletion;
-						'createHTMLFile' = $global:configs.createHTMLFile;
-						'emailReport' = $global:configs.emailReport;
-						'verbose' = [bool]$false;
-					}
-					
-					$htmlReportFilename = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $global:configs.openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $itoContactName
-					
-					if ($scriptParams) {remove-variable scriptParams}
-					$scriptParams = @{ 
-						'subject' = $global:configs.subject;
-						'smtpServer' = $global:configs.smtpServer;
-						'smtpDomainFQDN' = $global:configs.smtpDomainFQDN;
-						'replyToRecipients' = $global:configs.replyToRecipients;
-						'fromRecipients' = $global:configs.fromRecipients;
-						'fromContactName'=Reporting Services
-						'toRecipients' = $global:configs.toRecipients;
-						'body' = (get-content $htmlReportFilename);
-						'attachements' = $null
-					}
-					
-					
-					# This routine sends the email
-					#function emailContact ([string] $smtpServer,  [string] $from, [string] $replyTo, [string] $toAddress ,[string] $subject, [string] $htmlPage) {
-					sendEmail @scriptParams
-					
-					# its not working for some reason
-					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" @scriptParams
-				} 
-				
+		{			
+			logThis -msg "`t-> Collecting VMware Reports" -logfile $logfile 
+			if ($scriptParams) {remove-variable scriptParams}
+			$scriptParams = @{
+				'logProgressHere'=$logfile;
+				'srvconnection'=$srvconnection;
+				'logDir'=$global:report.Runtime.LogDirectory;
+				'runCapacityReports' = $global:report.Runtime.Configs.capacity;
+				'runPerformanceReports' = $global:report.Runtime.Configs.perfChecks;
+				'runExtendedReports' = $global:report.Runtime.Configs.runExtendedVMwareReports;
+				'vms' = $global:report.Runtime.Configs.vmsToCheckPerformance;
+				'showPastMonths' = [int]$global:report.Runtime.Configs.previousMonths;
+				'runJobsSequentially' = $global:report.Runtime.Configs.runJobsSequentially;
+				'returnResultsOnly'=$true
 			}
 			
-			###########################################################################
-			#
-			# REPORT 2 :- Some kind of HealthCheck on Each VM (Performances, Configurations etc..) lovely
-			#
-			###########################################################################
-			if ($global:configs.perfChecks)
-			{
-				$thisReportLogdir="$($global:configs.runtime_log_directory)\Performance_Reports" # Where all the CSVs are output by collectAll
-				$reportHeader="Performance Reports"
-				$reportIntro="Find below a list of comprehensive capacity report produced by $itoContactName for $customer. $($srvconnection.count) VMware Infrastructure(s) have been audited as part of this report."	
-				if (!$global:configs.$reportOnly)
-				{	
-					if ($scriptParams) {remove-variable scriptParams}
-					$scriptParams = @{
-						'logProgressHere' = $logfile;
-						'srvConnection' = $srvconnection;
-						'logDir' = $thisReportLogdir;
-						'runCapacityReports' = $false;
-						'runPerformanceReports' = $true;
-						'runExtendedReports' = $false;
-						'vms' = $global:configs.vmsToCheckPerformance;
-						'showPastMonths' = [int]$global:configs.previousMonths;
-						'runJobsSequentially' = $global:configs.runJobsSequentially
-					}
-					logThis -msg "`t-> Collecting Performance information to location: $thisReportLogdir" -logfile $logfile 
-					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams 
-				}
-				
-				logThis -msg "`t-> Generating Performance Checks Report" -logfile $logfile 
-				if ($global:configs.emailReport)				
-				{
-					if ($scriptParams) {remove-variable scriptParams}
-					$scriptParams = @{
-						'inDir' = $thisReportLogdir;
-						'logDir' = $global:configs.outputDirectory;
-						'reportHeader' = $global:configs.reportHeader;
-						'reportIntro' = $global:configs.reportIntro;
-						'farmName' = $global:configs.customer;
-						'openReportOnCompletion' = $global:configs.openReportOnCompletion;
-						'createHTMLFile' = $global:configs.createHTMLFile;
-						'emailReport' = $global:configs.emailReport;
-						'verbose' = $false;
-						'itoContactName' = $global:configs.itoContactName;
-					}
-					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion $openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $true -verbose $false -itoContactName $itoContactName
-					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" @scriptParams
-				} 
-				if(!$global:configs.stopReportGenerator)
-				{
-					if ($scriptParams) {remove-variable scriptParams}
-					$scriptParams = @{
-						'inDir' = $thisReportLogdir;
-						'logDir' = $global:configs.outputDirectory;
-						'reportHeader' = $global:configs.reportHeader;
-						'reportIntro' = $global:configs.reportIntro;
-						'farmName' = $global:configs.customer;
-						'openReportOnCompletion' = $global:configs.openReportOnCompletion;
-						'createHTMLFile' = $global:configs.createHTMLFile;
-						'emailReport' = $global:configs.emailReport;
-						'verbose' = $false;
-						'itoContactName' = $global:configs.itoContactName;
-					}
-					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $itoContactName
-					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" @scriptParams
-				}
-			}
-
-
-			###########################################################################
-			#
-			# REPORT 3 :- Perform an Infrastructure Wide Health Check (Performances, Configurations etc..) lovely
-			#
-			###########################################################################
-
-			if ($global:configs.healthCheck -and !$global:configs.reportOnly)
-			{
-				$thisReportLogdir="$($global:configs.runtime_log_directory)\Issues_Report" # Where all the CSVs are output by collectAll
-				$reportHeader="Health Check & Issues Report"
-				$reportIntro="This report forms a Health Check report for $customer’s VMware infrastructure(s). $($srvconnection.count) VMware Infrastructure(s) have been audited as part of this report."
-				
-				& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\Issues_Report.ps1" -srvConnection $srvconnection -logDir $thisReportLogdir -saveReportToDirectory $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -headerType 2 -ensureTheseFieldsAreFieldIn $ensureTheseFieldsAreFieldIn -performanceLastDays 7 -showPastMonths $previousMonths -vmsToCheck $vmsToCheckHealthCheck -excludeThinDisks $global:configs.excludeThinDisks
-				
-				if(!$global:configs.stopReportGenerator)
-				{
-					if ($scriptParams) {remove-variable scriptParams}
-					$scriptParams = @{
-						'inDir' = $thisReportLogdir;
-						'logDir' = $global:configs.outputDirectory;
-						'reportHeader' = $global:configs.reportHeader;
-						'reportIntro' = $global:configs.reportIntro;
-						'farmName' = $global:configs.customer;
-						'openReportOnCompletion' = $global:configs.openReportOnCompletion;
-						'createHTMLFile' = $global:configs.createHTMLFile;
-						'emailReport' = $global:configs.emailReport;
-						'verbose' = $false;
-						'itoContactName' = $global:configs.itoContactName;
-					}
-					#& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $reportHeader -reportIntro $reportIntro -farmName $customer -openReportOnCompletion  $openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $itoContactName
-					& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1"  @scriptParams
-				}
-			}
-			
-
-			###########################################################################
-			#
-			# REPORT 4 :- Create a audit of each Virtual Machine - Intensive & Detailed output HealthCheck -- Cool too
-			#
-			###########################################################################
-			if ($global:configs.generatePerVMReport -and !$global:configs.reportOnly)
-			{
-				$thisReportLogdir="$($global:configs.runtime_log_directory)\VMs_HealthChecks"
-				$enable=$true
-				# check only VMs specified in vmsToCheck. vmsToCheck is set in the customer INI file (Comma delimited)
-				if ($global:configs.vmsToCheckHealthCheck -and $global:configs.vmsToCheckHealthCheck -ne "*")
-				{
-					logThis -msg "`t-> Generating Individual VM Checks For $([string]$global:configs.vmsToCheckHealthCheck)" -logfile $logfile 
-					$global:configs.vmsToCheckHealthCheck -split "," | %{
-						& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\exportVMDetails.ps1" -srvConnection $srvconnection -guestName $_ -includeSectionSysInfo $enable -includeSectionPerfStats $true -includeTasks $enable -includeErrors $enable -includeAlarms $enable -includeVMEvents $enable -includeVMSnapshots $enable -launchBrowser $false -showIndividualDevicesStats $false -logDir $thisReportLogdir -showPastMonths $global:configs.previousMonths
-					}
-				} else {
-					logThis -msg "`t-> Generating VM Checks for ALL VMs" -logfile $logfile 
-					#Get-VM * -Server $srvconnection | %{ 
-						& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\exportVMDetails.ps1" -srvConnection $srvconnection -includeSectionSysInfo $enable -includeSectionPerfStats $true -includeTasks $enable -includeErrors $enable -includeAlarms $enable -includeVMEvents $enable -includeVMSnapshots $enable -launchBrowser $false -showIndividualDevicesStats $false -logDir $thisReportLogdir -showPastMonths $previousMonths
-					#}
-				}
-			}
+			$global:report["$type"] = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
 		}  else {
 			logThis -msg ">>" -ForegroundColor Red  -logfile $logfile 
 			logThis -msg ">> Unable to connect to vCenter Server(s) ""$($global:configs.vCenterServers)""."  -ForegroundColor Red  -logfile $logfile 
@@ -478,7 +279,7 @@ function startProcess()
 	# SAN REPORTS :- 
 	#
 	###########################################################################
-	Set-Location $($global:configs.scriptsLoc)	
+	Set-Location $($global:configs.scriptsLoc)
 	# NOT WORKING!!!
 	if ($global:configs.collectSANReports)
 	{
@@ -495,6 +296,13 @@ function startProcess()
 			$reportHeader="Storage Health Check"
 			$reportIntro="This report was prepared by $itoContactName for $($global:configs.customer) as a review of its Storage Systems."	
 			$thisReportLogdir="$($global:configs.runtime_log_directory)\Storage"
+			$type="V7000"
+			$global:report["$type"] = @{}
+			$global:report["$type"]["Runtime"]=@{}
+			$global:report["$type"]["Runtime"]["Logfile"] = $logfile
+			$global:report["$type"]["Runtime"]["Title"] = $reportHeader
+			$global:report["$type"]["Runtime"]["Introduction"] = $reportIntro
+			$global:report["$type"]["Runtime"]["LogDirectory"] = $thisReportLogdir			
 	        
 	        if ($global:configs.sanV7000User -and $global:configs.sanV7000SecurePasswordFile -and !$global:configs.sanV700password)
 	        {
@@ -530,6 +338,10 @@ function startProcess()
 		$collectSanIosFibreSwitches = $true
 		if ($collectSanIosFibreSwitches)
 		{
+			$type="Brocade"
+			$global:report["$type"] = @{}
+			$global:report["$type"]["Runtime"]=@{}
+			$global:report["$type"]["Runtime"]["Logfile"] = $logfile
 			$sanIOSscriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.brocadeIOSscriptsHomeDir)"
 		}
 	}
@@ -542,6 +354,10 @@ function startProcess()
 	Set-Location $($global:configs.scriptsLoc)	
 	if ($global:configs.collectXenReports)
 	{
+		$type="XenServer"
+		$global:report["$type"] = @{}
+		$global:report["$type"]["Runtime"]=@{}
+		$global:report["$type"]["Runtime"]["Logfile"] = $logfile
 		logThis -msg "Collecting XEN Reports"
 		$xenScriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.xenscriptsHomeDir)" # requires interacting with master server
 	}
@@ -554,6 +370,10 @@ function startProcess()
 	Set-Location $($global:configs.scriptsLoc)	
 	if ($global:configs.collectHYPERVReports)
 	{
+		$type="HyperV"
+		$global:report["$type"] = @{}
+		$global:report["$type"]["Runtime"]=@{}
+		$global:report["$type"]["Runtime"]["Logfile"] = $logfile
 		logThis -msg "Collecting Hyper-V Reports"  -logfile $logfile 
 		$hypervScriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.hyperVscriptsHomeDir)" # requires interacting with master server
 	}
@@ -566,6 +386,10 @@ function startProcess()
 	Set-Location $($global:configs.scriptsLoc)	
 	if ($global:configs.collectWMIReports)
 	{
+		$type="Windows"
+		$global:report["$type"] = @{}
+		$global:report["$type"]["Runtime"]=@{}
+		$global:report["$type"]["Runtime"]["Logfile"] = $logfile
 		logThis -msg "Collecting Windows WMI Reports"  -logfile $logfile 
 		$wmiScriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.wmiScriptsHomeDir)" # requires interacting with Windows via network 
 	}
@@ -578,18 +402,29 @@ function startProcess()
 	Set-Location $($global:configs.scriptsLoc)	
 	if ($global:configs.collectLinuxReports)
 	{
-		logThis -msg "Collecting Linux Systems Reports"  -logfile $logfile 
+		$type="Linux"
+		$global:report["$type"] = @{}
+		$global:report["$type"]["Runtime"]=@{}
+		$global:report["$type"]["Runtime"]["Logfile"] = $logfile
+		logThis -msg "Collecting Linux Systems Reports"  -logfile $logfile		
 		$wmiScriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.linuxScriptsHomeDir)" # requires interacting with Windows via network 
 	}
 
 	# Set the location back to the original directory
 	Set-Location $($global:configs.scriptsLoc)
+
+	$global:report["Runtime"]["Logs"] = getRuntimeLogFileContent
 }
 
 # MAIN
 if ($configObj) {Remove-Variable configObj -Scope All }
 if ($global:configs) {Remove-Variable configs -Scope Global }
 if ($preconfig) {Remove-Variable preconfig -Scope All }
+if ($global:report) { Remove-Variable report -Scope Global }
+
+$global:report = @{}
+$global:report["Runtime"]=@{}
+$global:report["Runtime"]["StartTime"]=Get-Date
 $configObj,$preconfig = readConfiguration -inifile $inifile
 Write-Host "AFTER"
 $configObj
@@ -598,12 +433,17 @@ $preconfig
 pause
 if ($configObj)
 {	
-	#$configObj
-	#pause
 	$configObj.Add("Silent",$silent)
 	$configObj.Add("scriptsLoc",$scriptsLoc)
-	$global:configs = $configObj	
+	$global:configs = $configObj
+	$global:report["Runtime"]["Configs"]=$configObj
+	#Set-Variable -Scope Global -Name silent -Value $silent
+
 	startProcess	
+	if ($global:report)
+	{
+		return $global:report
+	}
 } else {
-	Write-Host "Invalid Configurations"
+	logThis -msg "Invalid Configurations"
 }

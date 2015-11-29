@@ -2,33 +2,37 @@
 #Version : 1.0
 #Updated : 23 March 2015
 #Author  : teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[string]$property="MemoryMB",[int]$headerType=1)
-logThis -msg "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true,
+	[bool]$showDate=$false
+)
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-
-# Want to initialise the module and blurb using this 1 function
 InitialiseModule
-
 
 $array = getVirtualMachinesCapacityBy -srvConnection $srvconnection -property "MemoryMB" -propertyDisplayName "Memory Size" -unit "MB" -headerType $headerType
 
-############### THIS IS WHERE THE STUFF HAPPENS
-if ($returnReportOnly)
-{ 
-	return $array.table
-} else {
-	ExportCSV -table $array.Table 
-}
-
-# Post Creation of Report
-if ($array.MetaInfo)
+if ($array.Table )
 {
-	ExportMetaData -meta $array.MetaInfo
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$array.MetaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $array.Table,$array.MetaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $array.Table
+		ExportMetaData -meta $array.MetaInfo
+	}
 }
 
 if ($srvConnection -and $disconnectOnExist) {

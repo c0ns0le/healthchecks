@@ -4,21 +4,27 @@
 # Author: teiva.rodiere@gmail.com
 #
 param(
-		[object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showOnlyTemplates=$false,
-		[bool]$skipEvents=$true,[bool]$verbose=$false,
-		[int]$numsamples=([int]::MaxValue),[int]$numPastDays=7,
-		[int]$sampleIntevalsMinutes=5,[int]$headerType=1)
-logThis -msg "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+		
+		,[int]$headerType=1)
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true,
+	[bool]$showDate=$false,
+	[bool]$showOnlyTemplates=$false,
+	[bool]$skipEvents=$true,
+	[int]$numsamples=([int]::MaxValue),
+	[int]$numPastDays=7,
+	[int]$sampleIntevalsMinutes=5
+)
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-
-# Want to initialise the module and blurb using this 1 function
 InitialiseModule
-
 
 # Report Meta Data
 $metaInfo = @()
@@ -33,7 +39,7 @@ $metaInfo +="displayTableOrientation=Table" # options are List or Table
 
 
 $index=1;
-$report =  $srvConnection | %{
+$dataTable =  $srvConnection | %{
     $vcenterName = $_.Name
     if ($showOnlyTemplates) 
     {
@@ -126,13 +132,21 @@ $report =  $srvConnection | %{
 }
 
 
-# Post Creation of Report
-ExportCSV -table $report
-if ($metaAnalytics)
+if ($dataTable)
 {
-	$metaInfo += "analytics="+$metaAnalytics
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
 }
-ExportMetaData -meta $metaInfo
 
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;

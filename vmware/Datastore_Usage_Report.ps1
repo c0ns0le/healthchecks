@@ -16,7 +16,7 @@ param(	[object]$srvConnection="",
 		[bool]$includeThisMonthEvenIfNotFinished=$true,
 		[int]$showPastMonths=6,
 		[int]$headerType=1,
-		[bool]$returnTableOnly=$true,
+		[bool]$returnResults=$true,
 		[Object]$datastore,
 		[Object]$vcenter,
 		[bool]$resultsForCharting=$true # if you want to chart the results, then set that to true so values will be returned as GB not as text. ie: '1,300.00' instead of '1,300.00 GB'
@@ -24,15 +24,15 @@ param(	[object]$srvConnection="",
 
 #$([int]::MaxValue),
 logThis -msg "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
 
-Write-Host "vCenter Name: $($srvConnection.Name)"
-Write-Output "ScriptName: $($global:scriptName)" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt"
-Write-Output "vCenter: $($srvConnection.Name)" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt" -Append
-Write-Output "LogDir: $logDir" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt" -Append
+#Write-Host "vCenter Name: $($srvConnection.Name)"
+#Write-Output "ScriptName: $($global:scriptName)" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt"
+#Write-Output "vCenter: $($srvConnection.Name)" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt" -Append
+#Write-Output "LogDir: $logDir" | Out-File "C:\admin\OUTPUT\AIT\19-11-2015\Capacity_Reports\$($global:scriptName).txt" -Append
 
 #$global:logfile
 #$global:outputCSV
@@ -62,7 +62,7 @@ if ($datastore)
 	})
 }
 
-$datastores
+#$datastores
 if (!$datastores)
 {
 	showError "No datastores found"
@@ -237,28 +237,32 @@ if (!$datastores)
 		$row
 	}
 	
-	if ($returnTableOnly)
+	
+	if ($dataTable)
 	{
-		return $dataTable
-	} else {
-		if ($dataTable)
+		#$dataTable $dataTable
+		$objMetaInfo = @()
+		$objMetaInfo +="tableHeader=$title"
+		$objMetaInfo +="introduction=Find below the usage report for all datastores audited. "
+		$objMetaInfo +="chartable=false"
+		$objMetaInfo +="titleHeaderType=h$($headerType+1)"
+		$objMetaInfo +="showTableCaption=false"
+		$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
+		$metricCSVFilename = "$logdir\$($title -replace '\s','_').csv"
+		$metricNFOFilename = "$logdir\$($title -replace '\s','_').nfo"
+		if ($metaAnalytics)
 		{
-			$objMetaInfo = @()
-			$objMetaInfo +="tableHeader=$title"
-			$objMetaInfo +="introduction=Find below the usage report for all datastores audited. "
-			$objMetaInfo +="chartable=false"
-			$objMetaInfo +="titleHeaderType=h$($headerType+1)"
-			$objMetaInfo +="showTableCaption=false"
-			$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
-			$metricCSVFilename = "$logdir\$($title -replace '\s','_').csv"
-			$metricNFOFilename = "$logdir\$($title -replace '\s','_').nfo"
+			$metaInfo += "analytics="+$metaAnalytics
+		}	
+		if ($returnResults)
+		{
+			return $dataTable,$metaInfo
+		} else {
 			ExportCSV -table $dataTable -thisFileInstead $metricCSVFilename 
 			ExportMetaData -metadata $objMetaInfo -thisFileInstead $metricNFOFilename
 			updateReportIndexer -string "$(split-path -path $metricCSVFilename -leaf)"
-		}	
+		}
 	}
-	
-	
 }
 
 if ($srvConnection -and $disconnectOnExist) {

@@ -2,25 +2,21 @@
 #Version : 1.0
 #Updated : 23 March 2015
 #Author  : teiva.rodiere@gmail.com
-param(	[object]$srvConnection,
-		[string]$logDir="output",
-		[string]$comment="",
-		[bool]$showDate=$false,
-		[bool]$returnReportOnly=$false,
-		[bool]$showExtra=$true,
-		#[string]$configFile=".\customerEnvironmentSettings-ALL.ini",
-		[string]$startinFolder="rootFolder",
-		[int]$headerType=1
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true,
+	[bool]$showDate=$false,
+	[bool]$showExtra=$true,
+	[string]$startinFolder="rootFolder"
 )
-Write-Host "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-
-# Want to initialise the module and blurb using this 1 function
 InitialiseModule
 
 #[string]$configFile=".\customerEnvironmentSettings-ALL.ini",
@@ -62,7 +58,8 @@ if($showExtra)
 }
 
 
-$Report = foreach ($folder in $folders) {
+$Report = $folders | %{ 
+	$folder = $_
 	logThis -msg  "Processing VMs in folder ""$folder""";
 	#$vms = $allVms | ?{$_.Folder.Name -like $folder}
 	$vms = Get-VM -Server $srvConnection -Location $folder.Name
@@ -212,24 +209,26 @@ $Report = foreach ($folder in $folders) {
 	
 	logThis -msg  $obj -ForegroundColor Yellow
 	$obj
-}
+} | sort -Property "Total VMs"
 
 #logThis -msg  $Report
 ############### THIS IS WHERE THE STUFF HAPPENS
-if ($returnReportOnly)
-{ 
-	return $Report
-} else {
-	#ExportCSV -table ($Report | sort -Property VMs -Descending) 
-	ExportCSV -table $Report -sortBy "Total VMs"
-}
 
-# Post Creation of Report
-if ($metaAnalytics)
+if ($dataTable)
 {
-	$metaInfo += "analytics="+$metaAnalytics
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
 }
-ExportMetaData -meta $metaInfo
 
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;

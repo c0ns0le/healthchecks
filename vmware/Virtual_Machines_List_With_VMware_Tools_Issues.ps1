@@ -2,16 +2,19 @@
 #Version : 1.0
 #Updated : 23 March 2015
 #Author  : teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false,[bool]$launchReport=$false,[int]$headerType=1)
-Write-host "Importing Module vmwareModules.psm1 (force)" -ForegroundColor Yellow
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true,
+	[bool]$showDate=$false
+)
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-
-# Want to initialise the module and blurb using this 1 function
 InitialiseModule
 
 # Meta data needed by the porting engine to 
@@ -25,7 +28,7 @@ $metaInfo +="titleHeaderType=h$($headerType)"
 logThis -msg "Collecting VMs..."
 $vms =  Get-VM * -Server $srvConnection | ?{ ($_.ExtensionData.Guest.ToolsStatus -ne "toolsOk") -and ($_.ExtensionData.Guest.ToolsStatus -ne "") } 
 $index=1
-$Report = $vms | %{
+$dataTable = $vms | %{
 	logThis -msg "Processing $index\$($vms.Count) :- $($_.Name)"
 	$row  = New-Object System.Object
 	$row | Add-Member -MemberType NoteProperty -Name "Name" -Value $_.Name
@@ -36,16 +39,22 @@ $Report = $vms | %{
 	$row
 	$index++
 }
-
-# Export Report to file (CSV)
-ExportCSV -table $Report 
-
-# Post Creation of Report
-if ($metaAnalytics)
+if ($dataTable)
 {
-	$metaInfo += "analytics="+$metaAnalytics
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
 }
-ExportMetaData -meta $metaInfo
+
 
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;

@@ -2,17 +2,19 @@
 # Version : 2
 # Updated : 10/11/2009
 # Author : teiva.rodiere@gmail.com
-param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[int]$headerType=1,[bool]$showExtraSettings)
-
-logThis -msg "Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name ".\vmwareModules.psm1" -Force -PassThru
-Set-Variable -Name "scriptName" -Value $($MyInvocation.MyCommand.name) -Scope Global
-Set-Variable -Name "logDir" -Value $logDir -Scope Global
-Set-Variable -Name "vCenter" -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
-
-# Want to initialise the module and blurb using this 1 function
+param(
+	[object]$srvConnection="",
+	[string]$logDir="output",
+	[string]$comment="",
+	[bool]$verbose=$false,
+	[int]$headerType=1,
+	[bool]$returnResults=$true,
+	[bool]$showDate=$false
+)
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
+Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
+Set-Variable -Name logDir -Value $logDir -Scope Global
+Set-Variable -Name vCenter -Value $srvConnection -Scope Global
 InitialiseModule
 
 $metaInfo = @()
@@ -25,7 +27,7 @@ logThis -msg "Exporting datastores..."
 #$datastores = Get-Datastore -Server $srvConnection" -Name ""DTE-EXCHANGE" | sort name;
 $datastores = Get-Datastore -Server $srvConnection | sort name;
 $index=1;
-$run1Report = $datastores | %{
+$dataTable = $datastores | %{
     $datastore = $_;
     logThis -msg "Processing datastore $index of $($datastores.Count) - ""$($datastore.Name)""" -Foregroundcolor Yellow;
     
@@ -94,7 +96,7 @@ $run1Report = $datastores | %{
 		
 				$lunid = $scsiLunTemp.RuntimeName
 				verboseThis $scsiLunTemp
-				Write-Host $scsiLunTemp | fl
+				#Write-Host $scsiLunTemp | fl
                $row | Add-Member -MemberType "NoteProperty" -Name "Scsi Lun Id" -Value $lunid
                $row | Add-Member -MemberType "NoteProperty" -Name "Extent Capacity (GB)" -Value ([math]::ROUND($scsiLunTemp.CapacityMB / 1024, 2))
 #				switch ($lunid)
@@ -176,7 +178,21 @@ $run1Report = $datastores | %{
 	Remove-Variable datastore
 }
 
-ExportCSV -table  ($run1Report | sort Name)
+if ($dataTable)
+{
+	#$dataTable $dataTable
+	if ($metaAnalytics)
+	{
+		$metaInfo += "analytics="+$metaAnalytics
+	}	
+	if ($returnResults)
+	{
+		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
+	} else {
+		ExportCSV -table $dataTable
+		ExportMetaData -meta $metaInfo
+	}
+}
 
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;
