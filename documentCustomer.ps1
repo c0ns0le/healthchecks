@@ -34,9 +34,11 @@ param(
 	[bool]$stopReportGenerator=$false,
 	[bool]$silent=$false	
 )
-[bool]$global:logTofile = $true
+
+[bool]$global:logTofile = $false
 [bool]$global:logInMemory = $true
 [bool]$global:logToScreen = $true
+
 $script=$MyInvocation.MyCommand.Path
 $scriptsLoc=$(Split-Path $script)
 
@@ -261,7 +263,6 @@ function startProcess()
 				'runJobsSequentially' = $global:report.Runtime.Configs.runJobsSequentially;
 				'returnResultsOnly'=$true
 			}
-			
 			$global:report["$type"] = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
 		}  else {
 			logThis -msg ">>" -ForegroundColor Red  -logfile $logfile 
@@ -439,11 +440,11 @@ if ($configObj)
 	$global:report["Runtime"]["Configs"]=$configObj
 	#Set-Variable -Scope Global -Name silent -Value $silent
 
-	startProcess	
-	if ($global:report)
-	{
-		return $global:report
-	}
+	startProcess
+	$global:report["Runtime"]["EndTime"]=Get-Date
+	return $global:report
+
 } else {
 	logThis -msg "Invalid Configurations"
 }
+
