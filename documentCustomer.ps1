@@ -438,8 +438,21 @@ if ($configObj)
 
 	startProcess
 	$global:report["Runtime"]["EndTime"]=Get-Date
-	$global:report | Export-Clixml -Path "$($global:report.Runtime.LogDirectory)\$($global:report.customer -replace ' ','_').xml"
-	
+	logThis -msg "Writing results to disks"
+	$xmlOutput = "$($global:report.Runtime.LogDirectory)\$($global:report.Runtime.Configs.Customer -replace ' ','_').xml"	
+	$global:report | Export-Clixml -Path $xmlOutput
+	logThis -msg "Zipping results for transport"
+	$zippedXmlOutput = $xmlOutput -replace ".xml",".zip"
+	if (Test-Path -Path $zippedXmlOutput)
+	{
+		Remove-Item $xmlOutput
+	}
+	if ($global:report.Runtime.Configs.emailReport)
+	{
+		
+		New-ZipFile -InputObject $xmlOutput -ZipFilePath $zippedXmlOutput
+		logThis -msg "Emailing results"		
+	}
 
 } else {
 	logThis -msg "Invalid Configurations"
