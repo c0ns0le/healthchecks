@@ -443,14 +443,13 @@ if ($configObj)
 	$global:report | Export-Clixml -Path $xmlOutput
 	logThis -msg "Zipping results for transport"
 	$zippedXmlOutput = $xmlOutput -replace ".xml",".zip"
+	New-ZipFile -InputObject $xmlOutput -ZipFilePath $zippedXmlOutput
 	if (Test-Path -Path $zippedXmlOutput)
 	{
 		Remove-Item $xmlOutput
 	}
 	if ($global:report.Runtime.Configs.emailReport)
 	{
-		
-		New-ZipFile -InputObject $xmlOutput -ZipFilePath $zippedXmlOutput
 		logThis -msg "Emailing results"		
 	}
 
