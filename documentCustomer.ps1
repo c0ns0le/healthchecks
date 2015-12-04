@@ -438,7 +438,7 @@ if ($configObj)
 
 	startProcess
 	$global:report["Runtime"]["EndTime"]=Get-Date
-	$global:report | Export-Clixml -Path $global:report.Runtime.LogDirectory
+	$global:report | Export-Clixml -Path "$($global:report.Runtime.LogDirectory)\$($global:report.customer -replace ' ','_').xml"
 	
 
 } else {
