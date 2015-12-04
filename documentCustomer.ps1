@@ -431,7 +431,7 @@ Write-Host "AFTER"
 $configObj
 Write-Host "BEFORE"
 $preconfig 
-pause
+#pause
 if ($configObj)
 {	
 	$configObj.Add("Silent",$silent)
