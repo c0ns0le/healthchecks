@@ -2,7 +2,7 @@
 
 .SYNOPSIS
 
-Reads in a customer specific parameters from a given INI file.
+TO BE ADVISED. Reads in a customer specific parameters from a given INI file.
 
 
 .DESCRIPTION
@@ -427,11 +427,7 @@ $global:report = @{}
 $global:report["Runtime"]=@{}
 $global:report["Runtime"]["StartTime"]=Get-Date
 $configObj,$preconfig = readConfiguration -inifile $inifile
-Write-Host "AFTER"
-$configObj
-Write-Host "BEFORE"
-$preconfig 
-#pause
+
 if ($configObj)
 {	
 	$configObj.Add("Silent",$silent)
