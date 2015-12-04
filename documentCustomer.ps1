@@ -438,7 +438,8 @@ if ($configObj)
 
 	startProcess
 	$global:report["Runtime"]["EndTime"]=Get-Date
-	return $global:report
+	$global:report | Export-Clixml -Path $global:report.Runtime.LogDirectory
+	
 
 } else {
 	logThis -msg "Invalid Configurations"
