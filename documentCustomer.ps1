@@ -148,38 +148,38 @@ function startProcess()
 	$runtimeDate="$(get-date -f dd-MM-yyyy)" # Get today's date to create the correct directory and file names -- Don't change this if you don't know what you are doing
 	
 	
-	#$logDir="$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\output\TEMP\$runtimeDate" # Where you want the final HTML reports to exist
-	$defaultOutputReportDirectory="$($global:configs.scriptsLoc)\$($global:configs.customer -replace ' ','_')" # Where you want the final HTML reports to exist
+	#$logDir="$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\output\TEMP\$runtimeDate" # Where you want the final HTML reports to exist
+	$defaultOutputReportDirectory="$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.customer -replace ' ','_')" # Where you want the final HTML reports to exist
 	#$runtimeDate="23-03-2015" # Uncomment this line if you are generating reports from a previous audit with overwriteRuntimeDate as the date "Day-Month-Year"
-	if (!$global:configs.outputDirectory)
+	if (!$global:report.Runtime.Configs.outputDirectory)
 	{
 		# keeping this around whilst I am resolving the cross-script issue wth this variable changing un-predictably
 		$global:logDir = "$defaultOutputReportDirectory\$runtimeDate"
 		#$logDir="$defaultOutputReportDirectory\$runtimeDate"
 		#$outputDirectory="$defaultOutputReportDirectory\$runtimeDate"
-		$global:configs.Add("runtime_log_directory","$($global:configs.outputDirectory)\$runtimeDate")		
+		$global:report.Runtime.Configs.Add("runtime_log_directory","$($global:report.Runtime.Configs.outputDirectory)\$runtimeDate")		
 	} else {
 		# keeping this around whilst I am resolving the cross-script issue wth this variable changing un-predictably
-		$global:logDir="$($global:configs.outputDirectory)\$runtimeDate"
-		#$logDir = "$($global:configs.outputDirectory)\$runtimeDate" 
-		#$outputDirectory="$($global:configs.outputDirectory)\$runtimeDate" 
-		$global:configs.Add("runtime_log_directory","$($global:configs.outputDirectory)\$runtimeDate")
+		$global:logDir="$($global:report.Runtime.Configs.outputDirectory)\$runtimeDate"
+		#$logDir = "$($global:report.Runtime.Configs.outputDirectory)\$runtimeDate" 
+		#$outputDirectory="$($global:report.Runtime.Configs.outputDirectory)\$runtimeDate" 
+		$global:report.Runtime.Configs.Add("runtime_log_directory","$($global:report.Runtime.Configs.outputDirectory)\$runtimeDate")
 		
 	}
 	Import-Module ".\generic\genericModule.psm1" -Force	
 
-	if ((Test-Path -path $global:configs.runtime_log_directory) -ne $true) {
-		New-Item -type directory -Path $global:configs.runtime_log_directory
-		#$childitem = Get-Item -Path $global:configs.runtime_log_directory
-		#$global:configs.runtime_log_directory = $childitem.FullName
+	if ((Test-Path -path $global:report.Runtime.Configs.runtime_log_directory) -ne $true) {
+		New-Item -type directory -Path $global:report.Runtime.Configs.runtime_log_directory
+		#$childitem = Get-Item -Path $global:report.Runtime.Configs.runtime_log_directory
+		#$global:report.Runtime.Configs.runtime_log_directory = $childitem.FullName
 	}
-	$global:report["Runtime"]["LogDirectory"]=$global:configs.runtime_log_directory	
-	$logfile="$($global:configs.runtime_log_directory)\documentCustomer.log"
+	$global:report["Runtime"]["LogDirectory"]=$global:report.Runtime.Configs.runtime_log_directory	
+	$logfile="$($global:report.Runtime.Configs.runtime_log_directory)\documentCustomer.log"
 	$global:report["Runtime"]["Logfile"]=$logfile
 	
-	if (!$global:configs.Silent)
+	if (!$global:report.Runtime.Configs.Silent)
 	{
-		#Invoke-Item $global:configs.runtime_log_directory
+		#Invoke-Item $global:report.Runtime.Configs.runtime_log_directory
 	}
 
 	if (Test-Path $logfile)
@@ -194,21 +194,21 @@ function startProcess()
 	# VMWARE REPORTING :- 
 	#
 	###########################################################################
-	if ($global:configs.collectVMwareReports)
+	if ($global:report.Runtime.Configs.collectVMwareReports)
 	{
 		$type="VMware"
 		$global:report["$type"] = @{}
 		$global:report["$type"]["Runtime"]=@{}
 		$global:report["$type"]["DataTable"]=@{}
-		$vcCredentialsFileDirectory = Split-Path $global:configs.vcCredentialsFile
+		$vcCredentialsFileDirectory = Split-Path $global:report.Runtime.Configs.vcCredentialsFile
 		if (!$vcCredentialsFileDirectory)
 		{
-			$global:configs.vcCredentialsFile="$(Split-Path $inifile)\$($global:configs.vcCredentialsFile)"
+			$global:report.Runtime.Configs.vcCredentialsFile="$(Split-Path $inifile)\$($global:report.Runtime.Configs.vcCredentialsFile)"
 		}
 		
 		try 
 		{	
-			$filepath=$global:configs.vcCredentialsFile | Resolve-Path -ErrorAction Stop
+			$filepath=$global:report.Runtime.Configs.vcCredentialsFile | Resolve-Path -ErrorAction Stop
 			
 			$passwordFile = "$($($filepath).Path)"	
 			#$passwordFile
@@ -217,36 +217,36 @@ function startProcess()
 			#$ErrorMessage = $_.Exception.Message
 	    		#$FailedItem = $_.Exception.ItemName
 			#showError -msg $ErrorMessage
-			$global:configs.vcCredentialsFile
+			$global:report.Runtime.Configs.vcCredentialsFile
 			
-			set-mycredentials -Filename $global:configs.vcCredentialsFile
-			$passwordFile = $global:configs.vcCredentialsFile
+			set-mycredentials -Filename $global:report.Runtime.Configs.vcCredentialsFile
+			$passwordFile = $global:report.Runtime.Configs.vcCredentialsFile
 			#break
 		}
 
-		Set-Location "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)"
+		Set-Location "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)"
 		
 		if (!$srvconnection)
 		{
 			logThis -msg ">>>>" -ForegroundColor Yellow
-			logThis -msg "$($global:configs.vCenterServers)"
+			logThis -msg "$($global:report.Runtime.Configs.vCenterServers)"
 			logThis -msg ">>>>" -ForegroundColor Yellow
-			#$credentials = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\get-mycredentials-fromFile.ps1" -User $vcUser -SecureFileLocation  $passwordFile
-			$credentials = getmycredentialsfromFile -User $global:configs.vcUser -SecureFileLocation $passwordFile
-			$global:configs.vCenterServers=$global:configs.vCenterServers -split ','
-			$srvconnection= Connect-VIServer -Server @($global:configs.vCenterServers) -Credential $credentials			
+			#$credentials = & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\get-mycredentials-fromFile.ps1" -User $vcUser -SecureFileLocation  $passwordFile
+			$credentials = getmycredentialsfromFile -User $global:report.Runtime.Configs.vcUser -SecureFileLocation $passwordFile
+			$global:report.Runtime.Configs.vCenterServers=$global:report.Runtime.Configs.vCenterServers -split ','
+			$srvconnection= Connect-VIServer -Server @($global:report.Runtime.Configs.vCenterServers) -Credential $credentials			
 		}
 		
-		$global:report["$type"]["Runtime"]["vCenters"]=$global:configs.vCenterServers
-		Import-Module -Name "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\vmwareModules.psm1" -Force
+		$global:report["$type"]["Runtime"]["vCenters"]=$global:report.Runtime.Configs.vCenterServers
+		Import-Module -Name "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\vmwareModules.psm1" -Force
 		
 		#Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 		
-		InitialiseModule -logDir $global:configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
+		InitialiseModule -logDir $global:report.Runtime.Configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
 		
 		logThis -msg "Collecting VMware Reports ($runtime_log_directory)" -logfile $logfile 
 		$global:report["$type"]["Runtime"]["Lofile"]=$logfile
-		#$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)="C:\admin\scripts\vmware" # requires interacting with VMware vCenter server
+		#$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)="C:\admin\scripts\vmware" # requires interacting with VMware vCenter server
 		if ($srvconnection)
 		{			
 			logThis -msg "`t-> Collecting VMware Reports" -logfile $logfile 
@@ -263,10 +263,10 @@ function startProcess()
 				'runJobsSequentially' = $global:report.Runtime.Configs.runJobsSequentially;
 				'returnResultsOnly'=$true
 			}
-			$global:report["$type"] = & "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
+			$global:report["$type"] = & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
 		}  else {
 			logThis -msg ">>" -ForegroundColor Red  -logfile $logfile 
-			logThis -msg ">> Unable to connect to vCenter Server(s) ""$($global:configs.vCenterServers)""."  -ForegroundColor Red  -logfile $logfile 
+			logThis -msg ">> Unable to connect to vCenter Server(s) ""$($global:report.Runtime.Configs.vCenterServers)""."  -ForegroundColor Red  -logfile $logfile 
 			logThis -msg ">> Check the address, credentials, and network connectivity"  -ForegroundColor Red  -logfile $logfile 
 			logThis -msg ">> between your script and the vCenter server and try again." -ForegroundColor Red  -logfile $logfile 
 			logThis -msg ">>" -ForegroundColor Red  -logfile $logfile 
@@ -280,11 +280,11 @@ function startProcess()
 	# SAN REPORTS :- 
 	#
 	###########################################################################
-	Set-Location $($global:configs.scriptsLoc)
+	Set-Location $($global:report.Runtime.Configs.scriptsLoc)
 	# NOT WORKING!!!
-	if ($global:configs.collectSANReports)
+	if ($global:report.Runtime.Configs.collectSANReports)
 	{
-		$passwordFile = "$($($global:configs.sanV7000SecurePasswordFile | Resolve-Path).Path)"
+		$passwordFile = "$($($global:report.Runtime.Configs.sanV7000SecurePasswordFile | Resolve-Path).Path)"
 		logThis -msg "Collecting SAN Reports"  -logfile $logfile 
 		###########################################################################
 		#
@@ -292,11 +292,11 @@ function startProcess()
 		#
 		###########################################################################
 		
-		if ($global:configs.sanV7000collectReports)
+		if ($global:report.Runtime.Configs.sanV7000collectReports)
 		{
 			$reportHeader="Storage Health Check"
-			$reportIntro="This report was prepared by $itoContactName for $($global:configs.customer) as a review of its Storage Systems."	
-			$thisReportLogdir="$($global:configs.runtime_log_directory)\Storage"
+			$reportIntro="This report was prepared by $itoContactName for $($global:report.Runtime.Configs.customer) as a review of its Storage Systems."	
+			$thisReportLogdir="$($global:report.Runtime.Configs.runtime_log_directory)\Storage"
 			$type="V7000"
 			$global:report["$type"] = @{}
 			$global:report["$type"]["Runtime"]=@{}
@@ -305,28 +305,24 @@ function startProcess()
 			$global:report["$type"]["Runtime"]["Introduction"] = $reportIntro
 			$global:report["$type"]["Runtime"]["LogDirectory"] = $thisReportLogdir			
 	        
-	        if ($global:configs.sanV7000User -and $global:configs.sanV7000SecurePasswordFile -and !$global:configs.sanV700password)
+	        if ($global:report.Runtime.Configs.sanV7000User -and $global:report.Runtime.Configs.sanV7000SecurePasswordFile -and !$global:report.Runtime.Configs.sanV700password)
 	        {
-	            #$credentials = & "$($global:configs.scriptsLoc)\$sanV7000scriptsHomeDir\get-mycredentials-fromFile.ps1" -User $sanV7000User -SecureFileLocation $passwordFile
-			  $credentials = get-mycredentials-fromFile -User $global:configs.sanV7000User -SecureFileLocation $passwordFile
-	            #$credentials
-	            #pause
+	            #$credentials = & "$($global:report.Runtime.Configs.scriptsLoc)\$sanV7000scriptsHomeDir\get-mycredentials-fromFile.ps1" -User $sanV7000User -SecureFileLocation $passwordFile
+			  $credentials = get-mycredentials-fromFile -User $global:report.Runtime.Configs.sanV7000User -SecureFileLocation $passwordFile
 	        }
-			if ($global:configs.sanV7000User -and $global:configs.sanV700password -and $global:configs.sanV7000ArraysIPs)
+			if ($global:report.Runtime.Configs.sanV7000User -and $global:report.Runtime.Configs.sanV700password -and $global:report.Runtime.Configs.sanV7000ArraysIPs)
 			{    
-				$credentials = Get-Credential -UserName  $global:configs.sanV7000User -Message "Please specify a password for user account ""$($global:configs.sanV7000User)"" to use to authenticate against arrays [string]$($global:configs.sanV700ArraysIPs)"
+				$credentials = Get-Credential -UserName  $global:report.Runtime.Configs.sanV7000User -Message "Please specify a password for user account ""$($global:report.Runtime.Configs.sanV7000User)"" to use to authenticate against arrays [string]$($global:report.Runtime.Configs.sanV700ArraysIPs)"
 	            #$deviceList = (($sanV7000ArraysIPs -split ',' -replace '^','"') -replace '$','"') -join ','
-	            $deviceList = $global:configs.sanV7000ArraysIPs -split ','
-	            #$deviceList
-	            #pause
-	            & "$($global:configs.scriptsLoc)\$($global:configs.sanV7000scriptsHomeDir)\ibmstorwize-checks.ps1" -logDir $thisReportLogdir -username $global:configs.sanV7000User -cpassword $sanV700password -arrayOfTargetDevices $deviceList
+	            $deviceList = $global:report.Runtime.Configs.sanV7000ArraysIPs -split ','
+	            & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.sanV7000scriptsHomeDir)\ibmstorwize-checks.ps1" -logDir $thisReportLogdir -username $global:report.Runtime.Configs.sanV7000User -cpassword $sanV700password -arrayOfTargetDevices $deviceList
 
 			}
 
 
 	        if(!$stopReportGenerator)
 			{
-				& "$($global:configs.scriptsLoc)\$($global:configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:configs.outputDirectory -reportHeader $global:configs.reportHeader -reportIntro $global:configs.reportIntro -farmName $global:configs.customer -openReportOnCompletion  $global:configs.openReportOnCompletion -createHTMLFile $global:configs.createHTMLFile -emailReport $global:configs.emailReport -verbose $false -itoContactName $global:configs.itoContactName
+				& "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:report.Runtime.Configs.outputDirectory -reportHeader $global:report.Runtime.Configs.reportHeader -reportIntro $global:report.Runtime.Configs.reportIntro -farmName $global:report.Runtime.Configs.customer -openReportOnCompletion  $global:report.Runtime.Configs.openReportOnCompletion -createHTMLFile $global:report.Runtime.Configs.createHTMLFile -emailReport $global:report.Runtime.Configs.emailReport -verbose $false -itoContactName $global:report.Runtime.Configs.itoContactName
 			}
 
 		}
@@ -343,7 +339,7 @@ function startProcess()
 			$global:report["$type"] = @{}
 			$global:report["$type"]["Runtime"]=@{}
 			$global:report["$type"]["Runtime"]["Logfile"] = $logfile
-			$sanIOSscriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.brocadeIOSscriptsHomeDir)"
+			$sanIOSscriptsHomeDir="$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.brocadeIOSscriptsHomeDir)"
 		}
 	}
 
@@ -352,15 +348,15 @@ function startProcess()
 	# XEN REPORTS :- 
 	#
 	###########################################################################
-	Set-Location $($global:configs.scriptsLoc)	
-	if ($global:configs.collectXenReports)
+	Set-Location $($global:report.Runtime.Configs.scriptsLoc)	
+	if ($global:report.Runtime.Configs.collectXenReports)
 	{
 		$type="XenServer"
 		$global:report["$type"] = @{}
 		$global:report["$type"]["Runtime"]=@{}
 		$global:report["$type"]["Runtime"]["Logfile"] = $logfile
 		logThis -msg "Collecting XEN Reports"
-		$xenScriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.xenscriptsHomeDir)" # requires interacting with master server
+		$xenScriptsHomeDir="$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.xenscriptsHomeDir)" # requires interacting with master server
 	}
 
 	###########################################################################
@@ -368,15 +364,15 @@ function startProcess()
 	# HYPERV-V REPORTS :- 
 	#
 	###########################################################################
-	Set-Location $($global:configs.scriptsLoc)	
-	if ($global:configs.collectHYPERVReports)
+	Set-Location $($global:report.Runtime.Configs.scriptsLoc)	
+	if ($global:report.Runtime.Configs.collectHYPERVReports)
 	{
 		$type="HyperV"
 		$global:report["$type"] = @{}
 		$global:report["$type"]["Runtime"]=@{}
 		$global:report["$type"]["Runtime"]["Logfile"] = $logfile
 		logThis -msg "Collecting Hyper-V Reports"  -logfile $logfile 
-		$hypervScriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.hyperVscriptsHomeDir)" # requires interacting with master server
+		$hypervScriptsHomeDir="$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.hyperVscriptsHomeDir)" # requires interacting with master server
 	}
 
 	###########################################################################
@@ -384,15 +380,15 @@ function startProcess()
 	# WMI REPORTS :- 
 	#
 	###########################################################################
-	Set-Location $($global:configs.scriptsLoc)	
-	if ($global:configs.collectWMIReports)
+	Set-Location $($global:report.Runtime.Configs.scriptsLoc)	
+	if ($global:report.Runtime.Configs.collectWMIReports)
 	{
 		$type="Windows"
 		$global:report["$type"] = @{}
 		$global:report["$type"]["Runtime"]=@{}
 		$global:report["$type"]["Runtime"]["Logfile"] = $logfile
 		logThis -msg "Collecting Windows WMI Reports"  -logfile $logfile 
-		$wmiScriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.wmiScriptsHomeDir)" # requires interacting with Windows via network 
+		$wmiScriptsHomeDir="$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.wmiScriptsHomeDir)" # requires interacting with Windows via network 
 	}
 
 	###########################################################################
@@ -400,19 +396,19 @@ function startProcess()
 	# Linux Servers REPORTS :- 
 	#
 	###########################################################################
-	Set-Location $($global:configs.scriptsLoc)	
-	if ($global:configs.collectLinuxReports)
+	Set-Location $($global:report.Runtime.Configs.scriptsLoc)	
+	if ($global:report.Runtime.Configs.collectLinuxReports)
 	{
 		$type="Linux"
 		$global:report["$type"] = @{}
 		$global:report["$type"]["Runtime"]=@{}
 		$global:report["$type"]["Runtime"]["Logfile"] = $logfile
 		logThis -msg "Collecting Linux Systems Reports"  -logfile $logfile		
-		$wmiScriptsHomeDir="$($global:configs.scriptsLoc)\$($global:configs.linuxScriptsHomeDir)" # requires interacting with Windows via network 
+		$wmiScriptsHomeDir="$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.linuxScriptsHomeDir)" # requires interacting with Windows via network 
 	}
 
 	# Set the location back to the original directory
-	Set-Location $($global:configs.scriptsLoc)
+	Set-Location $($global:report.Runtime.Configs.scriptsLoc)
 
 	$global:report["Runtime"]["Logs"] = getRuntimeLogFileContent
 }
