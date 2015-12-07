@@ -56,7 +56,7 @@ if ($VMNames -eq ""){
 	exit
 } else {
 	#foreach ($srvconnection in $srvconnections) {
-		$vms=Get-VM $VMNames -Server $srvconnection -ErrorAction SilentlyContinue
+		$vms= Get-VM $VMNames -Server $srvconnection -ErrorAction SilentlyContinue
 		foreach ($vm in $vms) {
 			if ($vm) { 
 				$row = "" | Select VMName,GuestFullName,GuestState,ToolsStatus,ToolsVersion,DiskNumber,DiskName,VMDKCapacityGB,Persistent,Datastore,DatastoreCapacityLeftGB,MountPoint,CapacityGB,FreeSpaceGB,PercFree,Cluster;

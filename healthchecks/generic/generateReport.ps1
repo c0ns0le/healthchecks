@@ -4,7 +4,7 @@
 # of CSV, then make the change in collectAll.ps1. It is achieved by changing the order of the scripts from $defaultReports and $extraReports
 #
 # Version : 1.2
-#Author : 24/03/2015, by teiva.rodiere@gmail.com
+#Author : 24/03/2015, by teiva.rodiere@gmail.com 
 # Syntax
 # ./generateInfrastructureReports.ps1 -srvconnection $srvconnection -emailReport [$true|$false] -verboseHTMLFilesToFile [$true|$false]
 #
@@ -61,7 +61,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 #$global:logfile
 #$global:outputCSV
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule -logDir $logDir -parentScriptName $($MyInvocation.MyCommand.name)
+#InitialiseModule -logDir $logDir -parentScriptName $($MyInvocation.MyCommand.name)
 
 
 

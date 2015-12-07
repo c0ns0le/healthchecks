@@ -99,7 +99,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name reportIndex -Value "$logDir\index.txt" -Scope Global
 #Write-Host ":: Log File $global:logfile"
 #Write-Host ":: Output CSV $global:outputCSV"
-InitialiseModule
+#InitialiseModule
 
 $scriptCSVFilename = $global:outputCSV #).Replace(".csv",".csv")
 

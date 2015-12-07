@@ -12,7 +12,7 @@ $global:logfile
 $global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule
+#InitialiseModule
 
 #Definitions for max vCPU/core and Mem reservations
 $vCPUPerpCorePolicyLimit = 4; #max of 4vCPU per core

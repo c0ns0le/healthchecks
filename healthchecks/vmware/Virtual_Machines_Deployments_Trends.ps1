@@ -10,7 +10,7 @@ $global:logfile
 $global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule
+#InitialiseModule
 
 #LogThis -msg "This script log to " $of -ForegroundColor Yellow 
 

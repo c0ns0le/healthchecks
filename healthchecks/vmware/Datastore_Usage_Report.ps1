@@ -38,7 +38,7 @@ Set-Variable -Name vCenter -Value $srvConnection -Scope Global
 #$global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule -logDir $logDir -parentScriptName $($MyInvocation.MyCommand.name)
+#InitialiseModule -logDir $logDir -parentScriptName $($MyInvocation.MyCommand.name)
 
 $now = get-date #(get-date).AddMonths(-1) #use now but because we are half way thought the month, i only want up to the last day of the previous month
 

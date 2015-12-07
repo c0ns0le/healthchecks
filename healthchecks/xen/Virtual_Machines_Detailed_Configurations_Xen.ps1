@@ -16,7 +16,7 @@ $global:logfile
 $global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-xen_InitialiseModule
+xen_#InitialiseModule
 
 
 # TO REMOVE WHEN INTEGRATING INTO REST OF THE SCRIPTS

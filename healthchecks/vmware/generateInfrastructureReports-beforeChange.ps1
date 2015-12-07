@@ -61,7 +61,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 #$global:logfile
 #$global:outputCSV
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule
+#InitialiseModule
 
 
 

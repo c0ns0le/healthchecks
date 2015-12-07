@@ -17,7 +17,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global
 
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule
+#InitialiseModule
 
 # Meta data needed by the porting engine to 
 $metaInfo = @()

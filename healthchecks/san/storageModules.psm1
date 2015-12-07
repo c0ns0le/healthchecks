@@ -5,7 +5,7 @@
 #
 
 
-#function InitialiseModule()
+#function #InitialiseModule()
 #{
 	# Put in there what needs to load for each Storage script.. Unlikely to find modules that are common the various modules..but just in case.
 #}

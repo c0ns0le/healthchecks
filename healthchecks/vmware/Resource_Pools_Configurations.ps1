@@ -11,7 +11,7 @@ $global:logfile
 $global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule
+#InitialiseModule
 $Report = $srvConnection | %{
     $vCenterName = $_.Name
 	logThis -msg "Enumerating resources from this managed environment $vCenterName"

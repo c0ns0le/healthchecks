@@ -12,7 +12,7 @@ $global:logfile
 $global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule
+#InitialiseModule
 
 Function Get-LDAPUser ($UserName) {
     $queryDC = (get-content env:logonserver).Replace('\','');

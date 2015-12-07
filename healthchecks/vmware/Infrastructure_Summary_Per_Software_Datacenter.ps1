@@ -19,7 +19,7 @@ Set-Variable -Name vCenter -Value $srvConnection -Scope Global
 #$global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-InitialiseModule
+#InitialiseModule
 
 # Report Meta Data
 $metaInfo = @()

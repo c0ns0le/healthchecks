@@ -1,5 +1,4 @@
-$srvconnection = get-vc vsvwin2008e100,vsvwin2008e101,vsvwin2008e102
-$vms = get-vm -Server $srvconnection
+$vms = get-vm * -Server $srvconnection
 
 $hostnames = $vms | select Host -Unique
 $cmdtask = "start D:\INF-VMware\mybin\Pinger.exe -s"

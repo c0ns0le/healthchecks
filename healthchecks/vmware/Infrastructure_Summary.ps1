@@ -16,7 +16,7 @@ Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Glob
 #Set-Variable -Name vCenter -Value $srvConnection -Scope Global
 if ($logDir -and !$global:logDir) { Set-Variable -Name logDir -Value $logDir -Scope Global }
 
-InitialiseModule
+#InitialiseModule
 
 # Report Meta Data
 $metaInfo = @()

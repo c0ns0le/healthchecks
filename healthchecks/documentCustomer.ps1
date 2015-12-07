@@ -38,8 +38,8 @@ param(
 [bool]$global:logTofile = $false
 [bool]$global:logInMemory = $true
 [bool]$global:logToScreen = $true
-
 $script=$MyInvocation.MyCommand.Path
+$global:scriptName = Split-Path $MyInvocation.MyCommand.Path -Leaf
 $scriptsLoc=$(Split-Path $script)
 
 # Clear srvconnection if it already exists
@@ -229,7 +229,7 @@ function startProcess()
 			$passwordFile = $global:report.Runtime.Configs.vcCredentialsFile
 			#break
 		}
-
+		
 		Set-Location "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)"
 		
 		if (!$srvconnection)
@@ -244,11 +244,11 @@ function startProcess()
 		}
 		
 		$global:report["$type"]["Runtime"]["vCenters"]=$global:report.Runtime.Configs.vCenterServers
-		Import-Module -Name "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\vmwareModules.psm1" -Force
+		Import-Module -Name "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\vmwareModules.psm1" -Force -Verbose:$false
 		
 		#Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 		
-		InitialiseModule # -logDir $global:report.Runtime.Configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
+	#	#InitialiseModule # -logDir $global:report.Runtime.Configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
 		
 		logThis -msg "Collecting VMware Reports ($runtime_log_directory)" -logfile $logfile 
 		$global:report["$type"]["Runtime"]["Lofile"]=$logfile
@@ -439,9 +439,9 @@ try {
 		$global:configs = $configObj
 		$global:report["Runtime"]["Configs"]=$configObj
 		#Set-Variable -Scope Global -Name silent -Value $silent
-
+				
 		startProcess
-		
+
 		$global:report["Runtime"]["EndTime"]=Get-Date
 		
 		$xmlOutput = "$($global:report.Runtime.LogDirectory)\$($global:report.Runtime.Configs.Customer -replace ' ','_').xml"
@@ -472,20 +472,21 @@ try {
 				if (!$emailFileDirectory)
 				{
 					$global:report.Runtime.Configs.emailCredEncryptedPasswordFile = "$(Split-Path $($global:report.Runtime.configs.inifile))\$($global:report.Runtime.Configs.emailCredEncryptedPasswordFile)"
-				} 
-				$mailCredentials = getmycredentialsfromFile -User $global:report.Runtime.Configs.emailCredUser -SecureFileLocation $passwordFile $global:report.Runtime.Configs.emailCredEncryptedPasswordFile
+				}
+				$mailCredentials = getmycredentialsfromFile -User $global:report.Runtime.Configs.emailCredUser -SecureFileLocation $global:report.Runtime.Configs.emailCredEncryptedPasswordFile
 			} else {
 				$mailCredentials = $null
 			}
+			$attachments = @("")
+			$attachments += $zippedXmlOutput;
 			$emailParams = @{ 
 				'subject' = $global:report.Runtime.Configs.subject;
 				'smtpServer' = $global:report.Runtime.Configs.smtpServer;
-				'smtpDomainFQDN' = $global:report.Runtime.Configs.smtpDomainFQDN;
 				'replyTo' = $global:report.Runtime.Configs.replyToRecipients;
 				'from' = $global:report.Runtime.Configs.fromRecipients;
 				'toAddress' = $global:report.Runtime.Configs.toRecipients;
 				'body' = $body;
-				'attachements' = $zippedXmlOutput;
+				'attachments' = [object]$attachments;
 				'fromContactName' = $global:report.Runtime.Configs.fromContactName
 				'credentials' = $mailCredentials
 			}
@@ -497,8 +498,8 @@ try {
 	}
 }catch [system.exception]
 {
-  logThis -msg "Caught a system exception:"  
-  showError -msg $_
+	logThis -msg "Caught a system exception:"  
+	showError -msg $_
   
 } Finally
 {
