@@ -42,6 +42,12 @@ param(
 $script=$MyInvocation.MyCommand.Path
 $scriptsLoc=$(Split-Path $script)
 
+# Clear srvconnection if it already exists
+if ($srvconnection -or $global:srvconnection)
+{
+	Remove-Variable srvconnection -Scope Global
+}
+
 function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
 {
 	#logThis -msg "Reading in configurations from file $inifile"
@@ -242,7 +248,7 @@ function startProcess()
 		
 		#Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 		
-		InitialiseModule -logDir $global:report.Runtime.Configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
+		InitialiseModule # -logDir $global:report.Runtime.Configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
 		
 		logThis -msg "Collecting VMware Reports ($runtime_log_directory)" -logfile $logfile 
 		$global:report["$type"]["Runtime"]["Lofile"]=$logfile
@@ -251,12 +257,13 @@ function startProcess()
 		{			
 			logThis -msg "`t-> Collecting VMware Reports" -logfile $logfile 
 			if ($scriptParams) {remove-variable scriptParams}
+							#'runPerformanceReports' = $global:report.Runtime.Configs.perfChecks;							
 			$scriptParams = @{
 				'logProgressHere'=$logfile;
 				'srvconnection'=$srvconnection;
 				'logDir'=$global:report.Runtime.LogDirectory;
 				'runCapacityReports' = $global:report.Runtime.Configs.capacity;
-				'runPerformanceReports' = $global:report.Runtime.Configs.perfChecks;
+				'runPerformanceReports' = $false;
 				'runExtendedReports' = $global:report.Runtime.Configs.runExtendedVMwareReports;
 				'vms' = $global:report.Runtime.Configs.vmsToCheckPerformance;
 				'showPastMonths' = [int]$global:report.Runtime.Configs.previousMonths;
@@ -413,43 +420,92 @@ function startProcess()
 	$global:report["Runtime"]["Logs"] = getRuntimeLogFileContent
 }
 
-# MAIN
-if ($configObj) {Remove-Variable configObj -Scope All }
-if ($global:configs) {Remove-Variable configs -Scope Global }
-if ($preconfig) {Remove-Variable preconfig -Scope All }
-if ($global:report) { Remove-Variable report -Scope Global }
 
-$global:report = @{}
-$global:report["Runtime"]=@{}
-$global:report["Runtime"]["StartTime"]=Get-Date
-$configObj,$preconfig = readConfiguration -inifile $inifile
 
-if ($configObj)
-{	
-	$configObj.Add("Silent",$silent)
-	$configObj.Add("scriptsLoc",$scriptsLoc)
-	$global:configs = $configObj
-	$global:report["Runtime"]["Configs"]=$configObj
-	#Set-Variable -Scope Global -Name silent -Value $silent
+# Resolve the init file first
+try {
+	$inifile = ($inifile | Resolve-Path -ErrorAction SilentlyContinue).Path
+	# MAIN
+	
+	$global:report = @{}
+	$global:report["Runtime"]=@{}
+	$global:report["Runtime"]["StartTime"]=Get-Date
+	$configObj,$preconfig = readConfiguration -inifile $inifile
 
-	startProcess
-	$global:report["Runtime"]["EndTime"]=Get-Date
-	logThis -msg "Writing results to disks"
-	$xmlOutput = "$($global:report.Runtime.LogDirectory)\$($global:report.Runtime.Configs.Customer -replace ' ','_').xml"	
-	$global:report | Export-Clixml -Path $xmlOutput
-	logThis -msg "Zipping results for transport"
-	$zippedXmlOutput = $xmlOutput -replace ".xml",".zip"
-	New-ZipFile -InputObject $xmlOutput -ZipFilePath $zippedXmlOutput
-	if (Test-Path -Path $zippedXmlOutput)
-	{
-		Remove-Item $xmlOutput
+	if ($configObj)
+	{	
+		$configObj.Add("Silent",$silent)
+		$configObj.Add("scriptsLoc",$scriptsLoc)
+		$global:configs = $configObj
+		$global:report["Runtime"]["Configs"]=$configObj
+		#Set-Variable -Scope Global -Name silent -Value $silent
+
+		startProcess
+		
+		$global:report["Runtime"]["EndTime"]=Get-Date
+		
+		$xmlOutput = "$($global:report.Runtime.LogDirectory)\$($global:report.Runtime.Configs.Customer -replace ' ','_').xml"
+		logThis -msg "Writing results to $xmlOutput"
+		$global:report | Export-Clixml -Path $xmlOutput
+
+		$zippedXmlOutput = $xmlOutput -replace ".xml",".zip"
+		logThis -msg "Zipping results for transport to $zippedXmlOutput"
+		New-ZipFile -InputObject $xmlOutput -ZipFilePath $zippedXmlOutput
+		if (Test-Path -Path $zippedXmlOutput)
+		{
+			Remove-Item $xmlOutput
+		}
+		if ($global:report.Runtime.Configs.emailReport)
+		{
+			logThis -msg "Emailing results"
+			if ($emailParams) {remove-variable scriptParams}
+			
+			$body = @"
+				Health check results for $($global:report.Runtime.Configs.subject) $($global:report.Runtime.Configs.customer)
+"@
+			
+			# This routine sends the email
+			#function emailContact ([string] $smtpServer,  [string] $from, [string] $replyTo, [string] $toAddress ,[string] $subject, [string] $htmlPage) {
+			if ($global:report.Runtime.Configs.myMailServerRequiresAuthentication)
+			{	
+				$emailFileDirectory = Split-Path $global:report.Runtime.Configs.emailCredEncryptedPasswordFile
+				if (!$emailFileDirectory)
+				{
+					$global:report.Runtime.Configs.emailCredEncryptedPasswordFile = "$(Split-Path $($global:report.Runtime.configs.inifile))\$($global:report.Runtime.Configs.emailCredEncryptedPasswordFile)"
+				} 
+				$mailCredentials = getmycredentialsfromFile -User $global:report.Runtime.Configs.emailCredUser -SecureFileLocation $passwordFile $global:report.Runtime.Configs.emailCredEncryptedPasswordFile
+			} else {
+				$mailCredentials = $null
+			}
+			$emailParams = @{ 
+				'subject' = $global:report.Runtime.Configs.subject;
+				'smtpServer' = $global:report.Runtime.Configs.smtpServer;
+				'smtpDomainFQDN' = $global:report.Runtime.Configs.smtpDomainFQDN;
+				'replyTo' = $global:report.Runtime.Configs.replyToRecipients;
+				'from' = $global:report.Runtime.Configs.fromRecipients;
+				'toAddress' = $global:report.Runtime.Configs.toRecipients;
+				'body' = $body;
+				'attachements' = $zippedXmlOutput;
+				'fromContactName' = $global:report.Runtime.Configs.fromContactName
+				'credentials' = $mailCredentials
+			}
+			sendEmail @emailParams
+		}
+
+	} else {
+		logThis -msg "No configurations found in $inifile"
 	}
-	if ($global:report.Runtime.Configs.emailReport)
-	{
-		logThis -msg "Emailing results"		
-	}
-
-} else {
-	logThis -msg "Invalid Configurations"
+}catch [system.exception]
+{
+  logThis -msg "Caught a system exception:"  
+  showError -msg $_
+  
+} Finally
+{
+	Set-Location $($global:report.Runtime.Configs.scriptsLoc)
+	if ($report) { Remove-Variable report -Scope Global }
+	if ($srvconnection) { Remove-Variable srvconnection -Scope Global }	
+	if ($configObj) { Remove-Variable configObj -Scope local }
+	if ($preconfig) {Remove-Variable preconfig -Scope local }
+	logThis -msg "Script Exited."
 }
-

@@ -20,7 +20,7 @@ param(
 	[int]$numPastDays=7,
 	[int]$sampleIntevalsMinutes=5
 )
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $srvConnection -Scope Global

@@ -2728,20 +2728,20 @@ function formatNumbers (
 
 function showError ([Parameter(Mandatory=$true)][string] $msg, $errorColor="Red")
 {
-	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
-	logThis ">> " -ForegroundColor $errorColor
-	logThis ">> $msg" -ForegroundColor $errorColor
-	logThis ">> " -ForegroundColor $errorColor
-	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
+	logThis -msg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
+	logThis -msg ">> " -ForegroundColor $errorColor
+	logThis -msg ">> $msg" -ForegroundColor $errorColor
+	logThis -msg ">> " -ForegroundColor $errorColor
+	logThis -msg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
 }
 
 function verboseThis ([Parameter(Mandatory=$true)][object] $msg, $errorColor="Cyan")
 {
-	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
-	logThis ">> " -ForegroundColor $errorColor
-	logThis ">> $msg" -ForegroundColor $errorColor
-	logThis ">> " -ForegroundColor $errorColor
-	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
+	logThis -msg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
+	logThis -msg ">> " -ForegroundColor $errorColor
+	logThis -msg ">> $msg" -ForegroundColor $errorColor
+	logThis -msg ">> " -ForegroundColor $errorColor
+	logThis -msg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
 }
 
 #Log To Screen and file
@@ -2933,6 +2933,7 @@ function sendEmail
 		[Parameter(Mandatory=$true)][string] $subject, 
 		[Parameter(Mandatory=$true)][string] $body="",
 		[Parameter(Mandatory=$false)][string]$fromContactName="",
+		[Parameter(Mandatory=$false)][PSCredential] $credentials,
 		[Parameter(Mandatory=$false)][object] $attachements # An array of filenames with their full path locations
 	)  
 {

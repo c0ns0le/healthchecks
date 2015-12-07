@@ -11,10 +11,11 @@ param(	[object]$srvConnection="",
 		[bool]$returnResults=$true
 )
 
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose $false
+Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
-Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-Set-Variable -Name logDir -Value $logDir -Scope Global
+#Set-Variable -Name vCenter -Value $srvConnection -Scope Global
+if ($logDir -and !$global:logDir) { Set-Variable -Name logDir -Value $logDir -Scope Global }
+
 InitialiseModule
 
 # Report Meta Data
@@ -33,7 +34,7 @@ $metaInfo +="chartable=false"
 #$srvConnection = Connect-VIServer -Name $srvConnection
 
 logThis -msg "-> Loading clusters"
-$clusters = Get-Cluster -Server 
+$clusters = Get-Cluster -Server $srvConnection
 logThis -msg "-> Loading Datacenters"
 $datacenters = Get-datacenter -Server $srvConnection
 logThis -msg "-> Loading VMs"
