@@ -18,7 +18,7 @@ a single file (<customer.ini>) which contains a comprehensive list of environmen
 
 Read customer settings form the init file. This is how to call the sript for a specific customer.
 
-documentCustomer.ps1 -initFile "C:\admin\scripts\Customer_Settings\customer1.ini"
+documentCustomer.ps1 -initFile "Customer_Settings\default.ini"
 
 .NOTES
 
