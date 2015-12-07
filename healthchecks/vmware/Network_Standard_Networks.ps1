@@ -32,7 +32,8 @@ $dataTable = $srvConnection | %{
 		# define an object to capture all the information needed
 		$row = "" | select "VMHost"
 		$row.VMHost = $vswitch.VMHost
-		$clustername = (get-cluster -Server $vcenter -vmhost $report.VMhost).Name
+		
+		$clustername = (get-cluster -Server $vcenter -vmhost $vswitch.VMhost).Name
 		$row | Add-Member -Type NoteProperty -Name "vSwitch" -Value $vswitch.Name		
 		$row | Add-Member -Type NoteProperty -Name "NICs" -Value $([string]$_.nic -replace ' ',',')
 		$row | Add-Member -Type NoteProperty -Name "Number of Ports" -Value $vswitch.NumPorts

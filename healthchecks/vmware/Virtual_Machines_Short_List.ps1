@@ -4,9 +4,6 @@
 # Author: teiva.rodiere@gmail.com
 #
 param(
-		
-		,[int]$headerType=1)
-param(
 	[object]$srvConnection="",
 	[string]$logDir="output",
 	[string]$comment="",
