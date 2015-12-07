@@ -1,6 +1,6 @@
 # This scripts is intended to be a quick Issues & health check report for vmware environments.
 # Last updated: 20 Feb 2015
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 #
 # Goal for this script is to report on
 # - Cluster Health

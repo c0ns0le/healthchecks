@@ -1,7 +1,7 @@
 # Group Virtual Machines by vFolder and provides a table summary
 #Version : 1.0
 #Updated : 23 March 2015
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

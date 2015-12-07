@@ -1,6 +1,6 @@
 # Lists all VMs with a CPU or Memory Resevations
 # Setp 11 2009
-# author: teiva.rodiere@gmail.com
+# author: teiva.rodiere-at-gmail.com
 
 
 $row = "" | Select-Object VM,CPUReservation,CPULimits,MemReservation,MemLimit,Cluster

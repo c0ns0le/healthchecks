@@ -2,7 +2,7 @@
 # Permitted actions are: start,shutdown,restart,stop,reset,status
 # Version : 0.2
 # Last updated : 02 June 2010
-# Maintained by: teiva.rodiere@gmail.com
+# Maintained by: teiva.rodiere-at-gmail.com
 # Syntax: C:\admin\autoscripts\powerManageVM.cmd $powerAction $userid  $password $vm
 # Syntax (frmo openview):  ovdeploy -cmd "C:\admin\autoscripts\powerManageVM.cmd $powerAction $userid  $password $vm" -host $vcenter
 #

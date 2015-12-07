@@ -1,7 +1,7 @@
 # Groups Hypervisors by Server Hardware Model and spits out a small table with the quantity of servers in each.
 # The results is used as an input into a Capacity Review Report
 # Last updated: 23 March 2015
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

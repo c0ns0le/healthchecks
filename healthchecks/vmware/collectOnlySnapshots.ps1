@@ -2,7 +2,7 @@
 # Documents a cluster configuration
 #Version : 0.1
 #Updated : 4th October 2010
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$true,[bool]$outToScreen=$false,[string]$appendOutputToFile="")
 if ($verbose) 
 { 

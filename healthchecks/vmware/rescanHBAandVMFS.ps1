@@ -1,7 +1,7 @@
 # Rescan cluster hosts for new LUN and VMFS volumes
 #Version : 0.1
 #Updated : 09th July 2010
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$clustername="", [string]$logDir="output", [string]$mode="", [string]$vcenterName="")
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
 Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;

@@ -1,6 +1,6 @@
 # Exports Guest detailed information
 # Version : 1.6
-# Last updated : 02/02/2015, by teiva.rodiere@gmail.com
+# Last updated : 02/02/2015, by teiva.rodiere-at-gmail.com
 # It exports 3 things: 1) VM Properties, 2) Performance Metrics, 3) Event logs
 #
 #

@@ -1,7 +1,7 @@
 # Helps admin find a given virtual machine within multiple VirtualCenter servers and shows it's location
 #Version : 0.1
 #Updated : 1th Nov 2009
-#Author  : teiva.rodiere@gmail.com 
+#Author  : teiva.rodiere-at-gmail.com 
 param( [string] $VMName)
 
 $row = "" | Select-Object VMName,GuestFullName,GuestState,HostName,NumCPU,MemoryMB,HDDCount,NICCount,IpAddress,ToolsStatus,ToolsVersion,SyncTimeWithHost,BootTime,BladeSystem,Client,SLA,VRUC,VRUM,Cluster,ResponsibilityCode;

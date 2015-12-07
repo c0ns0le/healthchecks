@@ -1,7 +1,7 @@
 # Exports all User loggon events
 #Version : 0.1
 #Updated : 9th May 2012
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$false)
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
 Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;

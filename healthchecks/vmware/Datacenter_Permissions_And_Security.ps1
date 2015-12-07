@@ -1,7 +1,7 @@
 # Exports all Inventory objects which have permissions set on them
 #Version : 0.1
 #Updated : 8th May 2012
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[string]$userdomain="DOMAIN\user")
 logThis -msg "Importing Module vmwareModules.psm1 (force)"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru

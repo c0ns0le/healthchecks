@@ -2,7 +2,7 @@
 # imports the CSV into individual TAB, saves the script in the current directory
 # Syntax: csvToExcel.ps1
 # Version : 0.2
-# Author : 27/06/2010, by teiva.rodiere@gmail.com
+# Author : 27/06/2010, by teiva.rodiere-at-gmail.com
 # 
 param([object]$if=$pwd.path,[string]$of=$pwd.path)
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;

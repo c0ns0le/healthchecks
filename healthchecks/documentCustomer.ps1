@@ -1,34 +1,25 @@
 <#
-
 .SYNOPSIS
-
 TO BE ADVISED. Reads in a customer specific parameters from a given INI file.
-
-
+teiva.rodiere at gmail.com
 .DESCRIPTION
-
 <blah>
 
 .PARAMETER initFile
-
 a single file (<customer.ini>) which contains a comprehensive list of environmental parameters required for the script.
 
-
 .EXAMPLE
-
 Read customer settings form the init file. This is how to call the sript for a specific customer.
 
 documentCustomer.ps1 -initFile "Customer_Settings\default.ini"
 
 .NOTES
-
 <coming>
-
 #>
 # This report is a collection of many health checks and HTML generating report
 # Customise this for each customer and Voila
 # Last Modified: 25 March 2015
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 param(
 	[Parameter(Mandatory=$true)][string]$inifile,
 	[bool]$stopReportGenerator=$false,
@@ -147,7 +138,7 @@ function startProcess()
 	# DECLARATIONS :- Modify to suit installation
 	#
 	###########################################################################
-	#$sendAllEmailsTo="Teiva Rodiere <teiva.rodiere@gmail.com>" # Use this to overwrite for testing
+	#$sendAllEmailsTo="Teiva Rodiere <teiva.rodiere-at-gmail.com>" # Use this to overwrite for testing
 	# Runtime Variables
 	# $false to no launch on completion
 	# $false, should set to false if you are emailing using a cron job or something alike to avoid opening Web Browser
@@ -422,11 +413,15 @@ function startProcess()
 
 
 
-# Resolve the init file first
+<#
+
+	THIS IS WHERE IT BEGINS
+
+#>
 try {
-	$inifile = ($inifile | Resolve-Path -ErrorAction SilentlyContinue).Path
-	# MAIN
-	
+	$inifile = ($inifile | Resolve-Path -ErrorAction SilentlyContinue).Path	
+	# all reports, file attachment paths, and runtime information for each scripts 
+	# are returned to the variable $global:report
 	$global:report = @{}
 	$global:report["Runtime"]=@{}
 	$global:report["Runtime"]["StartTime"]=Get-Date
@@ -439,7 +434,9 @@ try {
 		$global:configs = $configObj
 		$global:report["Runtime"]["Configs"]=$configObj
 		#Set-Variable -Scope Global -Name silent -Value $silent
-				
+		
+		
+
 		startProcess
 
 		$global:report["Runtime"]["EndTime"]=Get-Date
@@ -477,7 +474,7 @@ try {
 			} else {
 				$mailCredentials = $null
 			}
-			$attachments = @("")
+			
 			$attachments += $zippedXmlOutput;
 			$emailParams = @{ 
 				'subject' = $global:report.Runtime.Configs.subject;

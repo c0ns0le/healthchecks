@@ -1,6 +1,6 @@
 ﻿# Exports Virtual Machine Details from Xen
 # Version : 0.1
-#Author : 18/03/2015, by teiva.rodiere@gmail.com
+#Author : 18/03/2015, by teiva.rodiere-at-gmail.com
 param(
 		[object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$includeTemplates=$false,
 		[bool]$skipEvents=$true,[bool]$verbose=$false,

@@ -1,7 +1,7 @@
 # THIS is teiva's template base script which can be cloned of into new scripts to help accelerating the development process
 #Version : 0.1
 #Updated : 3th Feb 2015
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

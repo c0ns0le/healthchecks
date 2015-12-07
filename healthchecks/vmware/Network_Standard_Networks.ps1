@@ -1,7 +1,7 @@
 ﻿# Exports Distributed vSwitches configurations and essential information from vCenter for documentation purposes
 #Version : 0.1
 #Updated : 3th Feb 2015
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 
 param(
 	[object]$srvConnection="",

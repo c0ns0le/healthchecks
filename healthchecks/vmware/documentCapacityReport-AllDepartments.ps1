@@ -2,7 +2,7 @@
 # "root" Folders within the "Virtual Machine and Template" Inventory
 #Version : 0.1
 #Updated : 27th Feb 2012
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$true)
 
 function ShowSyntax() {

@@ -1,7 +1,7 @@
 # This script exports the Licences in this environment
 #Version : 1.0
 #Updated : 24 March 2015
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

@@ -1,6 +1,6 @@
 #Check vSwitches/Port Groups config in VCS for the 1st host in every cluster
 #Version : 0.4
-#Author : 04/06/2010, by teiva.rodiere@gmail.com
+#Author : 04/06/2010, by teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[string]$scanType="one",[bool]$showTimestamp=$true)
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
 Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;

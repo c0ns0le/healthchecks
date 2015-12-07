@@ -1,7 +1,7 @@
 # Exports performance results for VMHosts
 #Version : 0.1
 #Updated : 3th Feb 2015
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",
 	[string]$logDir="output",
 	[string]$comment="",

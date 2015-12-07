@@ -1,7 +1,7 @@
 # Documents Guests by  Operating Systems type
 # The results is used as an input into a Capacity Review Report
 # Last updated: 8 March 2012
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 #
 
 param(

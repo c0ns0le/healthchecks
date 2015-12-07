@@ -1,7 +1,7 @@
 # Documents VMs with vSphere Replication configurations
 #Version : 0.1
 #Updated : 3th Feb 2015
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

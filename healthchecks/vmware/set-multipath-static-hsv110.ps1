@@ -1,8 +1,8 @@
-# Load balance ESX datastore/LUNs on Mincom EVA5000. The script load balances LUNs according to MOD(4) algorithm and exact controller ports
+# Load balance ESX datastore/LUNs on Customer EVA5000. The script load balances LUNs according to MOD(4) algorithm and exact controller ports
 # 
 # Version : 0.4
 # Updated : 31/11/2013
-# Author  : teiva.rodiere@gmail.com
+# Author  : teiva.rodiere-at-gmail.com
 # Syntax  : set-multipath-static-hsv110.ps1
 #
 #

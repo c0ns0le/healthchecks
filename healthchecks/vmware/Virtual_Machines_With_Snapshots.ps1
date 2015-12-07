@@ -1,7 +1,7 @@
 # Scripts scans virtual machines and outputs a list of VMs with Snapshot and exports it to a CSV
 # Version : 1.0
 # Updated : 23 March 2015
-# Author  : teiva.rodiere@gmail.com
+# Author  : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

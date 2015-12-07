@@ -1,7 +1,7 @@
 # Documents a cluster configuration
 #Version : 0.6
 #Updated : 12th Feb 2010
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="")
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
 Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;

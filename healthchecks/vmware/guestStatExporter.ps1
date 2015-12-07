@@ -1,6 +1,6 @@
 # This scripts provides common performance statistics information about VMs from a specified location
 # Last updated: 31 March 2011
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 #
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[string$location="")
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
@@ -41,5 +41,5 @@ if ($location -eq "")
 $startdate=$(Get-date -date (Get-date).adddays(-7) -format d); 
 $enddate=$(get-date -format d);  
 
-Get-VM -Location $location | %{ Get-Stat -Entity $_.name -start $startdate  -Finish $enddate -Common -IntervalSecs 1200 | Export-Csv "C:\admin\powershell\scheduler\MINCOM_AXIS\$_-weekly-st
+Get-VM -Location $location | %{ Get-Stat -Entity $_.name -start $startdate  -Finish $enddate -Common -IntervalSecs 1200 | Export-Csv "C:\admin\powershell\scheduler\Customer_AXIS\$_-weekly-st
 ats.csv" -NoTypeInformation}

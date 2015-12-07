@@ -2,7 +2,7 @@
 # The scripts should only export the results into separate CSV in the folder specified by $logDir. Then right at the end the script calls the generateReport script which reads things back in
 # and generates the HTML report.
 # Version: 0.1 - May 5th 2015
-# maintainer: teiva.rodiere@gmail.com
+# maintainer: teiva.rodiere-at-gmail.com
 #
 # see function showSyntax() below for the list of Syntax
 #

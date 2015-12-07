@@ -1,7 +1,7 @@
 # Lists VMs that have floppy and CD roms connected
 #Version : 0.1
 #Updated : 3 Septembre 2009
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 
 $myvm = "" | Select Name,Path;
 foreach ( $vm in (get-vm *)) 

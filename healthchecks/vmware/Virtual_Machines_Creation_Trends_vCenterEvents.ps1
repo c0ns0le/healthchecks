@@ -1,6 +1,6 @@
 # This scripts provides an analysis of VM Creation Trends on a monthly basis
 # Last updated: 31 March 2011
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 #
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="")
 logThis -msg "Importing Module vmwareModules.psm1 (force)"

@@ -1,6 +1,6 @@
 ﻿#Script to Deploy Multiple VMs from Template using number iteration
 # version: 0.1
-# Autor:	teiva.rodiere@gmail.com
+# Autor:	teiva.rodiere-at-gmail.com
 
 #*****************************************************
 #Connect-VIServer -Server $env:hostname -User <user> -Password <password>

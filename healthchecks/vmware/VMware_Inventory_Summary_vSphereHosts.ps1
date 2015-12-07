@@ -1,11 +1,11 @@
 # Scans the VMware Infrastructure and documents hardware and software configurations 
 # of Virtual Center Server and esx/esxi systems
 #Version : 0.8
-#Last Updated : 12th Feb 2010, teiva.rodiere@gmail.com
-#Author : teiva.rodiere@gmail.com 
+#Last Updated : 12th Feb 2010, teiva.rodiere-at-gmail.com
+#Author : teiva.rodiere-at-gmail.com 
 #Inputs: vcenter server name, username, and password
 #Version : 0.6
-#Author :12/11/2011, by teiva.rodiere@gmail.com
+#Author :12/11/2011, by teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$false,[bool]$formatList=$false)
 logThis -msg "Importing Module vmwareModules.psm1 (force)"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru

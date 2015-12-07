@@ -1,6 +1,6 @@
 # This scripts 
 # Last updated: 15 Feb 2010
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 #
 param(	[object]$srvConnection="",
 		[string]$logDir="output",

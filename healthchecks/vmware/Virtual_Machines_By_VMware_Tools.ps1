@@ -1,7 +1,7 @@
 # This script exports a list of VMs with vmWare Tools issues: - Out of date or not running
 # Version : 1.0
 # Updated : 23 March 2015
-# Author  : teiva.rodiere@gmail.com
+# Author  : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

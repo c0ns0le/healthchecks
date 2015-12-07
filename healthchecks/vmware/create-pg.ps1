@@ -1,7 +1,7 @@
 #Purpose: USe this script to create a port group on all hosts in a defined cluster
 #Version : 0.3
-#Last Updated : 26th Feb 2010, teiva.rodiere@gmail.com
-#Author : teiva.rodiere@gmail.com 
+#Last Updated : 26th Feb 2010, teiva.rodiere-at-gmail.com
+#Author : teiva.rodiere-at-gmail.com 
 #Syntax: .\create-pg.ps1 -Cluster "VMWARE_CLUSTER" -pgName "Portgroup_Name" -vlan "100" -vSwitchName "vSwitch1" -vcenterName "name"
 #Inputs: vcenter server name, username, and password
 #Output: new port group created on defined vSwitch

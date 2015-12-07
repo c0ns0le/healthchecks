@@ -1,7 +1,7 @@
 # Storage Capacity Report for Common Infrastructure
 #Version : 0.1
 #Updated : 8th Sept 2009
-#Author  : teiva.rodiere@gmail.com 
+#Author  : teiva.rodiere-at-gmail.com 
 
 $row = "" | Select VMName,GuestFullName,GuestState,ToolsStatus,ToolsVersion,MountPoint,CapacityMB,FreeSpaceMB,PercFree,Cluster;
 get-cluster | foreach-object {

@@ -1,7 +1,7 @@
 # Helps admin find a given virtual machine within multiple VirtualCenter servers and shows it's location
 #Version : 0.1
 #Updated : 11th Nov 2009
-#Author  : teiva.rodiere@gmail.com 
+#Author  : teiva.rodiere-at-gmail.com 
 # Syntaxt: .\findVM.ps1 NAME1
 # Syntaxt for multiple VMs: .\findVM.ps1 NAME1 NAME2 NAME3
 # OUtput: <VMNAME1> found on vCenter server <Servername>
@@ -52,5 +52,5 @@ if (test-path $of)
 	Invoke-Item $of
 }  else {
 	Write-Output "Error while opening up the result file $of";
-	Write-Output "Try rerunning the script or contact INF-VMWARE@mincom.com";
+	Write-Output "Try rerunning the script or contact INF-VMWARE@Customer.com";
 }

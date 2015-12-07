@@ -1,7 +1,7 @@
 # Looks for VMs without COMMISSIONED DATE and COMMISIONED BY attributes, reports them, and looks through past eventsto determine the creation/commissioning date and the user who provisioned it.
 # Once it has determined it, you can choose to update vCenter attributes
 # Version : 0.6
-#Author : 13/06/2013, by teiva.rodiere@gmail.com
+#Author : 13/06/2013, by teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[bool]$disconnectOnExist=$false,[string]$comment="",[bool]$reportOnly=$true,[bool]$verbose=$true,[bool]$overwrite=$false,[string]$debugFile)
 
 # Expected annotations required in vCenter

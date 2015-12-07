@@ -1,7 +1,7 @@
 # Lists VMs and their some key attributes
 #Version : 0.1
 #Updated : 3rd Feb 2009
-#Author  : teiva.rodiere@gmail.com 
+#Author  : teiva.rodiere-at-gmail.com 
 
 $myarray = "" | Select-Object Name,IpAddress,GuestState,ESXHostName,NumCPU,MemoryMB,GuestFullName,ToolsStatus,ToolsVersion,SyncTimeWithHost,BootTime;
 

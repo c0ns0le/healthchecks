@@ -1,6 +1,6 @@
 # This scripts provides some capacity information for an environment and it clusters
 # Last updated: 31 March 2011
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 #
 param(	[object]$srvConnection,
 		[string]$logDir="output",

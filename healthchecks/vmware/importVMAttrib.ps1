@@ -1,7 +1,7 @@
 #Description: 
 #Version : 0.2
 #Updated : 30th Sept 2009
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 # Syntax : script.ps1 if.csv
 #	$if: input file in CSV format, comma delimited
 #    input file format: Name,Notes,<custom attributes>

@@ -1,7 +1,7 @@
 #Check vSwitches/Port Groups config in VCS for the 1st host in every cluster
 #Version : 0.4
 #Updated : 8th Oct 2009
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 
 
 #$vcenterName = Read-Host "Enter virtual center server name"

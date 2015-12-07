@@ -1,7 +1,7 @@
 # Lists the VMDK Disks for a VM
 #Version : 0.1
 #Updated : 21th Sept 2009
-#Author  : teiva.rodiere@gmail.com 
+#Author  : teiva.rodiere-at-gmail.com 
 # Syntaxt: exportVM_VMDKInformation.ps1 VSVWIN2003E055
 # Syntaxt for multiple VMs: exportVM_VMDKInformation.ps1 NAME1 NAME2 NAME3
 # Syntax Exporting to CSV: exportVM_VMDKInformation.ps1 VMNAME1 | Export-CSV ".\filename.csv"

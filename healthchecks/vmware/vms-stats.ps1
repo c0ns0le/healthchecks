@@ -1,6 +1,6 @@
 # Exports Virtual Machine Quick Stats
 #Version : 0.1
-#Author : 23/08/2012, by teiva.rodiere@gmail.com
+#Author : 23/08/2012, by teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$false,[int]$lastDays=5)
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
 Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;

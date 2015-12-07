@@ -4,7 +4,7 @@
 # of CSV, then make the change in collectAll.ps1. It is achieved by changing the order of the scripts from $defaultReports and $extraReports
 #
 # Version : 1.2
-#Author : 24/03/2015, by teiva.rodiere@gmail.com
+#Author : 24/03/2015, by teiva.rodiere-at-gmail.com
 # Syntax
 # ./generateInfrastructureReports.ps1 -srvconnection $srvconnection -emailReport [$true|$false] -verboseHTMLFilesToFile [$true|$false]
 #

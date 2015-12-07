@@ -1,7 +1,7 @@
 # The purpose of this script is to scan a VirtualCenter infrastructure for LUNs and report on the following attributes
 # Version : 2
 # Updated : 10/11/2009
-# Author : teiva.rodiere@gmail.com
+# Author : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

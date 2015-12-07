@@ -1,7 +1,7 @@
 # Exports all Events objects 
 #Version : 0.1
 #Updated : 9th May 2012
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 
 param([object]$srvConnection,[string]$logDir="output",[string]$comment="",[string]$lastDays=7,[string]$errorType="",[string]$eventString="",[string]$VM)
 

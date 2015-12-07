@@ -1,7 +1,7 @@
 # This scripts provides some capacity information for an environment 
 # The results is used as an input into a Capacity Review Report
 # Last updated: 8 March 2012
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 #
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false)
 logThis -msg "Importing Module vmwareModules.psm1 (force)"

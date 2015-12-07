@@ -1,6 +1,6 @@
 ﻿# This scripts looks for entries in the "Expiry Date" custom attribute of a Virtual machine
 # version: 0.1
-# Author: teiva.rodiere@mincom
+# Author: teiva.rodiere-at-gmail.com
 # Date: 30 Sept 2009
 
 

@@ -1,6 +1,6 @@
 # Exports detailed Virtual Machines Settings and Runtime information
 # Version : 1.1
-# Last Updated : 8/10/2015, by teiva.rodiere@gmail.com
+# Last Updated : 8/10/2015, by teiva.rodiere-at-gmail.com
 param(
 		[object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showOnlyTemplates=$false,
 		[bool]$skipEvents=$true,[bool]$verbose=$false,

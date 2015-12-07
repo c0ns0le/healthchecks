@@ -1,6 +1,6 @@
 # Exports DRS rules for each Cluster in a virtual center server
 # Last updated: 15/10/2009
-# Authored by: teiva.rodiere@gmail.com
+# Authored by: teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$false)
 logThis -msg "Importing Module vmwareModules.psm1 (force)"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru

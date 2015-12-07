@@ -1,7 +1,7 @@
 #Purpose: Use this script to create all portgroups on ALL hosts in the "Maintenance Dock" folder
 #Version : 0.3
-#Last Updated : 26th Feb 2010, teiva.rodiere@gmail.com
-#Author : teiva.rodiere@gmail.com 
+#Last Updated : 26th Feb 2010, teiva.rodiere-at-gmail.com
+#Author : teiva.rodiere-at-gmail.com 
 param([object]$srvConnection,$hostsInLocation="Maintenance Dock",$sourceHost="",$targetHost="", $pgName="",$vlan="",$vSwitchName="vSwitch1",$vcenterName="",[bool]$commit=$false,$autocontinue="")
 
 $disconnectOnExist = $true;
@@ -28,7 +28,7 @@ if ($sourceHost -eq "" -or ($hostsInLocation -eq "" -and $targetHost -eq ""))
 	exit;
 }
 
-#get-vc mmsbnevcm01.gms.mincom.com
+#get-vc $srvconnection
 
 #Get Source PGs
 $sourceVMhost = Get-VMhost -Name $sourceHost -Server $srvconnection

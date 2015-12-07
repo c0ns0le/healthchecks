@@ -1,12 +1,12 @@
 # This powershell script helps generating an snmp trap (Warm start - generic snmpv2)
 # 
 # Configure the settings
-$targethost="aubne-s-desx29.dev.mincom.com"
+$targethost="esxi.customer.com"
 $targethostUsername="root"
-$targethostPassword="SkG[9*iL"
-$rocommunity="vmwr0c123"
+$targethostPassword="rootpassword"
+$rocommunity="rocommunity"
 $trapPort="162" # this is the default though
-$receiverTargetHost="192.55.198.6"
+$receiverTargetHost="targetSNMPServer"
 # The following are not needed, it is just a reminder that the NNM polling settings are as follow
 #Timeout=2 seconds
 #Retries=3

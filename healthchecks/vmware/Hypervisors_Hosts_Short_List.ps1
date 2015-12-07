@@ -1,7 +1,7 @@
 # Enumerates a list of Hypervisors with a few information about each 
 # Version : 1.2
 # Last updated: 23 March 2015
-#Author : teiva.rodiere@gmail.com
+#Author : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

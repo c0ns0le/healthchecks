@@ -1,7 +1,7 @@
 param([string]$mode="readonly");
 
-$currStr="MINCOM-PROD"; 
-$newStr="MINCOM_01";
+$currStr="Customer-PROD"; 
+$newStr="Customer_01";
 
 Get-Datastore "*$currStr*" | %{
 	$replaceStr=($_.Name).Replace($currStr,$newStr); 

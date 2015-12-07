@@ -1,7 +1,7 @@
 # Stop VM of choice
 #Version : 0.1
 #Updated : 15th Step 2009
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 #param($userId,$passWord,$VM)
 if ($args) {
         $id=$args[1];

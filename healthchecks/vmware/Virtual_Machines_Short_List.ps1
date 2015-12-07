@@ -1,7 +1,7 @@
 # This script exports a list of VM with minimal information so it fits in a word document for reporting.
 # The results is used as an input into a Capacity Review Report
 # Last updated: 23 March 2015
-# Author: teiva.rodiere@gmail.com
+# Author: teiva.rodiere-at-gmail.com
 #
 param(
 	[object]$srvConnection="",

@@ -1,7 +1,7 @@
 # This script edits the VM config to get VM to upgrade tools on boot 
 # 
 # Version : 0.2
-#Author : 09/06/2010, by teiva.rodiere@gmail.com
+#Author : 09/06/2010, by teiva.rodiere-at-gmail.com
 # Syntax Example: .\set-VMs-VMwareToolsUpgradeOnBoot.ps1 -srvConnection $srvconnection -location "AUBNE-C-DVMWPROD" -readonly $false -upgradeAtPowerCycle $true -syncTimeWithHost $true
 #
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[string]$location,[bool]$readonly=$true,[bool]$upgradeAtPowerCycle=$true,[bool]$syncTimeWithHost=$true)

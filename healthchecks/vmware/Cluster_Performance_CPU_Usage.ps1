@@ -3,7 +3,7 @@
 # Output 2: It looks at averages, min and peak information for each month over the period defined in variable "lastMonths"
 # for the entire period and averages out 
 # Full compresensive list of metrics are available here: http://communities.vmware.com/docs/DOC-560
-# maintained by: teiva.rodiere@gmail.com
+# maintained by: teiva.rodiere-at-gmail.com
 # version: 3
 #
 #   Step 1) $srvconnection = get-vc <vcenterServer>

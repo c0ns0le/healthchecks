@@ -1,13 +1,13 @@
 # Scans the VMware Infrastructure and documents hardware and software configurations 
 # of Virtual Center Server and esx/esxi systems
 #Version : 0.8
-#Last Updated : 12th Feb 2010, teiva.rodiere@gmail.com
-#Author : teiva.rodiere@gmail.com 
+#Last Updated : 12th Feb 2010, teiva.rodiere-at-gmail.com
+#Author : teiva.rodiere-at-gmail.com 
 #Syntax: ".\documentVMHosts.ps1"
 #Inputs: vcenter server name, username, and password
 #Output file: "documentVMHost.csv"
 #Version : 0.4
-#Author : 04/06/2010, by teiva.rodiere@gmail.com
+#Author : 04/06/2010, by teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$false,[bool]$formatList=$true)
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
 Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;

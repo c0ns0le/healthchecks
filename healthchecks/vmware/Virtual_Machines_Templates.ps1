@@ -1,6 +1,6 @@
 # Exports resource pools configurations and runtime information
 # Version : 0.1
-#Author : 8/0632011, by teiva.rodiere@gmail.com
+#Author : 8/0632011, by teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="")
 LogThis -msg "Importing Module vmwareModules.psm1 (force)"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru

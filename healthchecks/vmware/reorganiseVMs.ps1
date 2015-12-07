@@ -1,22 +1,22 @@
 # This scripts reads in the output CSV file from "documentVMGuests.ps1". It takes the name of a VM, moves the VM to the correct vFolder or Resource pool, or both
 # Syntax: reorganiseVMs.ps1 -cluster clustername -executeMode [readonly|doit] -action [vfolderonly|rponly|both] -if inputfile.csv
 # Version : 0.3
-#Author : 11/06/2010, by teiva.rodiere@gmail.com
+#Author : 11/06/2010, by teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output", [string]$if="", [string]$cluster="", [string]$datacenter="", [string]$executeMode="readonly", [string]$action="")
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
 Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;
 
 $disconnectOnExist = $true;
 
-function Showsyntax()
+function Showsyntax([string]$clusterName)
 {
 	Write-Output "Syntax: reorganiseVMs.ps1 -datacenter dcname -cluster clustername -executeMode [readonly|doit] -action [vfolderonly|rponly|both] -if inputfile.csv"
-	Write-Host "Example 1: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster MMS_INTERNAL -executeMode doit -action both -if documentVMGuests.csv -datacenter MINCOM_CENTRAL"
-	Write-Host "Example 2: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster MMS_INTERNAL -executeMode doit -action rponly -if documentVMGuests.csv -datacenter MINCOM_CENTRAL"
-	Write-Host "Example 3: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster MMS_INTERNAL -executeMode doit -action vfolderonly -if documentVMGuests.csv -datacenter MINCOM_CENTRAL"
-	Write-Host "Example 4: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster MMS_INTERNAL -executeMode readonly -action both -if documentVMGuests.csv -datacenter MINCOM_CENTRAL"
-	Write-Host "Example 5: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster MMS_INTERNAL -executeMode readonly -action rponly -if documentVMGuests.csv -datacenter MINCOM_CENTRAL"
-	Write-Host "Example 6: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster MMS_INTERNAL -executeMode readonly -action vfolderonly -if documentVMGuests.csv -datacenter MINCOM_CENTRAL"
+	Write-Host "Example 1: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster $clusterName -executeMode doit -action both -if documentVMGuests.csv -datacenter Customer_CENTRAL"
+	Write-Host "Example 2: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster $clusterName -executeMode doit -action rponly -if documentVMGuests.csv -datacenter Customer_CENTRAL"
+	Write-Host "Example 3: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster $clusterName -executeMode doit -action vfolderonly -if documentVMGuests.csv -datacenter Customer_CENTRAL"
+	Write-Host "Example 4: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster $clusterName -executeMode readonly -action both -if documentVMGuests.csv -datacenter Customer_CENTRAL"
+	Write-Host "Example 5: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster $clusterName -executeMode readonly -action rponly -if documentVMGuests.csv -datacenter Customer_CENTRAL"
+	Write-Host "Example 6: C:\admin\powershell> C:\admin\powershell\reorganiseVMs.ps1 -cluster $clusterName -executeMode readonly -action vfolderonly -if documentVMGuests.csv -datacenter Customer_CENTRAL"
 	exit;
 }
 
@@ -55,7 +55,7 @@ function MoveToRP {
 
 if ($if -eq "" -or $datacenter -eq "" -or $cluster -eq "" -or $executeMode -eq "" -or $action -eq "")
 {
-	Showsyntax;
+	Showsyntax -clusterName "TEST_CLUSTER";
 }
 
 #if (!$srvConnection)

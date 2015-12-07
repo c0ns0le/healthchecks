@@ -1,7 +1,7 @@
 # Syntax
 # Set-Credentials -File securestring.txt
 # Set-Credentials 
-# maintained by: teiva.rodiere@gmail.com
+# maintained by: teiva.rodiere-at-gmail.com
 # You need to open run this under the account that will be using to run the reports or the automation
 # DOMAIn\svc-autobot is a domain account which most scripts run under on VCENTERSEVER.
 #   if you want to use DOMAIN\svcAccount to call any scripts under scheduled task, you need to create the password file for the target account to 

@@ -2,7 +2,7 @@
 # Note it does not check if CDP is enabled per NIC
 #Version : 0.1
 #Last Updated : 11th Aug 2010
-#Maintained by: teiva.rodiere@gmail.com 
+#Maintained by: teiva.rodiere-at-gmail.com 
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$false)
 Write-Host "Importing Module vmwareModules.psm1 (force)"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru

@@ -2,7 +2,7 @@
 # Exports a list of VMs with Resource Reservations and Limits
 #Version : 1.0
 #Updated : 23 March 2015
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param(
 	[object]$srvConnection="",
 	[string]$logDir="output",

@@ -1,7 +1,7 @@
 # Storage Capacity Report for Common Infrastructure
 #Version : 0.1
 #Updated : 8th Sept 2009
-#Author  : teiva.rodiere@gmail.com 
+#Author  : teiva.rodiere-at-gmail.com 
 $myarray = "" | Select Cluster,VMName,GuestState,ToolsStatus,ToolsVersion,DiskName,Persistent,VMDKCapacityGB,Datastore,MountPoint,CapacityGB,FreeSpaceGB,PercFree;
 get-cluster | foreach-object {
 		$cluster = $_.Name; 

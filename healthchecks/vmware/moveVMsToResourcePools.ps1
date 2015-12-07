@@ -1,7 +1,7 @@
 # Moves Virtual Machines around to a resource pool based on a give policy
 #Version : 0.1
 #Updated : 23th Feb 2012
-#Author  : teiva.rodiere@gmail.com
+#Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[string]$vmName="",[bool]$verbose=$true)
 
 function ShowSyntax() {

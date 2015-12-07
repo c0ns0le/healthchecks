@@ -1,9 +1,9 @@
 #Purpose: USe this script to delete a port group on all hosts in a defined cluster
 #Version : 0.3
-#Last Updated : 26th Feb 2010, teiva.rodiere@gmail.com
-#Author : teiva.rodiere@gmail.com 
+#Last Updated : 26th Feb 2010, teiva.rodiere-at-gmail.com
+#Author : teiva.rodiere-at-gmail.com 
 #Syntax: .\delete-pg.ps1 -Cluster name -pgName name -vSwitchName name"
-#Example: .\delete-pg.ps1 -Cluster CUSTOMER_CLU -pgName Mincom-PortGroup_100 -vSwitchName vSwitch1"
+#Example: .\delete-pg.ps1 -Cluster CUSTOMER_CLU -pgName Customer-PortGroup_100 -vSwitchName vSwitch1"
 #Inputs: vcenter server name, username, and password
 #Output: new port group created on defined vSwitch
 param($Cluster,$pgName,$vSwitchName)

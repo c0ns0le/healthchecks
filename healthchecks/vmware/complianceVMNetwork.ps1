@@ -4,7 +4,7 @@
 #Check vSwitches/Port Groups config in VCS for the 1st host in every cluster
 #Version : 0.1
 #Updated : 18th Sept 2009
-#Author  : noorfaizal.noor@mincom.com
+#Author  : teiva.rodiere-at-gmail.com
 
 $row = "" | Select-Object "Datacenter","Cluster","VMHost","vSwitch","vmNIC",
 "Ports","AllowPromiscuous","MacChanges",

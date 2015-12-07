@@ -1,8 +1,8 @@
 # This script assumes that the servers are wihtin the same vcenter, can easily be changed
 # teiva
 $srvconnection = get-vc vtx-qld-dcb1-vvc01
-$sourceHost = "mmsbneesx01.gms.mincom.com"
-$targetHost = "vtx-qld-dcb1-svr01.gms.mincom.com"
+$sourceHost = "$testesxserver"
+$targetHost = "$srvconnection"
 
 if ($srvconnection) 
 {

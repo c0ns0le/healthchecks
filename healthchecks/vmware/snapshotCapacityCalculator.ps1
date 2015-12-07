@@ -1,7 +1,7 @@
 # This scripts calculates the amount of disk capacity required for a VM to be snapshots
 # Syntax: snapshotCapacityCalculator.ps1 -vmname <NAME> [ -SpercValue 0-100 ]
 # Version : 0.1
-#Author : 16/06/2010, by teiva.rodiere@gmail.com
+#Author : 16/06/2010, by teiva.rodiere-at-gmail.com
 # More information
 # This minimum value represents the capacity value on top of the disk requirement of a VM that must be available for that VM prior to taking snapshot
 # Example: 

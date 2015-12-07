@@ -1,7 +1,7 @@
 # Exports Alarm actions and associated definitions from vCenter. The output can be used with configureAlarmActions.ps1 to import them into vCenter
 #Version : 0.1
-#Last Updated : 31th Jul 2012, teiva.rodiere@gmail.com
-#Author : teiva.rodiere@gmail.com 
+#Last Updated : 31th Jul 2012, teiva.rodiere-at-gmail.com
+#Author : teiva.rodiere-at-gmail.com 
 #Syntax:  .\documentAlarmActions.ps1
 #         .\documentAlarmActions.ps1 -srvConnection $srvConnection -comment "mycomment" -logDir "D:\temp"
 #Inputs: vcenter server name, username, and password

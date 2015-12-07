@@ -1,6 +1,6 @@
 # Generates a list of VMs then an email summary of VM ownership to each "Contact" + a special Manager Style Report with lots of Summary 
 # Version : 0.9
-#Author : 12/03/2014, by teiva.rodiere@gmail.com
+#Author : 12/03/2014, by teiva.rodiere-at-gmail.com
 # Syntax
 # .\sendListOfVMsToContacts-shortlist.ps1 -srvconnection $srvconnection -includeIndividualReports [$true|$false] -includeManagersReport [$true|$false] -emailReport [$true|$false] -verboseHTMLFilesToFile [$true|$false]
 #
@@ -46,16 +46,16 @@ $disconnectOnExist = $true;
 #$fromContactName = "INF VMware"
 #$fromAddress="inf-vmware@ventyx.abb.com"
 #$fromContactName = "Teiva Rodiere"
-#$fromAddress="teiva.rodiere@gmail.com"
+#$fromAddress="teiva.rodiere-at-gmail.com"
 $fromContactName="Service Center"
 $fromAddress="servicedesk@gms.ventyx.abb.com"
 $farmname = "VENTYX Managed Service VMware Infrastructure"
 $gmsContactName = "Ventyx Global Support Helpdesk "
 $replyAddress="servicedesk@gms.ventyx.abb.com"
-$smtpServer = "mmsbnemrl01.internal.mincom.com"
+$smtpServer = "mmsbnemrl01.internal.Customer.com"
 $emailfqdn = "@ventyx.abb.com" 
 # Uncomment the below line to overwride all emails destinations to the one below
-#$sendAllEmailsTo="teiva.rodiere@gmail.com"
+#$sendAllEmailsTo="teiva.rodiere-at-gmail.com"
 
 if ($logfile)
 {
