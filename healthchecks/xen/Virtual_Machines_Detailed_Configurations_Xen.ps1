@@ -12,11 +12,11 @@ Import-Module -Name ..\vmware\gmsTeivaModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name XenServer -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
+
+
 
 # Want to initialise the module and blurb using this 1 function
-xen_#InitialiseModule
+#xen_InitialiseModule
 
 
 # TO REMOVE WHEN INTEGRATING INTO REST OF THE SCRIPTS

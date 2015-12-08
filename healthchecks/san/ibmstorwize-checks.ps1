@@ -28,7 +28,7 @@ param([string]$logDir="output",
 	[Parameter(Mandatory=$false)][string]$reportIntro="This document presents a series of findings related to storage infrasructure for $customerName. It was prepared by $itoContactName" 
 )
 
-#Write-Host $arrayOfTargetDevicesWithSeparateCredentials
+
 
 function showSyntax()
 {
@@ -99,7 +99,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name reportIndex -Value "$logDir\index.txt" -Scope Global
 #Write-Host ":: Log File $global:logfile"
 #Write-Host ":: Output CSV $global:outputCSV"
-#InitialiseModule
+
 
 $scriptCSVFilename = $global:outputCSV #).Replace(".csv",".csv")
 
@@ -443,7 +443,7 @@ if (!$importFromThisXML)
 			$arrays[$title]=$dataTable				
 				
 		} else {
-			#$metaAnalytics+="analytics="
+			+="analytics="
 		}
 
 			

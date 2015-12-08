@@ -13,11 +13,11 @@ param(
 	[bool]$showExtra=$true,
 	[string]$startinFolder="rootFolder"
 )
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
+$silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-#InitialiseModule
+
+
 
 #[string]$configFile=".\customerEnvironmentSettings-ALL.ini",
 
@@ -216,7 +216,7 @@ $Report = $folders | %{
 
 if ($dataTable)
 {
-	#$dataTable $dataTable
+	
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics="+$metaAnalytics

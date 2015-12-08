@@ -13,11 +13,11 @@ param(
 	[bool]$returnResults=$true,
 	[bool]$showDate=$false
 )
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
+$silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-#InitialiseModule
+
+
 
 # Report Meta Data
 $metaInfo = @()
@@ -26,7 +26,7 @@ $metaInfo +="introduction=The table below provides usage information for all vir
 $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=List" # options are List or Table
 $metaInfo +="chartable=false"
-#$metaAnalytics
+
 
 
 #Definitions for max vCPU/core and Mem reservations
@@ -76,7 +76,7 @@ $dataTable | Add-Member -MemberType NoteProperty -Name "Fault Tolerance" -Value 
 
 if ($dataTable)
 {
-	#$dataTable $dataTable
+	
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics="+$metaAnalytics

@@ -1233,28 +1233,229 @@ function get-events([Parameter(Mandatory=$true)][Object]$obj,[Parameter(Mandator
 	
 }
 
-function getVMs([Parameter(Mandatory=$true)][Object]$srvConnection,[Parameter(Mandatory=$false)][object]$vmsToCheck)
+function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
 {
-	return (
-		$srvConnection | %{ 
-			$vcenterServer=$_; 
-			$targetVMs = get-vm * -server $vcenterServer
-			$targetVMs | %{ 
-				$obj=$_; $obj | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenterServer.Name; 		
-				if ($vmsToCheck)
-				{
-					if ($vmsToCheck.Contains($obj.Name))
-					{
-						$obj
-					}
-				} else {
-					$obj
-				}
+
+	if ($force -or !$global:infrastructure) 
+	{
+		logThis -msg "Getting an Infrastructure List"
+		$global:infrastructure = @{}
+		logThis -msg "`t-> vCenters"
+		$global:infrastructure["vCenters"] = $server
+
+		logThis -msg "`t-> VMhosts"
+		$global:infrastructure["VMhosts"] = $server | %{
+			$vcenter = $_
+			get-vmhost -server $vcenter | %{
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_ | Add-Member -MemberType NoteProperty -Name "Datacenter" -Value $(get-datacenter -VMhost $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "Cluster" -Value $(get-cluster -VMhost $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "VMs" -Value $(get-vm -location $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "Datastores" -Value $(get-datastore -VMhost $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "ResourcePools" -Value $(get-resourcepool -location $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "StandardSwitches" -Value $(get-virtualswitch -VMhost $_ -Server $vcenter -Standard | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "DistributedvSwitches" -Value $(get-virtualswitch -VMhost $_ -Server $vcenter -Distributed | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "StandardPortGroups" -Value $(get-virtualportgroup -VMhost $_ -Server $vcenter -Standard | select Name,Key)
+				$_ | Add-Member -MemberType NoteProperty -Name "DistributedPortGroups" -Value $(get-virtualportgroup -VMhost $_ -Server $vcenter -Distributed | select Name,Key)
+				$_
 			}
 		}
-	)
+		logThis -msg "`t-> Clusters"
+		$global:infrastructure["Clusters"] = $server | %{
+			$vcenter = $_
+			get-cluster -server $vcenter | %{				
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_ | Add-Member -MemberType NoteProperty -Name "Datacenter" -Value $(get-datacenter -Cluster $_ -Server $vcenter | select Name,Id)
+				$vmhosts = get-vmhost -location $_ -Server $vcenter
+				if ($vmhosts)
+				{
+					
+					$_ | Add-Member -MemberType NoteProperty -Name "VMhosts" -Value $($vmhosts | select Name,Id)
+					$_ | Add-Member -MemberType NoteProperty -Name "VMs" -Value $(get-vm -location $_ -Server $vcenter | select Name,Id)
+					$_ | Add-Member -MemberType NoteProperty -Name "Datastores" -Value $($vmhosts | get-datastore -Server $vcenter | select Name,Id)
+					$_ | Add-Member -MemberType NoteProperty -Name "ResourcePools" -Value $(get-resourcepool -location $_ -Server $vcenter | select Name,Id)
+					$_ | Add-Member -MemberType NoteProperty -Name "StandardSwitches" -Value $(get-virtualswitch -Vmhost $vmhosts -Server $vcenter -Standard | select Name,Id)
+					$_ | Add-Member -MemberType NoteProperty -Name "DistributedvSwitches" -Value $(get-virtualswitch -VMhost $vmhosts -Server $vcenter -Distributed | select Name,Id)
+					$_ | Add-Member -MemberType NoteProperty -Name "StandardPortGroups" -Value $(get-virtualportgroup -VMhost $vmhosts -Server $vcenter -Standard | select Name,Key)
+					$_ | Add-Member -MemberType NoteProperty -Name "DistributedPortGroups" -Value $(get-virtualportgroup -VMhost $vmhosts -Server $vcenter -Distributed | select Name,Key)
+				}
+				$_
+			}
+		}
+
+		logThis -msg "`t-> VMs"
+		$global:infrastructure["VMs"] = $server | %{
+			$vcenter = $_
+			get-vm -server $vcenter | %{
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_ | Add-Member -MemberType NoteProperty -Name "Datacenter" -Value $(get-datacenter -VM $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "Cluster" -Value $(get-cluster -VM $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "Datastores" -Value $(get-datastore -VM $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "ResourcePools" -Value $(get-resourcepool -VM $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "StandardSwitches" -Value $(get-virtualswitch -VM $_ -Server $vcenter -Standard | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "DistributedvSwitches" -Value $(get-virtualswitch -VM $_ -Server $vcenter -Distributed | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "StandardPortGroups" -Value $(get-virtualportgroup -Vm $_ -Server $vcenter -Standard | select Name,Key)
+				$_ | Add-Member -MemberType NoteProperty -Name "DistributedPortGroups" -Value $(get-virtualportgroup -VM $_ -Server $vcenter -Distributed | select Name,Key)
+				$_
+			}
+		}
+		logThis -msg "`t-> Datastores"
+		$global:infrastructure["Datastores"] = $server | %{
+			$vcenter = $_
+			get-datastore -server $vcenter | %{
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_
+			}
+		}
+		logThis -msg "`t-> Standard vSwitches"
+		$global:infrastructure["StandardvSwitches"] = $server | %{
+			$vcenter = $_
+			get-VirtualSwitch -server $vcenter -Standard | %{
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_
+			}
+		}
+		logThis -msg "`t-> Distributed vSwitches"
+		$global:infrastructure["DistributedvSwitches"] = $server | %{
+			$vcenter = $_
+			get-VirtualSwitch -server $vcenter -Distributed | %{
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_
+			}
+		}
+		logThis -msg "`t-> Distributed vSwitches"
+		$global:infrastructure["DistributedvSwitches"] = $server | %{
+			$vcenter = $_
+			get-VirtualSwitch -server $vcenter -Distributed | %{
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_
+			}
+		}
+		
+		logThis -msg "`t-> Port Groups"
+		$global:infrastructure["PortGroups"] = $server | %{
+			$vcenter = $_
+			get-resourcepool -server $vcenter | %{
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_
+			}
+		}
+		logThis -msg "`t-> Virtual Folders"
+		$global:infrastructure["vFolders"] = $server | %{
+			$vcenter = $_
+			get-Folder -server $vcenter | %{
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_
+			}
+		}
+		logThis -msg "`t-> Datacenters"
+		$global:infrastructure["Datacenters"] = $server | %{
+			$vcenter = $_
+			get-datacenter -server $vcenter | %{				
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_ | Add-Member -MemberType NoteProperty -Name "VMs" -Value $(Get-VM -Location $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "VMhosts" -Value $(Get-VMHost -Location $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "Clusters" -Value $(Get-Cluster -Location $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "ResourcePools" -Value $(Get-ResourcePool -Location $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "Datastores" -Value $(Get-Datastore -Location $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "vFolders" -Value $(Get-Folder -Location $_ -Server $vcenter | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "StandardSwitches" -Value $(get-virtualswitch -datacenter $_ -Server $vcenter -Standard | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "DistributedvSwitches" -Value $(get-virtualswitch -datacenter $_ -Server $vcenter -Distributed | select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "StandardPortGroups" -Value $(get-virtualportgroup -datacenter $_ -Server $vcenter -Standard | select Name,Key)
+				$_ | Add-Member -MemberType NoteProperty -Name "DistributedPortGroups" -Value $(get-virtualportgroup -datacenter $_ -Server $vcenter -Distributed | select Name,Key)
+				$_
+			}
+		}
+		logThis -msg "`t-> Snapshots"
+		$global:infrastructure["Snapshots"] = $server | %{
+			$vcenter = $_
+			Get-Snapshot * -server $vcenter | %{				
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_
+			}
+		}
+		return $global:infrastructure
+	} else {
+		logThis -msg "Already got an Infrastructure List, re-using it"
+		return $global:infrastructure
+	}
 }
 
+
+function getDatastores([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or !$global:infrastructure.Datastores)
+	{
+		logThis -msg "Getting list of datastores"
+		$infrastructure = collectAllEntities -server $server -force $true		
+		return $global:infrastructure.Datastores
+	} else {
+		logThis -msg "The list of datastores already exists, returning current list"
+		return $global:infrastructure.Datastores
+	}
+}
+
+#$dstores = getDatastores -srvConnection $server -force $true
+
+
+function getVMs([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force,[Parameter(Mandatory=$false)][object]$vmsToCheck)
+{
+	if ($force -or !$global:infrastructure.VMs)
+	{
+		logThis -msg "Getting list of Virtual Machine"
+		$infrastructure = collectAllEntities -server $server -force $true		
+		return $global:infrastructure.VMs
+
+	} else {
+		logThis -msg "The list of Virtual Machines already exists, returning current list"
+		return $global:infrastructure.VMs
+	}
+}
+
+#$hosts = getVmhosts -srvconnection $server -force $true
+function getVMHosts([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or !$global:infrastructure.VMhosts)
+	{
+		logThis -msg "Getting list of VMHosts"
+		$infrastructure = collectAllEntities -server $server -force $true
+		return $global:infrastructure.VMhosts
+	} else {
+		logThis -msg "The list of vmhosts already exists, returning current list"
+		return $global:infrastructure.VMhosts
+	}
+}
+
+#$clusters = getClusters -srvconnection $server -force $true
+function getClusters([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or !$global:infrastructure.Clusters)
+	{
+		logThis -msg "Getting list of clusters"
+		$infrastructure = collectAllEntities -server $server -force $true
+		return $global:infrastructure.Clusters
+		
+	} else {
+		logThis -msg "The list of clusters already exists, returning current list"
+		return $global:infrastructure.Clusters
+	}
+}
+function getDatacenters([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or !$global:infrastructure.Datacenters)
+	{
+		logThis -msg "Getting list of Datacenters"
+		$infrastructure = collectAllEntities -server $server -force $true
+		return $global:infrastructure.Datacenters
+	} else {
+		logThis -msg "The list of Datacenters already exists, returning current list"
+		return $global:infrastructure.Datacenters
+	}
+}
+
+#collectAllEntities -srvConnection $srvconnection
+
+#getVMs -srvConnection $srvconnection -force $true
 ################################################
 #$cpumytable = getVirtualMachinesCapacityBy -srvConnection $srvconnection -property "NumCPU" -propertyDisplayName "CPU Size"
 #$memmytable = getVirtualMachinesCapacityBy -srvConnection $srvconnection -property "MemoryMB" -propertyDisplayName "Memory Size" -unit "MB"
@@ -2073,7 +2274,6 @@ function InitialiseModule()
 	logThis -msg " Runtime CSV File = $global:runtimeCSVOutput" -ForegroundColor Cyan
 	logThis -msg " Runtime Meta File = $global:runtimeCSVMetaFile" -ForegroundColor Cyan
 	logThis -msg " Runtime Meta File (In Memory) = $global:runtimeLogFileInMemory" -ForegroundColor Cyan
-	logThis -msg " vCenter Server: $global:vCenter" -ForegroundColor  Cyan	
 	logThis -msg " ****************************************************************************" -foregroundColor Cyan	
 }
 

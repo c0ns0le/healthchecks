@@ -19,11 +19,11 @@ Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 Set-Variable -Name vCenter -Value $global:srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
+
+
 
 # Want to initialise the module and blurb using this 1 function
-#InitialiseModule
+
 
 $metaInfo = @()
 $metaInfo +="tableHeader=Hypervisor Resource Usage"

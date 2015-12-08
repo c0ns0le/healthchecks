@@ -11,13 +11,13 @@ param(
 	[bool]$showKeys=$false,
 	[bool]$returnResults=$true
 )
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
+$silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-Set-Variable -Name vCenter -Value $srvConnection -Scope Global
+
 
 # Want to initialise the module and blurb using this 1 function
-#InitialiseModule
+
 
 # Meta data needed by the porting engine to 
 $metaInfo = @()
@@ -58,7 +58,7 @@ $metaAnalytics = " A total of $(($Report.Used | measure -sum).Sum) licenses out 
 
 if ($dataTable)
 {
-	#$dataTable $dataTable
+	
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics="+$metaAnalytics

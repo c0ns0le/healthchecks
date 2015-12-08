@@ -26,11 +26,11 @@ param(
 	[bool]$unleashAllStats=$false
 )
 LogThis -msg"Importing Module vmwareModules.psm1 (force)"
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
+$silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-#InitialiseModule
+
+
 
 $now = get-date #(get-date).AddMonths(-1) #use now but because we are half way thought the month, i only want up to the last day of the previous month
 

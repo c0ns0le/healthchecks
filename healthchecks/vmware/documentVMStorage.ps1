@@ -38,7 +38,7 @@ if ($comment -eq "" ) {
 Write-Host "This script log to " $of -ForegroundColor Yellow 
 
 #$vCenterServers = "srvds3350x001.corporate.transgrid.local","SRVDWX3350X003.corporate.transgrid.local","SRVDSX3850X001.corporate.transgrid.local"
-#$srvconnections = Connect-VIServer -Server $vCenterServers 
+s = Connect-VIServer -Server $vCenterServers 
 
 if ($args.Count -eq 0) {
 	$VMNames = Read-Host "Enter VM name"

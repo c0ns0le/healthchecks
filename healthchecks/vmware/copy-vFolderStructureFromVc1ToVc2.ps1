@@ -29,7 +29,7 @@ if (!$srvConnections -or !$sourcevCenterName -or !$targetvCenterName)
     ShowSyntax
 } 
 
-#$srvConnections
+s
 
 #[vSphere PowerCLI] D:\INF-VMware\scripts> $viEvent = $vms | Get-VIEvent -Types info | where { $_.Gettype().Name -eq "VmBeingDeployedEvent"}
 $runtime="$(date -f dd-MM-yyyy)"

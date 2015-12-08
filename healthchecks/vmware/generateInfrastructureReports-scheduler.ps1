@@ -22,7 +22,7 @@ if (!$logfile)
 	$logfile = ($($MyInvocation.MyCommand.Name)).TrimEnd('.ps1');
 }
 
-$global:logFileName = $null
+Name = $null
 SetmyLogFile -filename $logFile
 Write-Host "Setting log file: SetmyLogFile -filename `"$global:logFileName`" [$runtime]"
 
@@ -100,7 +100,7 @@ if ($vcenterServers)
     {
         logThis -msg "-------------------------------------------------------------------"
         logThis -msg "Executing the below scripts against Infrastructure(s) $srvConnections"
-        #$srvConnections 
+        s 
 		logThis -msg "Executing .\generateInfrastructureReports.ps1 -srvConnection $srvconnections -emailReport $true -verboseHTMLFilesToFile $false" 
     	.\generateInfrastructureReports.ps1 -srvConnection $srvConnections -emailReport $true -verboseHTMLFilesToFile $false
     } else {

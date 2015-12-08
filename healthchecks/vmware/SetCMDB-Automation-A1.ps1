@@ -18,12 +18,10 @@ if ((Test-Path -path $logDir) -ne $true) {
 	#rm -recurse -force $log
 	rm -recurse -force "$logDir\SetCMDB-*"
 }
-
-
 Write-Output "Running script $($MyInvocation.MyCommand.path) from $($env:computername)" | out-file -filepath $log
 get-date  | out-file -filepath $log -append
 $vcenterServers = @();
-#Disconnect-VIServer * -confirm $false
+
 foreach ($environment in (Import-CSV ".\customerEnvironmentSettings-DEV.ini") )
 {
         $vcenterServers += $environment.vCenterSrvName;
@@ -31,11 +29,11 @@ foreach ($environment in (Import-CSV ".\customerEnvironmentSettings-DEV.ini") )
 Write-Output "List of vCenter servers to report: "  | out-file -filepath $log -append
 $vcenterServers | out-file -filepath $log -append
 
-#$mycred = .\Get-myCredentials.ps1 -User $environment.LoginUser -File $environment.SecurePasswordFile;
+
 if ($vcenterServers)
 {
 	# no need for this one because the account used by the service account GMS\svc-autobot has credentials in Managed Services
-	#$srvConnection = Connect-VIServer $environment.vCenterSrvName -Credential $mycred
+	 = Connect-VIServer $environment.vCenterSrvName -Credential $mycred
 	
     $srvConnection = Connect-VIServer -Server $vcenterServers -NotDefault
     if ($?)

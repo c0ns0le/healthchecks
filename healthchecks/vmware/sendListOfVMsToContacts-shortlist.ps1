@@ -78,7 +78,7 @@ if ($configFile)
 
 	#if ($environment.LoginUser -and $environment.SecurePasswordFile)
 	#{
-		#$mycred = .\Get-myCredentials.ps1 -User $environment.LoginUser -File $environment.SecurePasswordFile;
+		
 	#} else {
 		#if ($mycred) 
 		#{

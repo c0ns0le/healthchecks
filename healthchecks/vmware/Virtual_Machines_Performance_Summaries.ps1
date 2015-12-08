@@ -13,12 +13,11 @@ Write-Host "Importing Module vmwareModules.psm1 (force)"
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-$global:logfile
-$global:outputCSV
+
+
+
 
 # Want to initialise the module and blurb using this 1 function
-#InitialiseModule
 
 $IOPSReport = @()
 

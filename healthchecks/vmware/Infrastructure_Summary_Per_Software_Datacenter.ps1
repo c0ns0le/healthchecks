@@ -11,15 +11,15 @@ param(
 	[int]$headerType=1,
 	[bool]$returnResults=$true
 )
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
+$silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false -ErrorAction SilentlyContinue
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-Set-Variable -Name vCenter -Value $srvConnection -Scope Global
-#$global:logfile
+
+
 #$global:outputCSV
 
 # Want to initialise the module and blurb using this 1 function
-#InitialiseModule
+
 
 # Report Meta Data
 $metaInfo = @()
@@ -28,23 +28,27 @@ $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=list" # options are List or Table
 $metaInfo +="introduction=Find below a breakdown of your capacity by data center(SDD)."
 $metaInfo +="chartable=false"
-#$metaAnalytics
 
-logThis -msg "Enumerating datacenters..."
-$dataTable = Get-Datacenter -Server $srvConnection | %{
+
+logThis -msg "-> Loading clusters"
+$allclusters = getClusters -server $srvConnection
+logThis -msg "-> Loading Datacenters"
+$alldatacenters = getDatacenters -server $srvConnection
+logThis -msg "-> Loading VMs"
+$allvms = getVMs -Server $srvConnection
+logThis -msg "-> Loading datastores"
+$alldatastores = getDatastores -Server $srvConnection
+logThis -msg "-> Loading VMHosts"
+$allvmhosts = GetVMHosts -Server $srvConnection
+
+$dataTable = $alldatacenters | %{
 	$dc = $_
 	#$svConnection
 	logThis -msg "-> Processing datacenter $($dc.Name)"
-	logThis -msg "`t-> Loading clusters"
-	$clusters = Get-Cluster * -Location $dc
-	#logThis -msg "`t-> Loading Datacenters"
-	#$datacenters = Get-datacenter -Location $dc
-	logThis -msg "`t-> Loading VMs"
-	$vms = Get-VM * -Location $dc
-	logThis -msg "`t-> Loading datastores"
-	$datastores = get-datastore * -Location $dc
-	logThis -msg "`t-> Loading VMHosts"
-	$vmhosts = get-vmhost * -Location $dc
+	$vms = $allvms | ?{$_.vCenter -eq $dc.vCenter -and $_.Datacenter.Name -eq $dc.Name}
+	$clusters = $allclusters | ?{$_.vCenter -eq $dc.vCenter -and $_.Datacenter.Name -eq $dc.Name}
+	$datastores = $alldatastores | ?{$_.vCenter -eq $dc.vCenter -and $_.Datacenter.Name -eq $dc.Name}
+	$vmhosts = $allvmhosts | ?{$_.vCenter -eq $dc.vCenter -and $_.Datacenter.Name -eq $dc.Name}
 
 	$row  = New-Object System.Object
 	$row | Add-Member -MemberType NoteProperty -Name "Datacenter Name" -Value "$($dc.Name)"
@@ -84,16 +88,15 @@ $dataTable = Get-Datacenter -Server $srvConnection | %{
 	#$row | Add-Member -MemberType NoteProperty -Name "Storage" -Value "$($datastores.Count)"
 	$row | Add-Member -MemberType NoteProperty -Name "Storage Capacity (TB)" -Value " $(formatNumbers $dtCapacity)"
 	$row | Add-Member -MemberType NoteProperty -Name "Free Capacity (TB)" -Value "$(formatNumbers $dtFreespace)"
-	logThis -msg $row	
+	#logThis -msg $row
 	$row
 }
-
 # Perform some analytics
 
 
 if ($dataTable)
 {
-	#$dataTable $dataTable
+	
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics="+$metaAnalytics

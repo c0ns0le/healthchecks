@@ -89,9 +89,11 @@ function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
 			#Write-Host $keyname
 			# just in case the value is an array, process each
 			$updatedValue=""
+			#Write-Host  $configurations.$keyname		 -ForegroundColor White
 			$updatedField = $configurations.$keyname | %{
-				$curr_string = $_				
-				if ($curr_string.count -gt 1 -and $curr_string -match '$')
+				$curr_string = $_						
+				
+				if ($curr_string -match '\$')
 				{
 					# replace the string with a $ sign in it with the content of the variable it is expected
 					$newstring=""
@@ -102,19 +104,26 @@ function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
 						{
 							$key=$word -replace '\$'
 							$configurations.$key
+							#Write-Host "Needs replacing $word with $($configurations.$key)"
 						} else {
 							$word
+							#Write-Host "$($word)"
 						}
 					}
 					$updatedValue = [string]$newstring_array
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor Blue
 				} elseif ($curr_string -eq $true)
 				{
 					$updatedValue = $true
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor Cyan
 				} elseif ($curr_string -eq $false)
 				{
 					$updatedValue = $false
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor Green
 				} else {
+					
 					$updatedValue = $curr_string
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor Yellow
 				}
 				$updatedValue
 			}
@@ -235,11 +244,10 @@ function startProcess()
 		}
 		
 		$global:report["$type"]["Runtime"]["vCenters"]=$global:report.Runtime.Configs.vCenterServers
-		Import-Module -Name "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\vmwareModules.psm1" -Force -Verbose:$false
+		$out = Import-Module -Name "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\vmwareModules.psm1" -Force -Verbose:$false
 		
-		#Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
-		
-	#	#InitialiseModule # -logDir $global:report.Runtime.Configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
+		#Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global		
+	#	 # -logDir $global:report.Runtime.Configs.runtime_log_directory -parentScriptName $($MyInvocation.MyCommand.name)
 		
 		logThis -msg "Collecting VMware Reports ($runtime_log_directory)" -logfile $logfile 
 		$global:report["$type"]["Runtime"]["Lofile"]=$logfile
@@ -261,6 +269,8 @@ function startProcess()
 				'runJobsSequentially' = $global:report.Runtime.Configs.runJobsSequentially;
 				'returnResultsOnly'=$true
 			}
+			logThis -msg "Collecting firstime infrastructure items"
+			$infrastructure = collectAllEntities -server $srvconnection -force $true
 			$global:report["$type"] = & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
 		}  else {
 			logThis -msg ">>" -ForegroundColor Red  -logfile $logfile 
@@ -412,11 +422,8 @@ function startProcess()
 }
 
 
-
 <#
-
 	THIS IS WHERE IT BEGINS
-
 #>
 try {
 	$inifile = ($inifile | Resolve-Path -ErrorAction SilentlyContinue).Path	
@@ -426,7 +433,6 @@ try {
 	$global:report["Runtime"]=@{}
 	$global:report["Runtime"]["StartTime"]=Get-Date
 	$configObj,$preconfig = readConfiguration -inifile $inifile
-
 	if ($configObj)
 	{	
 		$configObj.Add("Silent",$silent)
@@ -434,8 +440,6 @@ try {
 		$global:configs = $configObj
 		$global:report["Runtime"]["Configs"]=$configObj
 		#Set-Variable -Scope Global -Name silent -Value $silent
-		
-		
 
 		startProcess
 
@@ -448,7 +452,8 @@ try {
 		$zippedXmlOutput = $xmlOutput -replace ".xml",".zip"
 		logThis -msg "Zipping results for transport to $zippedXmlOutput"
 		New-ZipFile -InputObject $xmlOutput -ZipFilePath $zippedXmlOutput
-		if (Test-Path -Path $zippedXmlOutput)
+		$deleteXML=$false
+		if ((Test-Path -Path $zippedXmlOutput) -and $deleteXML)
 		{
 			Remove-Item $xmlOutput
 		}
@@ -489,6 +494,8 @@ try {
 			}
 			sendEmail @emailParams
 		}
+
+		return $global:report
 
 	} else {
 		logThis -msg "No configurations found in $inifile"

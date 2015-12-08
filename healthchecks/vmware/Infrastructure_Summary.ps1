@@ -3,7 +3,7 @@
 # Last updated: 23 March 2015
 # Author: teiva.rodiere-at-gmail.com
 #
-param(	[object]$srvConnection="",
+param(	[object]$srvConnection,
 		[string]$logDir="output",
 		[string]$comment="",
 		[bool]$showDate=$false,
@@ -11,12 +11,10 @@ param(	[object]$srvConnection="",
 		[bool]$returnResults=$true
 )
 
-Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
+$silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
-#Set-Variable -Name vCenter -Value $srvConnection -Scope Global
+#
 if ($logDir -and !$global:logDir) { Set-Variable -Name logDir -Value $logDir -Scope Global }
-
-#InitialiseModule
 
 # Report Meta Data
 $metaInfo = @()
@@ -25,24 +23,18 @@ $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=List" # options are List or Table
 $metaInfo +="introduction=The table below contains some capacity overview for your infrastructure."
 $metaInfo +="chartable=false"
-#$metaAnalytics
 
-#$dataTable"Enumerating datacenters..."
-
-
-#$srvConnection
-#$srvConnection = Connect-VIServer -Name $srvConnection
 
 logThis -msg "-> Loading clusters"
-$clusters = Get-Cluster -Server $srvConnection
+$clusters = getClusters -server $srvConnection
 logThis -msg "-> Loading Datacenters"
-$datacenters = Get-datacenter -Server $srvConnection
+$datacenters = getDatacenters -server $srvConnection
 logThis -msg "-> Loading VMs"
-$vms = Get-VM -Server $srvConnection
+$vms = getVMs -Server $srvConnection
 logThis -msg "-> Loading datastores"
-$datastores = get-datastore -Server $srvConnection
+$datastores = getDatastores -Server $srvConnection
 logThis -msg "-> Loading VMHosts"
-$vmhosts = Get-VMHost -Server $srvConnection
+$vmhosts = GetVMHosts -Server $srvConnection
 
 <#
 #Write-Output "ScriptName: $($global:scriptName)" | Out-File $runtimeLogFile
@@ -53,9 +45,6 @@ Write-Output "LogDir: $logDir" | Out-File $runtimeLogFile -Append
 $dataTable  = New-Object System.Object
 $dataTable | Add-Member -MemberType NoteProperty -Name "VMware vCenter Servers" -Value $srvConnection.Count
 $dataTable | Add-Member -MemberType NoteProperty -Name "Datacenters" -Value $datacenters.Count
-
-#$dataTable | Out-File $runtimeLogFile -Append
-
 
 $vmsOn = ($vms | ?{$_.PowerState -eq "PoweredOn"}).Count
 $vmsOnPerc = "$(formatNumbers $(($vms | ?{$_.PowerState -eq ""PoweredOn""}).Count / $vms.Count * 100))%"
@@ -97,7 +86,7 @@ $ftConfiguredVMs=($vms.ExtensionData.Config.ExtraConfig | ?{$_.key -like "*repla
 $dataTable | Add-Member -MemberType NoteProperty -Name "VMware ESX/ESXi Servers" -Value "Total $($vmhosts.Count) Servers $([string] $vmhostsStates) | $vmhostsInMaintenanceMode In Maintenance | $($($vmhosts.ExtensionData.OverallStatus -ne ""green"").Count) Need Attention"
 $dataTable | Add-Member -MemberType NoteProperty -Name "Clusters" -Value "Total $($clusters.Count) Clusters | $($($clusters | ?{$_.HAEnabled}).Count) HA Enabled | $($($clusters | ?{!$_.HAEnabled}).Count) HA Disabled | $($($clusters | ?{$_.DrsEnabled}).Count) DRS Enabled | $($($clusters | ?{!$_.DrsEnabled}).Count) DRS Disabled | $($($clusters.ExtensionData.OverallStatus -ne ""green"").Count) Need Attention"
 $dataTable | Add-Member -MemberType NoteProperty -Name "Datastores" -Value "Total $($datastores.Count) | $(formatNumbers $dtCapacity)TB Capacity | $(formatNumbers $dtFreespace)TB Free ($(formatNumbers $dtFreespacePerc)%) $([string]$dtTypes) $([string]$dtVmfs) | $($($datastores.ExtensionData.OverallStatus -ne ""green"").Count) Need Attention"
-$dataTable | Add-Member -MemberType NoteProperty -Name "Virtual Machines" -Value "Total $($vms.Count) VMs | $vmsOn Powered On ($vmsOnPerc) | $vmsNeedingAttention Needing Attention | $(formatNumbers ($vms | measure -Property MemoryGB -Sum).Sum)GB Memory | $(($vms | measure -Property NumCPU -Sum).Sum) vCPU | Average of $([Math]::Round(($($(($vms | measure -Property NumCPU -Sum).Sum) / $($vmhosts | measure NumCPU -Sum).Sum) * 100),2)) ratio" 
+$dataTable | Add-Member -MemberType NoteProperty -Name "Virtual Machines" -Value "Total $($vms.Count) VMs | $vmsOn Powered On ($vmsOnPerc) | $vmsNeedingAttention Needing Attention | $(formatNumbers ($vms | measure -Property MemoryGB -Sum).Sum)GB Memory | $(($vms | measure -Property NumCPU -Sum).Sum) vCPU | $((($vms | measure -Property NumCPU -Sum).Sum) / $($vmhosts | measure NumCPU -Sum).Sum) vCPU-pCore ratio" 
 
 $dataTable | Add-Member -MemberType NoteProperty -Name "VMs Disk Usage" -Value "$(getsize -unit 'B' -val $vmdkProvisionedBytes) Provisioned, $(getsize -unit 'B' -val $vmdkConsumedBytes) Consumed, $(getsize -unit 'B' -val $vmdkSpaceSavingsThinBytes) Savings through Thin Disk deployment"
 $dataTable | Add-Member -MemberType NoteProperty -Name "vSphere Replication" -Value "$($vmsWithvSphereReplication.Count) configured"
@@ -105,22 +94,19 @@ $dataTable | Add-Member -MemberType NoteProperty -Name "Fault Tolerance" -Value 
 
 if ($dataTable)
 {
-	#$dataTable $dataTable
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics="+$metaAnalytics
 	}	
-	
+
 	if ($global:logTofile) {
 		ExportCSV -table $dataTable
 		ExportMetaData -meta $metaInfo
 	}
-	
 	if ($returnResults)
 	{
 		return $dataTable,$metaInfo,(getRuntimeLogFileContent)
 	} 
-	
 }
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;
