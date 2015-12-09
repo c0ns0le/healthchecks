@@ -262,7 +262,7 @@ function startProcess()
 				'srvconnection'=$srvconnection;
 				'logDir'=$global:report.Runtime.LogDirectory;
 				'runCapacityReports' = $global:report.Runtime.Configs.capacity;
-				'runPerformanceReports' = $false;
+				'runPerformanceReports' = $global:report.runtime.Configs.perfChecks;
 				'runExtendedReports' = $global:report.Runtime.Configs.runExtendedVMwareReports;
 				'vms' = $global:report.Runtime.Configs.vmsToCheckPerformance;
 				'showPastMonths' = [int]$global:report.Runtime.Configs.previousMonths;
@@ -271,6 +271,7 @@ function startProcess()
 			}
 			logThis -msg "Collecting firstime infrastructure items"
 			$infrastructure = collectAllEntities -server $srvconnection -force $true
+
 			$global:report["$type"] = & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
 		}  else {
 			logThis -msg ">>" -ForegroundColor Red  -logfile $logfile 
