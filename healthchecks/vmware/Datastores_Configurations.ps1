@@ -15,8 +15,6 @@ $silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 
-
-
 $metaInfo = @()
 $metaInfo +="tableHeader=Datastores"
 $metaInfo +="introduction=The table below provides a comprehensive list of datastores in your environment as well as capacity information for each."
@@ -25,20 +23,23 @@ $metaInfo +="titleHeaderType=h$($headerType)"
 
 logThis -msg "Exporting datastores..."
 #$datastores = Get-Datastore -Server $srvConnection" -Name ""DTE-EXCHANGE" | sort name;
-$datastores = Get-Datastore -Server $srvConnection | sort name;
+#$datastores = Get-Datastore -Server $srvConnection | sort name;
+$infrastructure = collectAllEntities -server $srvConnection
+$datastores = GetDatastores -Server $srvConnection
+
 $index=1;
 $dataTable = $datastores | %{
     $datastore = $_;
-    logThis -msg "Processing datastore $index of $($datastores.Count) - ""$($datastore.Name)""" -Foregroundcolor Yellow;
-    
-    #logThis -msg "Processig extent " . $diskExtent.DiskName ." on the datastore" -ForegroundColor white;
-	
+    logThis -msg "Processing datastore $index of $($datastores.Count) - ""$($datastore.Name)""" -Foregroundcolor Yellow;    
+    #logThis -msg "Processig extent " . $diskExtent.DiskName ." on the datastore" -ForegroundColor white;	
     # Process each extents as an individual LUN
 	$datastore.ExtensionData.Info.Vmfs.Extent | %{
 	    $diskExtent = $_;
-	   $diskCanonicalName = $diskExtent.DiskName
-	   	$esxserver=$datastore  | get-vmhost | Select -First 1
+		$diskCanonicalName = $diskExtent.DiskName
+		#$esxserver=$datastore  | get-vmhost | Select -First 1
+		$esxserver = getVMHosts -server $srvconnection | ?{$_.Name -eq ($datastore.VMhosts | select -First 1).Name}	   	
 		$esxcli = Get-EsxCli -Vmhost $esxserver
+
 		$allPartitions = ($esxcli.storage.core.device.partition.list())
 		$startSectores = ($allPartitions | ?{$_.Type -eq 0 -and $_.Device -eq $diskExtent.DiskName}).StartSector
 		#$esxcli.storage.core.device.vaai.status.get()
@@ -50,9 +51,9 @@ $dataTable = $datastores | %{
 	    $usedPerc = [math]::ROUND( $usedMb / $datastore.CapacityMb * 100)
 		#$row | Add-Member -MemberType "NoteProperty" -Name "Cluster" -Value $clustername
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "BlockSize" -Value $datastore.ExtensionData.Info.Vmfs.BlockSizeMb
-	    	if ($datastore.Type -eq "VMFS")
-	    	{
-	    		$row | Add-Member -MemberType "NoteProperty" -Name "Type" -Value "$datastore.Type ($($datastore.ExtensionData.Info.Vmfs.BlockSizeMb)MB)"
+	    if ($datastore.Type -eq "VMFS")
+	    {
+	    	$row | Add-Member -MemberType "NoteProperty" -Name "Type" -Value "$($datastore.Type) ($($datastore.ExtensionData.Info.Vmfs.BlockSizeMb)MB)"
 		} else {
 			$row | Add-Member -MemberType "NoteProperty" -Name "Type" -Value $datastore.Type
 		}
@@ -62,8 +63,8 @@ $dataTable = $datastores | %{
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Used%" -Value $usedPerc
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Mode" -Value $([string]($datastore.ExtensionData.Host.MountInfo.AccessMode | sort -Unique) -replace " ",",") #$datastore.ExtensionData.Host[0].MountInfo.AccessMode	   
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Accessible" -Value $datastore.Accessible
-	    $row | Add-Member -MemberType "NoteProperty" -Name "Hosts" -Value ($datastore.ExtensionData.Host | measure).Count
-	    $row | Add-Member -MemberType "NoteProperty" -Name "VMs" -Value ($datastore.ExtensionData.Vm | measure).Count
+	    $row | Add-Member -MemberType "NoteProperty" -Name "Hosts" -Value $datastore.VMhosts.Count
+	    $row | Add-Member -MemberType "NoteProperty" -Name "VMs" -Value $datastore.VMs.Count
 	    $row | Add-Member -MemberType "NoteProperty" -Name "Vmfs Upgradable" -Value $datastore.ExtensionData.Info.Vmfs.VmfsUpgradable
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "Storage IO Enabled" -Value $datastore.ExtensionData.IormConfiguration.Enabled
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "Storage IO Threshold" -Value $datastore.ExtensionData.IormConfiguration.CongestionThreshold
@@ -71,8 +72,6 @@ $dataTable = $datastores | %{
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "Uuid" -Value $datastore.ExtensionData.Info.Vmfs.Uuid
 #	 	$row | Add-Member -MemberType "NoteProperty" -Name "SAN_LunID" -Value $diskExtent.DiskName
 	    #$row | Add-Member -MemberType "NoteProperty" -Name "Partition Extents" -Value $diskExtent.Partition      
-		
-		
 		if ($diskCanonicalName)
 		{
 	        #$scsiLun = Get-ScsiLun -VMHost  $esxhost -CanonicalName $diskCanonicalName #| Select-Object -Property "MultipathPolicy","Vendor","Model"
@@ -91,25 +90,25 @@ $dataTable = $datastores | %{
                 #logThis -msg $scsiLunTemp.LunType 
                 #logThis -msg $scsiLunTemp.RuntimeName
                 #exit;
-#                $hbadev,$c,$target,$LID = $scsiLunTemp.RuntimeName.Split(':')					
-			#$lunid = $LID.replace("L","");
+				#$hbadev,$c,$target,$LID = $scsiLunTemp.RuntimeName.Split(':')					
+				#$lunid = $LID.replace("L","");
 		
 				$lunid = $scsiLunTemp.RuntimeName
 				verboseThis $scsiLunTemp
 				#Write-Host $scsiLunTemp | fl
-               $row | Add-Member -MemberType "NoteProperty" -Name "Scsi Lun Id" -Value $lunid
-               $row | Add-Member -MemberType "NoteProperty" -Name "Extent Capacity (GB)" -Value ([math]::ROUND($scsiLunTemp.CapacityMB / 1024, 2))
-#				switch ($lunid)
-#				{
-#				    {$_ %2} {$row | Add-Member -MemberType "NoteProperty" -Name "ExtentLunParity " -Value "Odd"}
-#					default {$row | Add-Member -MemberType "NoteProperty" -Name "LunParity" -Value "Even"}
-#                }                    
+				$row | Add-Member -MemberType "NoteProperty" -Name "Scsi Lun Id" -Value $lunid
+				$row | Add-Member -MemberType "NoteProperty" -Name "Extent Capacity (GB)" -Value ([math]::ROUND($scsiLunTemp.CapacityMB / 1024, 2))
+				#switch ($lunid)
+				#{
+				#    {$_ %2} {$row | Add-Member -MemberType "NoteProperty" -Name "ExtentLunParity " -Value "Odd"}
+				#	default {$row | Add-Member -MemberType "NoteProperty" -Name "LunParity" -Value "Even"}
+				# }                    
                 
                 #$row | Add-Member -MemberType "NoteProperty" -Name "Runtime Name" -Value $scsiLunTemp.RuntimeName
-			$row | Add-Member -MemberType "NoteProperty" -Name "Multipathing Policy" -Value $scsiLunTemp.MultipathPolicy
-			$row | Add-Member -MemberType "NoteProperty" -Name "Vendor" -Value $scsiLunTemp.Vendor
-			$row | Add-Member -MemberType "NoteProperty" -Name "Model" -Value $scsiLunTemp.Model
-               $row | Add-Member -MemberType "NoteProperty" -Name "SerialNumber" -Value $scsiLunTemp.SerialNumber
+				$row | Add-Member -MemberType "NoteProperty" -Name "Multipathing Policy" -Value $scsiLunTemp.MultipathPolicy
+				$row | Add-Member -MemberType "NoteProperty" -Name "Vendor" -Value $scsiLunTemp.Vendor
+				$row | Add-Member -MemberType "NoteProperty" -Name "Model" -Value $scsiLunTemp.Model
+				$row | Add-Member -MemberType "NoteProperty" -Name "SerialNumber" -Value $scsiLunTemp.SerialNumber
                 
                 $scsiPaths = $scsiLunTemp | Get-ScsiLunPath;
                 $row | Add-Member -MemberType "NoteProperty" -Name "Total Paths" -Value $scsiPaths.Count
@@ -117,19 +116,17 @@ $dataTable = $datastores | %{
                 if (!$scsiPathsActive)
                 {
                     $row | Add-Member -MemberType "NoteProperty" -Name "Active Paths Count" -Value "0"
-		    $row | Add-Member -MemberType "NoteProperty" -Name "Active Adapter" -Value "N/A"
+					$row | Add-Member -MemberType "NoteProperty" -Name "Active Adapter" -Value "N/A"
                 } else {
-		   if ($scsiPathsActive.Count) {
-			$row | Add-Member -MemberType "NoteProperty" -Name "Active Paths Count" -Value $scsiPathsActive.Count
-		   } else {
-	                $row | Add-Member -MemberType "NoteProperty" -Name "ActivePathsCount" -Value "1"
-			$row | Add-Member -MemberType "NoteProperty" -Name "ActiveAdapter" -Value $($scsiPathsActive.ExtensionData.Adapter.replace("key-vim.host.",""))
-	                $row | Add-Member -MemberType "NoteProperty" -Name "TargetSANPort" -Value $scsiPathsActive.SanId
-		
-			verboseThis $($scsiPathsActive.ExtensionData.Adapter.replace("key-vim.host.",""))
-		
-        	   }
-		}
+					if ($scsiPathsActive.Count) {
+						$row | Add-Member -MemberType "NoteProperty" -Name "Active Paths Count" -Value $scsiPathsActive.Count
+					} else {
+						$row | Add-Member -MemberType "NoteProperty" -Name "ActivePathsCount" -Value "1"
+						$row | Add-Member -MemberType "NoteProperty" -Name "ActiveAdapter" -Value $($scsiPathsActive.ExtensionData.Adapter.replace("key-vim.host.",""))
+						$row | Add-Member -MemberType "NoteProperty" -Name "TargetSANPort" -Value $scsiPathsActive.SanId		
+						#verboseThis $($scsiPathsActive.ExtensionData.Adapter.replace("key-vim.host.",""))		
+	        		}
+				}
 
                 $scsiPathsStandby = $scsiPaths |where{$_.State -eq "Standby"}
 		
@@ -138,24 +135,25 @@ $dataTable = $datastores | %{
                 {
                     $row | Add-Member -MemberType "NoteProperty" -Name "StandbyPathCount" -Value "0"
                 } else {
-		    if ($scsiPathsStandby.Count) {
-                    	$row | Add-Member -MemberType "NoteProperty" -Name "StandbyPathCount" -Value $scsiPathsStandby.Count
-                    } else {
-                    	$row | Add-Member -MemberType "NoteProperty" -Name "StandbyPathCount" -Value "1"
-		    }
-                }
+					if ($scsiPathsStandby.Count) 
+					{
+						$row | Add-Member -MemberType "NoteProperty" -Name "StandbyPathCount" -Value $scsiPathsStandby.Count
+					} else {
+						$row | Add-Member -MemberType "NoteProperty" -Name "StandbyPathCount" -Value "1"
+					}
+				}
 
                 $scsiPathsFailed = $scsiPaths |where{$_.State -eq "Fail"}
                 if (!$scsiPathsFailed)
                 {
-                    $row | Add-Member -MemberType "NoteProperty" -Name "FailedPathCount" -Value "0"
+					$row | Add-Member -MemberType "NoteProperty" -Name "FailedPathCount" -Value "0"
                 } else {
-		    if($scsiPathsFailed.Count) {
+					if($scsiPathsFailed.Count) {
 	                    $row | Add-Member -MemberType "NoteProperty" -Name "FailedPathCount" -Value $scsiPathsFailed.Count
                     } else {
                     	$row | Add-Member -MemberType "NoteProperty" -Name "FailedPathCount" -Value "1"
-		    }
-                }
+					}
+				}
                 
                 if ($scsiPaths |where{$_.State -eq "Active" -and $_.Preferred -eq $true})
                 {
@@ -163,10 +161,13 @@ $dataTable = $datastores | %{
                 } else { 
                     $row | Add-Member -MemberType "NoteProperty" -Name "ActiveOnPreferred" -Value "False"
                 }
-
 			}
 		}
         $row | Add-Member -MemberType "NoteProperty" -Name "Datacenter" -Value $datastore.Datacenter
+		if ($infrastructure.vCenters.Count -gt 1)
+		{
+			$row | Add-Member -MemberType "NoteProperty" -Name "vCenter" -Value $datastore.vCenter
+		}
         if ($verbose)
         {
             logThis -msg $row -ForegroundColor white

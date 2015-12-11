@@ -15,10 +15,7 @@ $silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 
-
-
 # Want to initialise the module and blurb using this 1 function
-
 
 # Meta data needed by the porting engine to 
 $metaInfo = @()
@@ -27,20 +24,6 @@ $metaInfo +="introduction=The table displays a list of vCenter servers"
 $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=List" # options are List or Table
-#$metainfo +="displaytable=true"
-#$metainfo +="chartStandardWidth=800"
-#$metainfo +="chartStandardHeight=400"
-#$metainfo +="chartImageFileType=png"
-#$metainfo +="chartType=StackedBar100"
-#$metainfo +="chartText=Current Virtual Machine Capacity within Managed Services (AUBNE only)"
-#$metainfo +="chartTitle=vFolders As seen In vCenter"
-#$metainfo +="yAxisTitle=%"
-#$metainfo +="xAxisTitle=/"
-#$metainfo +="startChartingFromColumnIndex=1"
-#$metainfo +="yAxisInterval=10"
-#$metainfo +="yAxisIndex=1"
-#$metainfo +="xAxisIndex=0"
-#$metainfo +="xAxisInterval=-1"
 
 $dataTable = $srvConnection | %{
 	$vcenter = $_
@@ -62,10 +45,8 @@ $dataTable = $srvConnection | %{
 } | Sort -Property Count
 
 ############### THIS IS WHERE THE STUFF HAPPENS
-
 if ($dataTable)
 {
-	
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics="+$metaAnalytics

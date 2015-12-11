@@ -1343,5 +1343,8 @@ function getReportIndexer()
 
 function updateReportIndexer($string)
 {
-	if ($global:logTofile) { $string -replace ".csv",".nfo" -replace ".ps1",".nfo" -replace ".log",".nfo" | Out-file -Append -FilePath $global:reportIndex }
+	if ($global:logTofile) 
+	{
+		$string -replace ".csv",".nfo" -replace ".ps1",".nfo" -replace ".log",".nfo" | Out-file -Append -FilePath $global:reportIndex 
+	}
 }

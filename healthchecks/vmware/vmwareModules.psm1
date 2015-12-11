@@ -1175,8 +1175,6 @@ function getIssues(
 	}
 }
 
-
-
 function get-events([Parameter(Mandatory=$true)][Object]$obj,[Parameter(Mandatory=$true)][Object]$myvCenter,[DateTime]$startPeriod,[DateTime]$endPeriod)
 {
 	$events = Get-MyEvents -obj $obj -vCenterObj $myvCenter -startPeriod $startPeriod -endPeriod $endPeriod
@@ -1304,6 +1302,8 @@ function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parame
 			$vcenter = $_
 			get-datastore -server $vcenter | %{
 				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_ | Add-Member -MemberType NoteProperty -Name "VMhosts" -Value $($_ | get-vmhost -Server $vcenter| Select Name,Id)
+				$_ | Add-Member -MemberType NoteProperty -Name "VMs" -Value $($_ | get-vm -Server $vcenter | Select Name,Id)
 				$_
 			}
 		}
@@ -1374,13 +1374,23 @@ function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parame
 				$_
 			}
 		}
+
+		logThis -msg "`t-> Licenses"
+		$global:infrastructure["Licenses"] = $server | %{
+			$vcenter = $_
+			Get-Snapshot * -server $vcenter | %{				
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_
+			}
+		}
+
 		return $global:infrastructure
 	} else {
 		logThis -msg "Already got an Infrastructure List, re-using it"
 		return $global:infrastructure
 	}
 }
-
+#$infrastructure = collectAllEntities -server $srvconnection -force $true
 
 function getDatastores([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
 {
@@ -1394,9 +1404,7 @@ function getDatastores([Parameter(Mandatory=$true)][Object]$server,[Parameter(Ma
 		return $global:infrastructure.Datastores
 	}
 }
-
 #$dstores = getDatastores -srvConnection $server -force $true
-
 
 function getVMs([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force,[Parameter(Mandatory=$false)][object]$vmsToCheck)
 {
@@ -1440,6 +1448,7 @@ function getClusters([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mand
 		return $global:infrastructure.Clusters
 	}
 }
+
 function getDatacenters([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
 {
 	if ($force -or !$global:infrastructure.Datacenters)
@@ -1454,7 +1463,6 @@ function getDatacenters([Parameter(Mandatory=$true)][Object]$server,[Parameter(M
 }
 
 #collectAllEntities -srvConnection $srvconnection
-
 #getVMs -srvConnection $srvconnection -force $true
 ################################################
 #$cpumytable = getVirtualMachinesCapacityBy -srvConnection $srvconnection -property "NumCPU" -propertyDisplayName "CPU Size"
@@ -2254,6 +2262,126 @@ function Get-MyEvents {
 	}
 }
 
+function getPerformanceReport ([string]$type,[Object]$objects,[object]$stats,[bool]$showIndividualDevicesStats=$false,[int]$maxsamples=([int]::MaxValue),$unleashAllStats=$false,[int]$headerType=1)
+{
+	$title="$type Resource Usage"
+	$metaInfo = @()
+	$metaInfo +="tableHeader=$title"
+	$metaInfo +="introduction=The section provides you with performance results for each of your $type."
+	$metaInfo +="titleHeaderType=h$($headerType)"
+	$metaInfo +="titleHeaderType=h2"
+	#updateReportIndexer -string "$(split-path -path $objectCSVFilename -leaf)"
+	
+	$combinedResults=@{}
+
+	logThis -msg "Collecting stats on a monthly basis for the past $showPastMonths Months..." -foregroundcolor Green
+
+	$global:logToScreen = $true
+	$objects | sort -Property Name | %{
+		$object = $_
+	
+		$outputString = New-Object System.Object
+		logThis -msg "Processing host $($_.Name)..." -foregroundcolor Green
+		$filters = ""
+	
+		#$output.Server = $_.Name
+    
+		$combinedResults[$object.Name] = @{}
+
+		if ($unleashAllStats)
+		{
+			$metricsDefintions = $object | Get-StatType | ?{!$_.Contains(".latest")}
+		} else {
+			$metricsDefintions = $stats
+		}
+		
+		#$objectCSVFilename = $(getRuntimeCSVOutput).Replace(".csv","-$($object.Name).csv")
+		#$objectNFOFilename = $(getRuntimeCSVOutput).Replace(".csv","-$($object.Name).nfo")
+	
+		# I dod this so I can have a title for this report bu specifically for this host
+		#$objMetaInfo = @()
+		#$objMetaInfo +="tableHeader=$($object.Name)"
+		#$objMetaInfo +="introduction=The table below has been provided the performance review of hypervisor server: ""$($object.Name)"". The results show the usage over several periods including month by month for the last $showPastMonths months. "
+		#$objMetaInfo +="chartable=false"
+		#$objMetaInfo +="titleHeaderType=h$($headerType+1)"
+		#$objMetaInfo +="showTableCaption=false"
+		#$objMetaInfo +="displayTableOrientation=Table" # options are List or Table
+
+		#ExportCSV -table "" -thisFileInstead $objectCSVFilename 
+		#ExportMetaData -metadata $objMetaInfo -thisFileInstead $objectNFOFilename
+		#updateReportIndexer -string "$(split-path -path $objectCSVFilename -leaf)"
+
+		#$of = getRuntimeCSVOutput
+		#Write-Host "NEW File : $of" -BackgroundColor Red -ForegroundColor White
+		#$report = 
+		$metricsDefintions | %{
+			$metric = $_
+			$parameters= @{
+				'sourceVIObject'=$object;
+				'metric'=$metric;
+				'maxsamples'=$maxsamples;
+				'filters'=$filters;
+				'showIndividualDevicesStats'=$showIndividualDevicesStats;
+				'previousMonths'=$showPastMonths;
+				'returnObjectOnly'=$true;
+			}
+			#$report = getStats -sourceVIObject $object -metric $metric -filters $filters -maxsamples $maxsamples -showIndividualDevicesStats $showIndividualDevicesStats -previousMonths $showPastMonths -returnObjectOnly $true
+		
+			$report = getStats @parameters	
+			#$subheader = convertMetricToTitle $metric
+			#logThis -msg $report.Table
+			$combinedResults[$object.Name][$metric] = $report			
+		}
+	}
+	#$combinedResults
+	#pause
+	$bigreport = @{}
+	$metricsDefintions | %{
+		
+		$metricName = $_
+		#$combinedResults.keys | %{
+			
+			#$objectName = $_
+			
+			$listOfMonths = $combinedResults.$($combinedResults.keys | Select -First 1).$metricName.Months
+			$row = New-Object System.Object
+			$row | Add-Member -Type NoteProperty -Name  $metricName -Value ""
+			$filerIndex=1
+	
+			$listOfMonths | %{
+				$monthName = $_
+				$row | Add-Member -Type NoteProperty -Name "$monthName" -Value "Minimum"			
+				$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value "Maximum"
+				$filerIndex++
+				$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value "Average"
+				$filerIndex++
+			}
+
+			$finalreport = @()
+			$finalreport += $row	
+			$finalreport += $combinedResults.keys | %{
+				$keyname=$_
+				$table = $combinedResults[$keyname].$metricName.Table
+				#$row | Add-Member -Type NoteProperty -Name "Servers" -Value $keyname
+				$row = New-Object System.Object
+				$row | Add-Member -Type NoteProperty -Name  $metricName -Value $keyname
+				$filerIndex=1
+				$listOfMonths | %{
+					$monthName = $_
+					$row | Add-Member -Type NoteProperty -Name "$monthName" -Value ($table | ?{$_.Measure -eq "Minimum"}).$monthName
+					$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Maximum"}).$monthName 
+					$filerIndex++
+					$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Average"}).$monthName
+					$filerIndex++
+				}
+				$row
+			}
+			$bigreport[$metricName] = $finalreport
+		#}
+	}
+	$bigreport["net.usage.average"] | Out-file "C:\admin\OUTPUT\AIT\10-12-2015\table.txt"
+	return $bigreport,$metaInfo,(getRuntimeLogFileContent)
+}
 
 function InitialiseModule()
 {
@@ -2277,5 +2405,6 @@ function InitialiseModule()
 	logThis -msg " ****************************************************************************" -foregroundColor Cyan	
 }
 
+$silencer = Import-Module "..\generic\genericModule.psm1" -PassThru -Force -Verbose:$false
 
 InitialiseModule
