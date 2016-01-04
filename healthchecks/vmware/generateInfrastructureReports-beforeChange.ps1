@@ -46,7 +46,7 @@ param(
 	[string]$smtpDomainFQDN,
 	[string]$comment="",
 	[bool]$emailReport=$false,
-	[bool]$createHTMLFile=$true,
+	[bool]$htmlReports=$true,
 	[string]$overwriteRuntimeDate,
 	[string]$thisContactOnly="",
 	[bool]$openReportOnCompletion=$false
@@ -112,7 +112,7 @@ $filename = ($($MyInvocation.MyCommand.Name)).TrimEnd('.ps1');
 logThis -msg "$filename";
 $reportIndex = "$inDir\index.txt"
 
-if ($emailReport -or $createHTMLFile)
+if ($emailReport -or $htmlReports)
 {
 	#######################################################################################################
 	# Generate Manager Reports
@@ -405,7 +405,7 @@ if ($emailReport -or $createHTMLFile)
 	}
 	#$htmlPage += "<br><br><small>$runtime | $farmname | $srvconnection | generated from $env:computername.$env:userdnsdomain </small>";
 	$htmlPage += htmlFooter
-	if ($createHTMLFile)
+	if ($htmlReports)
 	{
 		
 		$htmlPage | Out-File "$tmpHTMLOutput"

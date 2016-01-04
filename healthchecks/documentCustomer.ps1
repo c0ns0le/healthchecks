@@ -21,7 +21,8 @@ documentCustomer.ps1 -initFile "Customer_Settings\default.ini"
 # Last Modified: 25 March 2015
 # Author: teiva.rodiere-at-gmail.com
 param(
-	[Parameter(Mandatory=$true)][string]$inifile,
+	[Parameter(Mandatory=$false)][string]$inifile,
+	[Parameter(Mandatory=$false)][string]$xmlFile,
 	[bool]$stopReportGenerator=$false,
 	[bool]$silent=$false	
 )
@@ -39,104 +40,6 @@ if ($srvconnection -or $global:srvconnection)
 	Remove-Variable srvconnection -Scope Global
 }
 
-function readConfiguration ([Parameter(Mandatory=$true)][string]$inifile)
-{
-	#logThis -msg "Reading in configurations from file $inifile"
-	$configurations = @{}
-	Get-Content $inifile | %{
-		if ($_ -notlike "#*")
-		{
-			$var = $_.Split('=')
-			#logThis -msg $var
-			#Write-Host $var[0]
-			if ($var.Count -gt 1)
-			{
-				$name=$var[0]
-				#Write-Host "$($var[0]) $($var[1])"
-				if ($var[1] -eq "true")
-				{
-					#$configurations.Add($var[0],$true)
-					$value=$true
-					#New-Variable -Name $var[0] -Value $true
-				} elseif ($var[1] -eq "false")
-				{
-					#$configurations.Add($var[0],$false)
-					$value=$false
-					#New-Variable -Name $var[0] -Value $false
-				} else {
-					if ($var[1] -match ',')
-					{
-						$value = $var[1] -split ','
-						#New-Variable -Name $var[0] -Value ($var[1] -split ',')
-					} else {
-						$value = $var[1]
-						#New-Variable -Name $var[0] -Value $var[1]
-					}
-				}
-				$configurations.Add($name,$value)
-			}
-		}
-	}
-	
-	
-	if ($configurations)
-	{
-		# Perform post processing by replace all strings with  $ sign in them with the content of their respective Content.
-		# for example: replaceing $customer with the actual customer name specified by the key $configurations.customer
-		$postProcessConfigs = @{}
-		$configurations.Keys | %{
-			$keyname=$_
-			#Write-Host $keyname
-			# just in case the value is an array, process each
-			$updatedValue=""
-			#Write-Host  $configurations.$keyname		 -ForegroundColor White
-			$updatedField = $configurations.$keyname | %{
-				$curr_string = $_						
-				
-				if ($curr_string -match '\$')
-				{
-					# replace the string with a $ sign in it with the content of the variable it is expected
-					$newstring=""
-					$newstring_array = $curr_string -split ' ' | %{
-						$word = $_
-						#Write-Host "`tBefore $word"
-						if ($word -like '*$*')
-						{
-							$key=$word -replace '\$'
-							$configurations.$key
-							#Write-Host "Needs replacing $word with $($configurations.$key)"
-						} else {
-							$word
-							#Write-Host "$($word)"
-						}
-					}
-					$updatedValue = [string]$newstring_array
-					#Write-Host "-t>>>$updatedValue" -ForegroundColor Blue
-				} elseif ($curr_string -eq $true)
-				{
-					$updatedValue = $true
-					#Write-Host "-t>>>$updatedValue" -ForegroundColor Cyan
-				} elseif ($curr_string -eq $false)
-				{
-					$updatedValue = $false
-					#Write-Host "-t>>>$updatedValue" -ForegroundColor Green
-				} else {
-					
-					$updatedValue = $curr_string
-					#Write-Host "-t>>>$updatedValue" -ForegroundColor Yellow
-				}
-				$updatedValue
-			}
-			$postProcessConfigs.Add($keyname,$updatedField)
-		}
-		$postProcessConfigs.Add("inifile",$inifile)
-		#return $configurations,$postProcessConfigs
-	
-		return $postProcessConfigs,$configurations
-	} else {
-		return $null
-	}
-}
 
 function startProcess()
 {	
@@ -171,8 +74,7 @@ function startProcess()
 		#$outputDirectory="$($global:report.Runtime.Configs.outputDirectory)\$runtimeDate" 
 		$global:report.Runtime.Configs.Add("runtime_log_directory","$($global:report.Runtime.Configs.outputDirectory)\$runtimeDate")
 		
-	}
-	Import-Module ".\generic\genericModule.psm1" -Force	
+	}	
 
 	if ((Test-Path -path $global:report.Runtime.Configs.runtime_log_directory) -ne $true) {
 		New-Item -type directory -Path $global:report.Runtime.Configs.runtime_log_directory
@@ -329,10 +231,10 @@ function startProcess()
 			}
 
 
-	        if(!$stopReportGenerator)
-			{
-				& "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:report.Runtime.Configs.outputDirectory -reportHeader $global:report.Runtime.Configs.reportHeader -reportIntro $global:report.Runtime.Configs.reportIntro -farmName $global:report.Runtime.Configs.customer -openReportOnCompletion  $global:report.Runtime.Configs.openReportOnCompletion -createHTMLFile $global:report.Runtime.Configs.createHTMLFile -emailReport $global:report.Runtime.Configs.emailReport -verbose $false -itoContactName $global:report.Runtime.Configs.itoContactName
-			}
+	        #if(!$stopReportGenerator)
+			#{
+				#& "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\generateInfrastructureReports.ps1" -inDir $thisReportLogdir -logDir $global:report.Runtime.Configs.outputDirectory -reportHeader $global:report.Runtime.Configs.reportHeader -reportIntro $global:report.Runtime.Configs.reportIntro -farmName $global:report.Runtime.Configs.customer -openReportOnCompletion  $global:report.Runtime.Configs.openReportOnCompletion -htmlReports $global:report.Runtime.Configs.htmlReports -emailReport $global:report.Runtime.Configs.emailReport -verbose $false -itoContactName $global:report.Runtime.Configs.itoContactName
+			#}
 
 		}
 
@@ -426,16 +328,19 @@ function startProcess()
 <#
 	THIS IS WHERE IT BEGINS
 #>
+Import-Module "$scriptsLoc\generic\genericModule.psm1" -Force
 try {
-	$inifile = ($inifile | Resolve-Path -ErrorAction SilentlyContinue).Path	
-	# all reports, file attachment paths, and runtime information for each scripts 
-	# are returned to the variable $global:report
-	$global:report = @{}
-	$global:report["Runtime"]=@{}
-	$global:report["Runtime"]["StartTime"]=Get-Date
-	$configObj,$preconfig = readConfiguration -inifile $inifile
-	if ($configObj)
-	{	
+	if (!$xmlFile)
+	{
+		# running the audit to produce a resultant XML file.
+		$inifile = ($inifile | Resolve-Path -ErrorAction SilentlyContinue).Path
+		#$configObj,$preconfig = readConfiguration -inifile $inifile		
+		$configObj = convertTextVariablesIntoObject (Get-Content $inifile)
+		# all reports, file attachment paths, and runtime information for each scripts 
+		# are returned to the variable $global:report
+		$global:report = @{}
+		$global:report["Runtime"]=@{}
+		$global:report["Runtime"]["StartTime"]=Get-Date
 		$configObj.Add("Silent",$silent)
 		$configObj.Add("scriptsLoc",$scriptsLoc)
 		$global:configs = $configObj
@@ -443,7 +348,7 @@ try {
 		#Set-Variable -Scope Global -Name silent -Value $silent
 
 		startProcess
-
+		
 		$global:report["Runtime"]["EndTime"]=Get-Date
 		
 		$xmlOutput = "$($global:report.Runtime.LogDirectory)\$($global:report.Runtime.Configs.Customer -replace ' ','_').xml"
@@ -452,36 +357,87 @@ try {
 
 		$zippedXmlOutput = $xmlOutput -replace ".xml",".zip"
 		logThis -msg "Zipping results for transport to $zippedXmlOutput"
-		New-ZipFile -InputObject $xmlOutput -ZipFilePath $zippedXmlOutput
+		$o=New-ZipFile -InputObject $xmlOutput -ZipFilePath $zippedXmlOutput 
+		# Thinking about putting this in the ini file but it's getting a little big and out of hand. I will leave it here until I have figured a better way.
 		$deleteXML=$false
 		if ((Test-Path -Path $zippedXmlOutput) -and $deleteXML)
 		{
 			Remove-Item $xmlOutput
-		}
-		if ($global:report.Runtime.Configs.emailReport)
-		{
-			logThis -msg "Emailing results"
-			if ($emailParams) {remove-variable scriptParams}
+		}			
+		# Process the results
+	} else {
+		# I don't want to collect anymore data but simply read in the resultant XML file.
+		$global:report = Import-Clixml $xmlFile
+	}
+
+	##############################################################################################
+	#	EMAIL XML RESULTANT FILE 
+	#
+	if ($global:report -and $global:report.Runtime.Configs.emailReport)
+	{
+		logThis -msg "Emailing results"
+		if ($emailParams) {remove-variable scriptParams}
 			
-			$body = @"
-				Health check results for $($global:report.Runtime.Configs.subject) $($global:report.Runtime.Configs.customer)
+		$body = @"
+			Health check results for $($global:report.Runtime.Configs.subject) $($global:report.Runtime.Configs.customer)
 "@
 			
-			# This routine sends the email
-			#function emailContact ([string] $smtpServer,  [string] $from, [string] $replyTo, [string] $toAddress ,[string] $subject, [string] $htmlPage) {
-			if ($global:report.Runtime.Configs.myMailServerRequiresAuthentication)
-			{	
-				$emailFileDirectory = Split-Path $global:report.Runtime.Configs.emailCredEncryptedPasswordFile
-				if (!$emailFileDirectory)
-				{
-					$global:report.Runtime.Configs.emailCredEncryptedPasswordFile = "$(Split-Path $($global:report.Runtime.configs.inifile))\$($global:report.Runtime.Configs.emailCredEncryptedPasswordFile)"
-				}
-				$mailCredentials = getmycredentialsfromFile -User $global:report.Runtime.Configs.emailCredUser -SecureFileLocation $global:report.Runtime.Configs.emailCredEncryptedPasswordFile
-			} else {
-				$mailCredentials = $null
+		# This routine sends the email
+		#function emailContact ([string] $smtpServer,  [string] $from, [string] $replyTo, [string] $toAddress ,[string] $subject, [string] $htmlPage) {
+		if ($global:report.Runtime.Configs.myMailServerRequiresAuthentication)
+		{	
+			$emailFileDirectory = Split-Path $global:report.Runtime.Configs.emailCredEncryptedPasswordFile
+			if (!$emailFileDirectory)
+			{
+				$global:report.Runtime.Configs.emailCredEncryptedPasswordFile = "$(Split-Path $($global:report.Runtime.configs.inifile))\$($global:report.Runtime.Configs.emailCredEncryptedPasswordFile)"
 			}
+			$mailCredentials = getmycredentialsfromFile -User $global:report.Runtime.Configs.emailCredUser -SecureFileLocation $global:report.Runtime.Configs.emailCredEncryptedPasswordFile
+		} else {
+			$mailCredentials = $null
+		}
 			
-			$attachments += $zippedXmlOutput;
+		$attachments += $zippedXmlOutput;
+		$emailParams = @{ 
+			'subject' = $global:report.Runtime.Configs.subject;
+			'smtpServer' = $global:report.Runtime.Configs.smtpServer;
+			'replyTo' = $global:report.Runtime.Configs.replyToRecipients;
+			'from' = $global:report.Runtime.Configs.fromRecipients;
+			'toAddress' = $global:report.Runtime.Configs.toRecipients;
+			'body' = $body;
+			'attachments' = [object]$attachments;
+			'fromContactName' = $global:report.Runtime.Configs.fromContactName
+			'credentials' = $mailCredentials
+		}
+		sendEmail @emailParams
+	}
+
+	##############################################################################################
+	#	HTML REPORTS 
+	#
+	# if the ini file contains htmlReports=true, then create HTML files
+	if ($global:report -and $global:report.Runtime.Configs.htmlReports)
+	{
+		logThis -msg "Generating HTML Report..."
+		$htmlFile = "$($global:report.Runtime.LogDirectory)\report.html"
+		$reportParamters = @{
+			"reportHeader"=$global:report.Runtime.Configs.reportHeader;
+			"reportIntro"=$global:report.Runtime.Configs.reportIntro;
+			"farmName"=$global:report.Runtime.Configs.customer;
+			"openReportOnCompletion"=$global:report.Runtime.Configs.openReportOnCompletion;
+			"verbose"=$false
+			"itoContactName"=$global:report.Runtime.Configs.itoContactName;
+			'xml'= $global:report
+		}
+		$htmlPage = generateHTMLReport @reportParamters			
+		$htmlPage | Out-File "$htmlFile"
+		logThis -msg "---> Opening $htmlFile"
+		if ($global:report.Runtime.Configs.$openReportOnCompletion)
+		{
+			Invoke-Expression "$htmlFile"
+		}
+
+		if ($global:report.Runtime.Configs.emailReport)
+		{
 			$emailParams = @{ 
 				'subject' = $global:report.Runtime.Configs.subject;
 				'smtpServer' = $global:report.Runtime.Configs.smtpServer;
@@ -489,19 +445,16 @@ try {
 				'from' = $global:report.Runtime.Configs.fromRecipients;
 				'toAddress' = $global:report.Runtime.Configs.toRecipients;
 				'body' = $body;
-				'attachments' = [object]$attachments;
+				'attachments' = [object]$html;
 				'fromContactName' = $global:report.Runtime.Configs.fromContactName
 				'credentials' = $mailCredentials
 			}
 			sendEmail @emailParams
 		}
-
-		return $global:report
-
-	} else {
-		logThis -msg "No configurations found in $inifile"
 	}
-}catch [system.exception]
+
+	if ($global:report ) { return $global:report }
+} catch [system.exception]
 {
 	logThis -msg "Caught a system exception:"  
 	showError -msg $_
@@ -512,6 +465,6 @@ try {
 	if ($report) { Remove-Variable report -Scope Global }
 	if ($srvconnection) { Remove-Variable srvconnection -Scope Global }	
 	if ($configObj) { Remove-Variable configObj -Scope local }
-	if ($preconfig) {Remove-Variable preconfig -Scope local }
+	#if ($preconfig) {Remove-Variable preconfig -Scope local }
 	logThis -msg "Script Exited."
 }

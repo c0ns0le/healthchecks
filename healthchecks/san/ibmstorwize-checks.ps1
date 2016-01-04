@@ -767,7 +767,7 @@ if($process -and $arrays)
 if ($generateReport)
 {
     # Now all the individuals TABLES are exported + the NFO Files, call the report generator against them to create the HTML Report.	
-	..\vmware\generateInfrastructureReports.ps1 -inDir $logDir -logDir $logDir -reportHeader "$reportHeader" -reportIntro "$reportIntro" -farmName "$customerName" -openReportOnCompletion $openReportOnCompletion -createHTMLFile $true -emailReport $false -verbose $false -itoContactName $itoContactName
+	..\vmware\generateInfrastructureReports.ps1 -inDir $logDir -logDir $logDir -reportHeader "$reportHeader" -reportIntro "$reportIntro" -farmName "$customerName" -openReportOnCompletion $openReportOnCompletion -htmlReports $true -emailReport $false -verbose $false -itoContactName $itoContactName
 }
 
 

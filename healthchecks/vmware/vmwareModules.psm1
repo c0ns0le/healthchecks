@@ -2269,7 +2269,7 @@ function getPerformanceReport ([string]$type,[Object]$objects,[object]$stats,[bo
 	$metaInfo +="tableHeader=$title"
 	$metaInfo +="introduction=The section provides you with performance results for each of your $type."
 	$metaInfo +="titleHeaderType=h$($headerType)"
-	$metaInfo +="titleHeaderType=h2"
+	#$metaInfo +="titleHeaderType=h2"
 	#updateReportIndexer -string "$(split-path -path $objectCSVFilename -leaf)"
 	
 	$combinedResults=@{}

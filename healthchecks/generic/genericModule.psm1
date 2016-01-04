@@ -1348,3 +1348,326 @@ function updateReportIndexer($string)
 		$string -replace ".csv",".nfo" -replace ".ps1",".nfo" -replace ".log",".nfo" | Out-file -Append -FilePath $global:reportIndex 
 	}
 }
+#######################################################################################################
+# Generate Reports from XML to HTML
+#######################################################################################################
+function generateHTMLReport(
+			[Parameter(Mandatory=$true)][string]$reportHeader,
+			[Parameter(Mandatory=$true)][string]$reportIntro,
+			[Parameter(Mandatory=$true)][string]$farmName,
+			[Parameter(Mandatory=$False)][bool]$openReportOnCompletion=$False,
+			[Parameter(Mandatory=$true)][string]$itoContactName,
+			[Parameter(Mandatory=$true)]$xml)
+{
+	$htmlPage = htmlHeader
+	$htmlPage += "`n<h1>$reportHeader</h1>"
+	$htmlPage += "`n<p>$reportIntro</p>"
+	$reportTitles = $xml.keys | ?{$_ -ne "Runtime"}
+	logThis -msg "Keys = $([string]$reportTitles)"
+	$reportTitles | %{	
+		#$subReportXML = $_
+		$reportTitle = $_
+		logThis -msg "reportTitle = $_"
+		$htmlPage += "`n<h1>$($reportTitle)</h1>"
+		
+		#LogThis -msg "$($xml.$reportTitle.
+		$subReportsTitles = $xml.$reportTitle.Reports.keys
+		#logThis -msg $subReportsTitles
+		$subReportsTitles | %{
+			$subReportsTitle = $_			
+			$htmlPage +=  "<h2>$subReportsTitle</h2>"
+			logThis -msg "subReportsTitle = $subReportsTitle"
+			for ($jindex = 0 ; $jindex -lt $xml.$reportTitle.Reports.$subReportsTitle.Count; $jindex++)
+			{			
+				$metaData = convertTextVariablesIntoObject ($xml.$reportTitle.Reports.$subReportsTitle[$jindex].MetaData)		
+				$dataTable = $xml.$reportTitle.Reports.$subReportsTitle[$jindex].DataTable
+				
+				<## if ($metaData)
+				{
+					Write-Output "<$($metaData.titleHeaderType)>$($metaData.tableHeader)</$($metaData.titleHeaderType)>"
+					if ($metaData.introduction)
+					{
+						Write-Output "<p>$($metaData.introduction)</p>"
+					}
+				}
+				if ($dataTable)
+				{
+					if ($metaData -and $metaData.displayTableOrientation)
+					{
+
+					}
+				}
+				#>
+				$expectedPassesToMakeForTopConsumers = 2
+				if ($metaData.generateTopConsumers)
+				{
+					# Report specifies that the report should generate a Top 10 (or other NUMBER) for this report, so need to make a second pass for the Top consumer report
+					$passesToMake = $expectedPassesToMakeForTopConsumers
+				} else {
+					$passesToMake = 1
+				}
+			
+				$passesSoFar=1;
+				# If the report NFO file 
+				while ($passesSoFar -le $passesToMake) 
+				{
+					if ($passesSoFar -eq $expectedPassesToMakeForTopConsumers)
+					{
+						$extraText = "(Top ($metaData.generateTopConsumers))"
+					} else {
+						$extraText = ""
+					}
+
+					if ($metaData.titleHeaderType)
+					{	
+						logThis -msg "`t-> Using header Type $($metaData.titleHeaderType) found in NFO $extraText" # -foregroundColor $color
+						#$headerType = $metaData.titleHeaderType # + " " + $extraText
+						$headerType = "h3"
+						#Write-Host "Here $headerType  <<"
+						#pause
+					} else 
+					{
+						logThis -msg "`t-> No header types found in NFO, using H2 instead $extraText"  -foregroundColor Yellow
+						$headerType = "h3"
+					}
+
+					if ($metaData.tableHeader)
+					{
+						logThis -msg "`t-> Using heading from NFO: $($metaData.tableHeader) $extraText"  #-foregroundColor $color
+						$htmlPage += "`n<$headerType>$($metaData.tableHeader) $extraText</$headerType>"
+						#Write-Host $htmlPage
+						#pause
+						#Remove-Variable tableHeader
+					
+					} else {
+						logThis -msg "`t-> Will derive Heading from the original filename" #-foregroundColor $color
+						if ($vcenterName)
+						{
+							#$title = $metaData.Filename.Replace($runtime+"_","").Replace("$vcenterName","").Replace(".csv","").Replace("_"," ")
+							$title = $metaData.Filename.Replace("$vcenterName","").Replace(".csv","").Replace("_"," ") + " " + $extraText
+						} else {
+							#$title = $metaData.Filename.Replace($runtime+"_","").Replace(".csv","").Replace("_"," ")
+							$title = $metaData.Filename.Replace(".csv","").Replace("_"," ") + " " + $extraText
+						}
+						$htmlPage += "`n<$headerType>$title $extraText</$headerType>"
+						logThis -msg "`t`t-> $title $extraText" -foreground yellow
+					
+					}
+					if ($metaData.introduction)
+					{
+						logThis -msg "`t-> Special introduction found in the NFO $extraText"  -foreground blue
+						$htmlPage += "`n<p>$($metaData.introduction) $($metaData.analytics)</p>"
+						#Remove-Variable introduction
+					} else {
+						logThis -msg "`t-> No introduction found in the NFO $extraText"  -foreground yellow
+					}
+					if ($metaData.metaAnalytics)
+					{
+						#$htmlPage += 
+					}
+				
+					$style="class=$setTableStyle"
+					
+					if($dataTable)
+					{
+						if ($passesSoFar -eq $expectedPassesToMakeForTopConsumers)
+						{
+							if ($metaData.generateTopConsumersSortByColumn)
+							{
+								$tmpreport = $dataTable | sort -Property $metaData.generateTopConsumersSortByColumn -Descending | Select -First $metaData.generateTopConsumers
+								$ataTable = $tmpreport
+							} else {
+								$tmpreport = $dataTable | sort | Select -First $metaData.generateTopConsumers
+								$dataTable = $tmpreport
+							}
+						}
+						if ($metaData.chartable -eq "true")
+						{
+							if ((Test-Path -path $metaData.ImageDirectory) -ne $true) {
+								New-Item -type directory -Path $metaData.ImageDirectory
+							}
+							logThis -msg "-> Need to Chart this table according to NFO" -foreground blue
+							# do the charting here instead of the table
+							$htmlPage += "`n<table>"
+							#$chartStandardWidth
+							#$chartStandardHeight
+							#$imageFileType
+							logThis -msg $dataTable -ForegroundColor Cyan
+							$report["OutputChartFile"] = createChart -sourceCSV $metaData.File -outputFileLocation $(($metaData.ImageDirectory)+"\"+$metaData.Filename.Replace(".csv",".$chartImageFileType")) -chartTitle $chartTitle `
+								-xAxisTitle $xAxisTitle -yAxisTitle $yAxisTitle -imageFileType $chartImageFileType -chartType $chartType `
+								-width $chartStandardWidth -height $chartStandardHeight -startChartingFromColumnIndex $startChartingFromColumnIndex -yAxisInterval $yAxisInterval `
+								-yAxisIndex  $yAxisIndex -xAxisIndex $xAxisIndex -xAxisInterval $xAxisInterval
+							
+							$report["outputChartFileName"] = Split-Path -Leaf $metaData.OutputChartFile
+
+							logThis -msg "-> image: ($metaData.OutputChartFile)" -foreground blue
+							$htmlPage += "`n<tr><td>"
+							if ($emailReport)
+							{
+								$htmlPage += "`n<div><img src=""$($metaData.OutputChartFile)""></img></div>"
+								$attachments += ($metaData.OutputChartFile)
+							} else
+							{
+								$htmlPage += "`n<div><img src=""$($metaData.OutputChartFile)""></img></div>"
+								# "<div><img src=""$($metaData.OutputChartFile)""></img></div>"
+							}
+							#$htmlPage += $metaData.DataTableCSV | ConvertTo-HTML -Fragment
+							#$htmlPage += "`n</td></tr></table>"
+							$htmlPage += "`n</td></tr>"
+							#logThis -msg $imageFileLocation -BackgroundColor Red -ForegroundColor Yellow
+							#$attachments += $imageFileLocation			
+							#$htmlPage += "`n<div><img src=""$outputChartFileName""></img></div>"
+							#$attachments += $imageFileLocation
+						
+							#Remove-Variable imageFileLocation
+							#Remove-Variable imageFilename
+						
+							$htmlPage += "`n</td></tr></table>"
+							#Remove-Variable chartable
+						} else { 
+							# displayTableOrientation can be List or Table, must be set in the NFO file
+							if ($dataTable.Count)
+							{
+								$count = $dataTable.Count
+							} else {
+								$count = 1
+							}
+							$caption = ""
+							#if (!$metaData.showTableCaption -or ($report.showTableCaption -eq $true))
+							if ($metaData.showTableCaption -eq $true)
+							{
+								$caption = "<p>Number of items: $count</p>"
+
+							}
+							if ($metaData.displayTableOrientation -eq "List")
+							{
+								$dataTable | %{
+									$htmlPage += ($_ | ConvertTo-HTML -Fragment -As $metaData.displayTableOrientation) -replace "<table","$caption<table class=aITTablesytle" -replace "&lt;/li&gt;","</li>" -replace "&lt\;li&gt;","<li>" -replace "&lt\;/ul&gt;","</ul>" -replace "&lt\;ul&gt;","<ul>"
+
+								}						
+							} elseif ($metaData.displayTableOrientation -eq "Table") {
+								#User has specified TABLE
+								$htmlPage += ($dataTable | ConvertTo-HTML -Fragment -As "Table") -replace "<table","$caption<table class=aITTablesytle" -replace "&lt;/li&gt;","</li>" -replace "&lt\;li&gt;","<li>" -replace "&lt\;/ul&gt;","</ul>" -replace "&lt\;ul&gt;","<ul>"
+								$htmlPage += "`n"
+							
+							} else {
+								# Do this regardless
+								$htmlPage += ($dataTable | ConvertTo-HTML -Fragment -As "Table") -replace "<table","$caption<table class=aITTablesytle" -replace "&lt;/li&gt;","</li>" -replace "&lt\;li&gt;","<li>" -replace "&lt\;/ul&gt;","</ul>" -replace "&lt\;ul&gt;","<ul>"
+								$htmlPage += "`n"
+								#$htmlPage += "`n<p>Invalid property in variable `$metaData.displayTableOrientation found in NFO. The only options are ""List"" and ""Table"" or don't put a variable in the NFO. <p>"
+							}
+							#Remove-Variable $report
+						}
+					} else {
+						#$htmlPage += "`n<p><i>No items found.</i></p>"
+					}
+					$passesSoFar++
+				}
+			}
+		}		
+	}
+	$htmlPage += "`n<p>If you need clarification or require assistance, please contact $itoContactName ($replyToRecipients)</p><p>Regards,</p><p>$itoContactName</p>"		
+	$htmlPage += "`n"	
+	$htmlPage += htmlFooter
+	return $htmlPage
+}
+
+
+function convertTextVariablesIntoObject ([Parameter(Mandatory=$true)][object]$obj)
+{
+	#logThis -msg "Reading in configurations from file $inifile"
+	$configurations = @{}
+	$obj | %{
+		if ($_ -notlike "#*")
+		{
+			$var = $_.Split('=')
+			#logThis -msg $var
+			#Write-Host $var[0]
+			if ($var.Count -gt 1)
+			{
+				$name=$var[0]
+				#Write-Host "$($var[0]) $($var[1])"
+				if ($var[1] -eq "true")
+				{
+					#$configurations.Add($var[0],$true)
+					$value=$true
+					#New-Variable -Name $var[0] -Value $true
+				} elseif ($var[1] -eq "false")
+				{
+					#$configurations.Add($var[0],$false)
+					$value=$false
+					#New-Variable -Name $var[0] -Value $false
+				} else {
+					if ($var[1] -match ',')
+					{
+						$value = $var[1] -split ','
+						#New-Variable -Name $var[0] -Value ($var[1] -split ',')
+					} else {
+						$value = $var[1]
+						#New-Variable -Name $var[0] -Value $var[1]
+					}
+				}
+				$configurations.Add($name,$value)
+			}
+		}
+	}
+	
+	
+	if ($configurations)
+	{
+		# Perform post processing by replace all strings with  $ sign in them with the content of their respective Content.
+		# for example: replaceing $customer with the actual customer name specified by the key $configurations.customer
+		$postProcessConfigs = @{}
+		$configurations.Keys | %{
+			$keyname=$_
+			#Write-Host $keyname
+			# just in case the value is an array, process each
+			$updatedValue=""
+			#Write-Host  $configurations.$keyname		 -ForegroundColor White
+			$updatedField = $configurations.$keyname | %{
+				$curr_string = $_						
+				
+				if ($curr_string -match '\$')
+				{
+					# replace the string with a $ sign in it with the content of the variable it is expected
+					$newstring=""
+					$newstring_array = $curr_string -split ' ' | %{
+						$word = $_
+						#Write-Host "`tBefore $word"
+						if ($word -like '*$*')
+						{
+							$key=$word -replace '\$'
+							$configurations.$key
+							#Write-Host "Needs replacing $word with $($configurations.$key)"
+						} else {
+							$word
+							#Write-Host "$($word)"
+						}
+					}
+					$updatedValue = [string]$newstring_array
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor Blue
+				} elseif ($curr_string -eq $true)
+				{
+					$updatedValue = $true
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor Cyan
+				} elseif ($curr_string -eq $false)
+				{
+					$updatedValue = $false
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor Green
+				} else {
+					
+					$updatedValue = $curr_string
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor Yellow
+				}
+				$updatedValue
+			}
+			$postProcessConfigs.Add($keyname,$updatedField)
+		}
+		#$postProcessConfigs.Add("inifile",$inifile)
+		#return $configurations,$postProcessConfigs
+	
+		return $postProcessConfigs#,$configurations
+	} else {
+		return $null
+	}
+}
