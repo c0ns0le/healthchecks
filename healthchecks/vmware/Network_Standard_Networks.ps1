@@ -20,7 +20,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 
 
 $metaInfo = @()
-$metaInfo +="tableHeader=Standard Networks"
+$metaInfo +="tableHeader=Standard Virtual Switches"
 $metaInfo +="introduction=The table below provides a comprehensive list of standard network switches."
 $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
@@ -50,7 +50,7 @@ $dataTable = $srvConnection | %{
 			$row | Add-Member -Type NoteProperty -Name "$_" -Value $vswitch.ExtensionData.Spec.Policy.Security.$_
 		}
 		# output
-		logThis -msg $row -ForegroundColor green
+		logThis -msg $row -ForegroundColor $global:colours.Highlight
 		$row
 	}
 }

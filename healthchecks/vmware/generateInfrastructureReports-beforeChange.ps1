@@ -140,13 +140,13 @@ if ($emailReport -or $htmlReports)
 	
 	if($showThisReport)
 	{
-		logThis -msg "###########################################################" -foregroundColor Green
+		logThis -msg "###########################################################" -ForegroundColor $global:colours.Highlight
 		logThis -msg "# REPORT 1: IMPORT ALL CSV FOR PROCESSING" -foreground Green
-		logThis -msg "###########################################################" -foregroundColor Green
+		logThis -msg "###########################################################" -ForegroundColor $global:colours.Highlight
 		logthis -msg "-> Reading all CSV files from $inDir for date $runtime" -foreground Yellow
 		if (Test-Path -Path $reportIndex)
 		{
-			logThis -msg "Found a reportIndex file specifying an ordered list of reports to include in this report:" -foregroundColor Yellow
+			logThis -msg "Found a reportIndex file specifying an ordered list of reports to include in this report:" -ForegroundColor $global:colours.Information
 			$reportIndexFileObj = Get-ChildItem -Path $reportIndex
 			$csvList = Get-Content -Path $reportIndexFileObj | %{
 				if ($_)
@@ -154,21 +154,21 @@ if ($emailReport -or $htmlReports)
 					Write-Output "$inDir\$_"
 				}
 			}
-			logThis -msg "-> [$($csvList.Count)] reports found in the index file $reportIndex" -foregroundColor Yellow
+			logThis -msg "-> [$($csvList.Count)] reports found in the index file $reportIndex" -ForegroundColor $global:colours.Information
 			$nfoList | %{
-				logThis $_ -ForegroundColor Yellow
+				logThis $_ -ForegroundColor $global:colours.Information
 			}
 			#logthis -msg $csvList
 		} else {
-			logThis -msg "No reportIndex file found specifying an ordered list of reports to include in this report:" -foregroundColor Yellow 
-			logThis -msg "The report will enumerate all CSV files found at location: $inDir, and include all found CSV in this report" -foregroundColor Yellow
+			logThis -msg "No reportIndex file found specifying an ordered list of reports to include in this report:" -ForegroundColor $global:colours.Information 
+			logThis -msg "The report will enumerate all CSV files found at location: $inDir, and include all found CSV in this report" -ForegroundColor $global:colours.Information
 			#$csvList = Get-ChildItem -Path $inDir -Filter "$runtime*.csv"
 			$csvList = Get-ChildItem -Path $inDir -Filter "*.csv" |%{
 				Write-Output "$inDir\$_"
 			}
-			logThis -msg "-> [$($csvList.Count)] reports found in directory $inDir" -foregroundColor Yellow
+			logThis -msg "-> [$($csvList.Count)] reports found in directory $inDir" -ForegroundColor $global:colours.Information
 			$csvList | %{
-				logThis $_  -foregroundColor Yellow
+				logThis $_  -ForegroundColor $global:colours.Information
 			}
 		}
 		
@@ -238,7 +238,7 @@ if ($emailReport -or $htmlReports)
 					$headerType = $report.titleHeaderType # + " " + $extraText
 				} else 
 				{
-					logThis -msg "`t-> No header types found in NFO, using H2 instead $extraText"  -foregroundColor Yellow
+					logThis -msg "`t-> No header types found in NFO, using H2 instead $extraText"  -ForegroundColor $global:colours.Information
 					$headerType = "h2"
 				}
 				if ($report.tableHeader)
@@ -309,7 +309,7 @@ if ($emailReport -or $htmlReports)
 						#$chartStandardWidth
 						#$chartStandardHeight
 						#$imageFileType
-						logThis -msg $report.DataTable -ForegroundColor Cyan
+						logThis -msg $report.DataTable -ForegroundColor $global:colours.Information
 						$report["OutputChartFile"] = createChart -sourceCSV $report.File -outputFileLocation $(($report.ImageDirectory)+"\"+$report.Filename.Replace(".csv",".$chartImageFileType")) -chartTitle $chartTitle `
 							-xAxisTitle $xAxisTitle -yAxisTitle $yAxisTitle -imageFileType $chartImageFileType -chartType $chartType `
 							-width $chartStandardWidth -height $chartStandardHeight -startChartingFromColumnIndex $startChartingFromColumnIndex -yAxisInterval $yAxisInterval `
@@ -331,7 +331,7 @@ if ($emailReport -or $htmlReports)
 						#$htmlPage += $report.DataTableCSV | ConvertTo-HTML -Fragment
 						#$htmlPage +="</td></tr></table>"
 						$htmlPage += "</td></tr>"
-						#logThis -msg $imageFileLocation -BackgroundColor Red -ForegroundColor Yellow
+						#logThis -msg $imageFileLocation -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 						#$attachments += $imageFileLocation			
 						#$htmlPage += "<div><img src=""$outputChartFileName""></img></div>"
 						#$attachments += $imageFileLocation

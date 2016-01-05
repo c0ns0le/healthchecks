@@ -30,10 +30,10 @@ $run1Report = $srvconnection | %{
 	$vCenter = $_
 	Get-Datacenter -Server $_| %{
 		$dc = $_.Name
-		logThis -msg "Processing [$vCenter\$dc]..." -ForegroundColor Yellow
+		logThis -msg "Processing [$vCenter\$dc]..." -ForegroundColor $global:colours.Information
 		Get-Cluster -Location $dc -Server $vCenter| Sort Name | % {
 			$cluster = $_
-			logThis -msg "    [$cluster]" -ForegroundColor Yellow
+			logThis -msg "    [$cluster]" -ForegroundColor $global:colours.Information
 			$compute = "" | Select "Environment"
 			if ($configFile)
 			{
@@ -51,7 +51,7 @@ $run1Report = $srvconnection | %{
 			
 			$compute | Add-Member -Type NoteProperty -Name "Cluster Name" -Value $($cluster.Name);
 			
-			logThis -msg "             --> VMs" -ForegroundColor Yellow
+			logThis -msg "             --> VMs" -ForegroundColor $global:colours.Information
 			$vms = Get-VM -Server $vCenter -Location $cluster ;
 			$vmsCount=0
 			if ($vms)
@@ -64,7 +64,7 @@ $run1Report = $srvconnection | %{
 				}
 			}
 			$compute | Add-Member -Type NoteProperty -Name "VMs" -Value  $vmsCount;
-			logThis -msg "             --> VMHosts " -ForegroundColor Yellow
+			logThis -msg "             --> VMHosts " -ForegroundColor $global:colours.Information
 			$esxhosts = Get-VMHost -Location $_.Name -Server $vCenter
 			$esxCount = 0
 			if ($esxhosts)
@@ -80,7 +80,7 @@ $run1Report = $srvconnection | %{
 			
 			
 			# Get datastore usage information only for those VMs
-			logThis -msg "             --> Datastores" -ForegroundColor Yellow
+			logThis -msg "             --> Datastores" -ForegroundColor $global:colours.Information
 			$datastores = Get-datastore -Server $vCenter -VMhost $esxhosts
 			$datastoreFreeTB = 0
 			$datastoreFreeTB = [math]::round($(($datastores | measure FreeSpaceMB -Sum).Sum/1024/1024),2)

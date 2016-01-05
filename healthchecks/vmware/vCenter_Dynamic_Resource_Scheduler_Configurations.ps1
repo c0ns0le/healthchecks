@@ -16,7 +16,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 #logThis -msg "Enumerating ..."
 $run1Report =   $srvConnection | %{
         $vCenterServer = $_.Name;
-        logThis -msg "Processing DRS Rules in vCenter server ""$vCenterServer""..." -ForegroundColor Cyan
+        logThis -msg "Processing DRS Rules in vCenter server ""$vCenterServer""..." -ForegroundColor $global:colours.Information
 		$drsRules = Get-DrsRule -Cluster * -Server $vCenterServer 
         if ($drsRules)
         {
@@ -26,7 +26,7 @@ $run1Report =   $srvConnection | %{
             } else { $drsRulesCount = 1 }
             $index=1;
     		$drsRules |  %{
-    			logThis -msg "Processing DRS rules $index/ $drsRulesCount - $($_.Name)" -ForegroundColor Yellow
+    			logThis -msg "Processing DRS rules $index/ $drsRulesCount - $($_.Name)" -ForegroundColor $global:colours.Information
     			$drsrule = "" | Select-Object "Name";
     			$drsrule.Name = $_.Name;
                 $drsrule | Add-Member -MemberType NoteProperty -Name "Enabled" -Value $_.Enabled;					
@@ -51,7 +51,7 @@ $run1Report =   $srvConnection | %{
                 $index++;
             }
         } else {
-            logThis -msg "No DRS rules found" -ForegroundColor Yellow;
+            logThis -msg "No DRS rules found" -ForegroundColor $global:colours.Information;
         }
 }
 

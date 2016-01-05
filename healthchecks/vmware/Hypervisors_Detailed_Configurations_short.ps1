@@ -36,14 +36,14 @@ $now = Get-date
 
 $run1Report = $srvConnection | %{
         $vCenterServer = $_.Name;
-        logThis -msg "Processing vCenter ""$vCenterServer""..." -ForegroundColor Cyan
-		logThis -msg "-> Getting View on the licencing server in this vCenter" -foregroundcolor yellow
+        logThis -msg "Processing vCenter ""$vCenterServer""..." -ForegroundColor $global:colours.Information
+		logThis -msg "-> Getting View on the licencing server in this vCenter" -ForegroundColor $global:colours.Information
 		#Get-View $_.ExtensionData.Content.LicenseManager
 		$lm = Get-view $_.ExtensionData.Content.LicenseManager
-		logThis -msg "-> Enumerating VMHosts" -foregroundcolor yellow
+		logThis -msg "-> Enumerating VMHosts" -ForegroundColor $global:colours.Information
         $vmhosts = Get-VMHost -Server $_ | sort Name #| Get-View
 		
-        logThis -msg "Found $($vmhosts.Count)" -ForegroundColor Yellow
+        logThis -msg "Found $($vmhosts.Count)" -ForegroundColor $global:colours.Information
         $hostCount = 1;
 		
         $vmhosts | %{

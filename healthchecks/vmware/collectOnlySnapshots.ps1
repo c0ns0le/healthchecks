@@ -45,7 +45,7 @@ if ($appendOutputToFile) {
 
 if ($verbose) 
 { 
-	Write-Host "This script log to " $of -ForegroundColor Yellow 
+	Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 }
 
 
@@ -66,7 +66,7 @@ elseif ($snapshots -and !$snapshots.Count)
 
 if ($outToScreen)
 {
-	Write-Host "Snaphosts in $comment ( $count found)" -ForegroundColor Red
+	Write-Host "Snaphosts in $comment ( $count found)" -ForegroundColor $global:colours.Error
 	$snapshots;
 	Write-Host "";
 }  

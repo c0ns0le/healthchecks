@@ -68,7 +68,7 @@ if (!$datastores)
 	showError "No datastores found"
 } else {
 	$title="Datastore Capacity Usage"
-	logThis -msg "Collecting usage stages for datastores on a monthly basis for the past $showPastMonths Months..." -foregroundcolor Green	
+	logThis -msg "Collecting usage stages for datastores on a monthly basis for the past $showPastMonths Months..." -ForegroundColor $global:colours.Highlight	
 	$today = Get-Date
 	$reportLastDay = $today
 	$reportFirstDay = forThisdayGetFirstDayOfTheMonth -day ($today.AddMonths(-$showPastMonths))

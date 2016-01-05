@@ -110,8 +110,8 @@ if (!$clusters)
 if ($showSummary) {
     $run1Report = $clusters | %{
         $output = "" | Select "Cluster"
-        logThis -msg "Processing Cluster $($_.Name)..." -foregroundcolor Green
-        logThis -msg "Collecting stats for the past $lastMonths Months..." -foregroundcolor Green
+        logThis -msg "Processing Cluster $($_.Name)..." -ForegroundColor $global:colours.Highlight
+        logThis -msg "Collecting stats for the past $lastMonths Months..." -ForegroundColor $global:colours.Highlight
         $output.Cluster = $_.Name
         $cluster = $_
     	$LastDayOfLastMonth = get-date ([System.DateTime]::DaysInMonth($(get-date).Year, $($(get-date).Month - 1)) + "/"+ (get-date).AddMonths(-1).Month + "/" + (get-date).AddMonths(-1).Year)
@@ -127,7 +127,7 @@ if ($showSummary) {
         $metrics | %{
             $metric = $_.MetricId
             $category,$type,$measure = $metric.Split(".")
-            logThis -msg "`tProcessing metric id $metric..." -Foregroundcolor Yellow
+            logThis -msg "`tProcessing metric id $metric..." -ForegroundColor $global:colours.Information
             #$hostStats = $stats | ?{$_.MetricId -match $metric}  | Measure-Object value -average -maximum -minimum
             $statsForthisMatrix = $stats | ?{$_.MetricId -match $metric}
             $unit = $statsForthisMatrix[0].Unit
@@ -225,26 +225,26 @@ if ($includeThisMonthEvenIfNotFinished)
 if ($showByMonth)
 {
     #$clusters = get-cluster -Server $srvconnection
-    logThis -msg "Collecting stats on a monthly basis for the past $lastMonths Months..." -foregroundcolor Green
+    logThis -msg "Collecting stats on a monthly basis for the past $lastMonths Months..." -ForegroundColor $global:colours.Highlight
     $clusters | %{
         $i = $lastMonths
         $cluster = $_    
         $of = $logDir + "\"+$filename+"-Last"+$lastMonths+"Months-"+$cluster.Name.replace(" ","_")+".csv"
-        logThis -msg "stats for cluster ""$cluster"" will output to " $of -ForegroundColor Yellow 
+        logThis -msg "stats for cluster ""$cluster"" will output to " $of -ForegroundColor $global:colours.Information 
         $run1Report = do {
             $date = $now.AddMonths(-$i)
             $output = "" | Select "Months"
             $output.Months = (get-date $date -format y)
             $firstDayOfMonth = get-date ("1/" + (Get-Date $date).Month + "/" + (Get-Date $date).Year + " 00:00:00")
             $lastDayOfMonth =  ($firstDayOfMonth.AddMonths(+1)) - (New-TimeSpan -seconds 1)
-            logThis -msg "Processing stats for $(Get-date $lastDayOfMonth -format y)" -Foregroundcolor Green
+            logThis -msg "Processing stats for $(Get-date $lastDayOfMonth -format y)" -ForegroundColor $global:colours.Highlight
   
             $stats = $cluster | Get-Stat  -Stat $mymetrics -Start (get-date $firstDayOfMonth -format d) -Finish (get-date $lastDayOfMonth -format d) -MaxSamples ([int]::MaxValue)
             $metrics = $stats | Select MetricId -unique
             $metrics | %{
                 $metric = $_.MetricId            
                 $category,$type,$measure = $metric.Split(".")
-                logThis -msg "`tProcessing metric id $metric..." -Foregroundcolor Yellow
+                logThis -msg "`tProcessing metric id $metric..." -ForegroundColor $global:colours.Information
                 $statsForthisMatrix = $stats | ?{$_.MetricId -match $metric}  #| Measure-Object value -average -maximum -minimum
                 $unit = $statsForthisMatrix[0].Unit
                 $hostStats = $statsForthisMatrix  | Measure-Object value -average -maximum -minimum

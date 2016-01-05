@@ -29,7 +29,7 @@ setSectionHeader -type "h2" -title "Virtual Machines Resource Usage" -text "The 
 	$device,$iotypes,$measure=$metric -split '.'	
 	$IOPSReport = $srvconnection | %{
 		$myVMs = Get-VM -server $_ | Where {$_.PowerState -eq "PoweredOn"} | Sort Name
-		LogThis -msg "$($myVMs.Count) Powered On found in $_" -ForegroundColor Yellow
+		LogThis -msg "$($myVMs.Count) Powered On found in $_" -ForegroundColor $global:colours.Information
 		$vmIndex=1;
 		$myVMs | %{
 			$vm = $_;

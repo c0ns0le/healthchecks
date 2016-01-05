@@ -15,17 +15,15 @@ $silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 
-
 # Want to initialise the module and blurb using this 1 function
-
 
 # Meta data needed by the porting engine to 
 $metaInfo = @()
-$metaInfo +="tableHeader=VMware License"
-$metaInfo +="introduction=The table below contains an export of all your licences currently assigned by your vCenter."
-$metaInfo +="chartable=false"
-$metaInfo +="titleHeaderType=h$($headerType)"
-$metaInfo +="displayTableOrientation=Table" # options are List or Table
+$metaInfo += "tableHeader=VMware License"
+$metaInfo += "introduction=The table below contains an export of all your licences currently assigned by your vCenter."
+$metaInfo += "chartable=false"
+$metaInfo += "titleHeaderType=h$($headerType)"
+$metaInfo += "displayTableOrientation=Table" # options are List or Table
 
 # Select the -first 1 assumes that the vCenter are in linked mode. If they are in linked mode, then the results will report double the actual capacity.
 # if the 2 or more vcenter servers are not in a linked-mode configuration then this code needs to be revisited.
@@ -37,13 +35,15 @@ $ReportPass1 = (Get-view $($srvConnection | select -First 1).ExtensionData.Conte
 	$row | add-member -type NoteProperty -Name "Used" -Value $_.Used
 	$row | add-member -type NoteProperty -Name "Packed As" -Value $_.CostUnit
 	$row | add-member -type NoteProperty -Name "Customer Label" -Value $_.Labels.Value
-	logThis -msg $row -ForegroundColor green
+	logThis -msg $row -ForegroundColor $global:colours.Highlight
 	$row 
 }
 # will display by types instead of individual entries
 $dataTable = $ReportPass1 | group Name | %{ 
 	$licenseType = $_
 	$individualLicenses = $_.Group
+	#logThis -msg "HERE"
+	#pause
 	$row = New-Object System.Object
 	$row | add-member -type NoteProperty -Name "Name" -Value $licenseType.Name
 	$row | add-member -type NoteProperty -Name "Total" -Value $(($individualLicenses | measure -Property Total -Sum).Sum)
@@ -61,7 +61,7 @@ if ($dataTable)
 	
 	if ($metaAnalytics)
 	{
-		$metaInfo += "analytics="+$metaAnalytics
+		$metaInfo += "analytics=$metaAnalytics"
 	}	
 	if ($returnResults)
 	{

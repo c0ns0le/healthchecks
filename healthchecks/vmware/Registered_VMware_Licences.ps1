@@ -3,7 +3,7 @@
 #Updated : 3th Feb 2015
 #Author  : teiva.rodiere-at-gmail.com
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$showDate=$false)
-Write-host "Importing Module vmwareModules.psm1 (force)" -ForegroundColor Yellow
+Write-host "Importing Module vmwareModules.psm1 (force)" -ForegroundColor $global:colours.Information
 Import-Module -Name .\vmwareModules.psm1 -Force -PassThru
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
@@ -47,7 +47,7 @@ $Report = $srvConnection | %{
 	$row | add-member -type NoteProperty -Name Licence -Value "$($licenceMgr.LicensedEdition)"
 	$row | add-member -type NoteProperty -Name Version -Value "$($licenceMgr."
 	# output
-	#logThis -msg $row -ForegroundColor green
+	#logThis -msg $row -ForegroundColor $global:colours.Highlight
 	$row 
 }
 

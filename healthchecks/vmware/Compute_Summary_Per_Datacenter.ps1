@@ -29,7 +29,7 @@ $mem = 100; # 100%
 $run1Report = $srvConnection | %{
 	$vCenter=$_
 	
-	logThis -msg "Processing [$vCenter]..." -ForegroundColor Yellow
+	logThis -msg "Processing [$vCenter]..." -ForegroundColor $global:colours.Information
 	$compute = "" | Select "Environment"	
 	if (logThis -msg)
 	{
@@ -41,14 +41,14 @@ $run1Report = $srvConnection | %{
 	}
 		
 	
-	logThis -msg "    --> VMs" -ForegroundColor Yellow 
+	logThis -msg "    --> VMs" -ForegroundColor $global:colours.Information 
 	$vms = Get-VM -Server $vCenter ;
 	# Get datastore usage information only for those VMs
-	logThis -msg "    --> datastores" -ForegroundColor Yellow 
+	logThis -msg "    --> datastores" -ForegroundColor $global:colours.Information 
 	$datastores = get-datastore -Server $vCenter
-	logThis -msg "    --> ESX Servers" -ForegroundColor Yellow
+	logThis -msg "    --> ESX Servers" -ForegroundColor $global:colours.Information
 	$vmhosts = Get-vmhost -Server $vCenter
-	logThis -msg "    --> Clusters" -ForegroundColor Yellow
+	logThis -msg "    --> Clusters" -ForegroundColor $global:colours.Information
 	$clusters = Get-Cluster -Server $vCenter | %{ 
 		$row = "" | Select Name,MemoryGB,CpuGhz,NumCpuCores; 
 		$row.Name=$_.Name; 

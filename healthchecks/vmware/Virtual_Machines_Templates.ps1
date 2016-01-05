@@ -15,10 +15,10 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 
 
 
-LogThis -msg "Enumerating templates.." -ForegroundColor Green
+LogThis -msg "Enumerating templates.." -ForegroundColor $global:colours.Highlight
 $run1Report = $srvConnection | %{
     Get-Template -Server $_.Name | Get-View | %{
-    	LogThis -msg "Processing $($_.Name)" -ForegroundColor Yellow;
+    	LogThis -msg "Processing $($_.Name)" -ForegroundColor $global:colours.Information;
     	$GuestConfig = "" | Select-Object "Template";
     	$GuestConfig.Template = $_.Name;
     	$GuestConfig | Add-Member -Type NoteProperty -Name "NumCPU" -Value  $_.Config.Hardware.NumCPU;
@@ -86,4 +86,4 @@ if ($srvConnection -and $disconnectOnExist) {
 	LogThis -msg "-> Disconnected from $srvConnection.Name <-" -ForegroundColor Magenta
 }
 
-LogThis -msg "Log file written to $of" -ForegroundColor Yellow
+LogThis -msg "Log file written to $of" -ForegroundColor $global:colours.Information

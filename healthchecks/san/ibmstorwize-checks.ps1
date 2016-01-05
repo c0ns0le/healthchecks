@@ -371,7 +371,7 @@ if (!$importFromThisXML)
 			
 		$dataTable = $deviceList | %{
 			$device=$_
-			#Write-Host $_ -ForegroundColor Yellow
+			#Write-Host $_ -ForegroundColor $global:colours.Information
 			#Write-Host $cmd
 			logthis -msg "`t-> Querying Device ""$($device.Name)/$($device.Username)/$($device.Password)""..."
 				

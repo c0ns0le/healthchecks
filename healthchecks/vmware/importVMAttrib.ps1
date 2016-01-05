@@ -174,7 +174,7 @@ if ($proceed) {
 						
 						# get the old values just in case
 						$oldVMAttributeValue = ($vmValues | ?{$_.Key -eq $attribKey}).Value
-						#Write-Host "=== >> $oldVMAttributeValue << ====" -BackgroundColor Red -ForegroundColor Yellow
+						#Write-Host "=== >> $oldVMAttributeValue << ====" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 						#if ($canBlankFields)
 						#{	
 						#	if ($oldVMAttributeValue -ne "" -and $newAttributeValue -eq "")

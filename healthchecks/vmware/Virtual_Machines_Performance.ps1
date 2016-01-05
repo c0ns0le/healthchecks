@@ -29,25 +29,21 @@ Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Glob
 Set-Variable -Name logDir -Value $logDir -Scope Global
 
 
-
-
 # Want to initialise the module and blurb using this 1 function
 
 
 $now = get-date #(get-date).AddMonths(-1) #use now but because we are half way thought the month, i only want up to the last day of the previous month
 
+$objects = GetVMs -Server $srvConnection
 if ($vms)
 {
-	$objects = Get-VM $vms -Server $srvConnection 
-} else {
-	$objects = Get-VM * -Server $srvConnection
-}
-
+	$objects = $vms | %{ $name=$_; $objects | ?{$_.Name -eq $name}}
+} 
 if (!$objects)
 {
 	showError "Invalid Objects"
 } else {
-	logThis -msg "Collecting stats on a monthly basis for the past $showPastMonths Months..." -foregroundcolor Green	
+	logThis -msg "Collecting stats on a monthly basis for the past $showPastMonths Months..." -ForegroundColor $global:colours.Highlight	
 	$metaInfo = @()
 	$metaInfo +="tableHeader=Virtual Machine Resource Usage"
 	$metaInfo +="introduction=The section provides you with performance results for each of your hypervisors. Review each host as part of your capacity planning session."
@@ -66,7 +62,7 @@ if (!$objects)
 		}
 		
 		$outputString = New-Object System.Object
-	    logThis -msg "Processing $($obj.Name)..." -foregroundcolor Green
+	    logThis -msg "Processing $($obj.Name)..." -ForegroundColor $global:colours.Highlight
 		$filters = ""
 		$objectCSVFilename = $(getRuntimeCSVOutput).Replace(".csv","-$($obj.Name).csv")
 		$objectNFOFilename = $(getRuntimeCSVOutput).Replace(".csv","-$($obj.Name).nfo")

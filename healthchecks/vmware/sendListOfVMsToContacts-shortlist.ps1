@@ -112,16 +112,16 @@ $run1Report =  $srvConnection | %{
     $vcenterName = $_.Name
     if ($showOnlyTemplates) 
     {
-        Write-Host "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor Red
+        Write-Host "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         $vms = Get-Template -Server $_ | Sort-Object Name
         
-        #Write-Host "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor Red
+        #Write-Host "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         #$vmsViews = $vms | Get-View;
     } else {
-        Write-Host "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor Red
+        Write-Host "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         $vms = Get-VM -Server $_ | Sort-Object Name 
         
-        #Write-Host "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor Red
+        #Write-Host "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         #$vmsViews = $vms | Get-View;
     }
     
@@ -131,7 +131,7 @@ $run1Report =  $srvConnection | %{
         $vms | %{
 			$vm = $_;
             #$vmView = $vmsView | ?{$_.Name -eq $vm.Name}
-			Write-Host "Processing $index of $($vms.Count) :- $vm" -ForegroundColor Yellow;
+			Write-Host "Processing $index of $($vms.Count) :- $vm" -ForegroundColor $global:colours.Information;
 			$GuestConfig = "" | Select-Object Name; 
 			$GuestConfig.Name = $vm.Name;
             $GuestConfig | Add-Member -Type NoteProperty -Name "GuestHostname" -Value $vm.ExtensionData.Guest.HostName;
@@ -202,10 +202,10 @@ if ($emailReport -or $verboseHTMLFilesToFile)
 	#$sortedList = $csvImport | Group-Object -Property Contact
 	if ($thisContactOnly)
 	{
-		Write-Host "Yes this contact $thisContactOnly" -BackgroundColor Red -ForegroundColor Yellow
+		Write-Host "Yes this contact $thisContactOnly" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 		$sortedList = $serverListReport | Group-Object -Property Contact | ?{$_.Name -eq $thisContactOnly}
 		Write-host $sortedList
-		Write-Host "Yes this contact $thisContactOnly" -BackgroundColor Red -ForegroundColor Yellow
+		Write-Host "Yes this contact $thisContactOnly" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 	} else 
 	{
 		$sortedList = $serverListReport | Group-Object -Property Contact
@@ -241,7 +241,7 @@ if ($emailReport -or $verboseHTMLFilesToFile)
 				}
 				
 			    $contactName = $contact.Name
-				Write-Host "Processing contact: $contactName.." -BackgroundColor Green -ForegroundColor Blue
+				Write-Host "Processing contact: $contactName.." -BackgroundColor $global:colours.Highlight -ForegroundColor $global:colours.ChangeMade
 				Write-Host "-> $count systems associated to the user";
 				$subject = "Your Virtual Machines Asset List"
 				#$htmlBody = "Dear <strong>$contactName</strong>,<br><br>You are receiving this email because our records show that you are currently nominated as the primary contact for one or more virtual machines found in the $farmname. <h3>Asset Information</h3>"
@@ -439,7 +439,7 @@ if ($emailReport -or $verboseHTMLFilesToFile)
 			Write-Host ""
 		}
 	} else {
-		Write-Host "There are no listed of VMs generated for the source farms or for this specified contact [$thisContactOnly]" -BackgroundColor Red -ForegroundColor Yellow
+		Write-Host "There are no listed of VMs generated for the source farms or for this specified contact [$thisContactOnly]" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 	}
 } else {
 	Write-Host "User Choice : Choosing NOT to generate HTML or emailing reports"
@@ -456,4 +456,4 @@ if ($emailReport -or $verboseHTMLFilesToFile)
 #	Write-Host "-> Disconnected from $srvConnection.Name <-" -ForegroundColor Magenta
 #}
 
-#Write-Host "Log file written to $of" -ForegroundColor Yellow
+#Write-Host "Log file written to $of" -ForegroundColor $global:colours.Information

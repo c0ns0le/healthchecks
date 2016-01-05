@@ -31,7 +31,7 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 # Main function
 iex ".\wmi-user-core-utilities.ps1"
@@ -43,4 +43,4 @@ $report | Export-Csv $of -NoTypeInformation
 Write-Output "" >> $of
 Write-Output "" >> $of
 Write-Output "Collected on $(get-date)" >> $of
-Write-Host "Log file written to $of" -ForegroundColor Yellow
+Write-Host "Log file written to $of" -ForegroundColor $global:colours.Information

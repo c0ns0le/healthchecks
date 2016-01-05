@@ -18,7 +18,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 $report1 = @()
 $report1 = $srvConnection | %{
     $vCenter = $_.Name
-    logThis -msg "Processing hosts in vCenter $vCenter" -ForegroundColor Cyan
+    logThis -msg "Processing hosts in vCenter $vCenter" -ForegroundColor $global:colours.Information
     $vmhosts = Get-VMHost -Server $_.Name | Sort Name | Get-View
     $hostCount = 0;
     $index=1;
@@ -34,7 +34,7 @@ $report1 = $srvConnection | %{
         $vmhost = $_
         $cluster = $(Get-VMhost -Name $vmhost.Name | Get-Cluster).Name
         $datacenter = $(Get-datacenter -VMhost $vmhost.Name).Name
-        logThis -msg "Processing host $index/$hostCount - $($vmhost.name)" -Foregroundcolor Yellow
+        logThis -msg "Processing host $index/$hostCount - $($vmhost.name)" -ForegroundColor $global:colours.Information
         $networkSystem = Get-view $vmhost.ConfigManager.NetworkSystem
         $networkSystem.NetworkInfo.Pnic | sort Device | %{
             $pnic = $_

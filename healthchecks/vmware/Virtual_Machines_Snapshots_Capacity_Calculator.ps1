@@ -22,19 +22,19 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 
 
 
-logThis -msg "Enumerating datacenters..." -ForegroundColor Cyan
+logThis -msg "Enumerating datacenters..." -ForegroundColor $global:colours.Information
 $run1Report = Get-Datacenter -Server $srvConnection | %{
 	$dc = $_.Name;
-	logThis -msg "Enumerating clusters in datacenter $dc..." -ForegroundColor Cyan
+	logThis -msg "Enumerating clusters in datacenter $dc..." -ForegroundColor $global:colours.Information
 	Get-Cluster -Location $dc | % { 
 		$clustername = $_.Name;
-		logThis -msg "Enumerating Hosts in cluster "$clustername"..." -ForegroundColor Cyan
+		logThis -msg "Enumerating Hosts in cluster "$clustername"..." -ForegroundColor $global:colours.Information
 		Get-VMHost -Location $clustername | Select-Object -First 1 | %{
 			$vmhost = $_;
-			logThis -msg "Enumerating Datastores on first cluster node"($vmhost.Name)"..." -ForegroundColor Cyan
+			logThis -msg "Enumerating Datastores on first cluster node"($vmhost.Name)"..." -ForegroundColor $global:colours.Information
 			Get-Datastore -VMHost $vmhost | Get-View | % {
 				$datastoreView = $_;
-				logThis -msg "Processing Datastores "$($datastoreView.info.Name)"..." -ForegroundColor Yellow
+				logThis -msg "Processing Datastores "$($datastoreView.info.Name)"..." -ForegroundColor $global:colours.Information
 				$datastoreFreeSpaceKB = $_.Summary.FreeSpace; # In KB
 				foreach ($vmItem in $datastoreView.Vm) {
 					$vmView = Get-View $vmItem;

@@ -33,32 +33,29 @@ $metaInfo +="reportPeriodInvtervalsInMins=$sampleIntevalsMinutes"
 $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=Table" # options are List or Table
 
-
-
 $index=1;
 $dataTable =  $srvConnection | %{
     $vcenterName = $_.Name
     if ($showOnlyTemplates) 
     {
-        logThis -msg "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor Yellow
+        logThis -msg "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor $global:colours.Information
         $vms = Get-Template -Server $_ | Sort-Object Name
         
-        #logThis -msg "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor Red
+        #logThis -msg "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         #$vmsViews = $vms | Get-View;
     } else {
-        logThis -msg "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor Yellow
-        $vms = Get-VM -Server $_ | Sort-Object Name 
+        logThis -msg "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor $global:colours.Information
+        $vms = GetVMs -Server $_ | Sort-Object Name
         
-        #logThis -msg "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor Red
+        #logThis -msg "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         #$vmsViews = $vms | Get-View;
     }
     
     if ($vms) 
     {
-        logThis -msg "Loading vcFolders from vCenter $_..." -ForegroundColor Yellow
-        $vcFolders = get-folder * -Server $_ | select -unique
-    
-        logThis -msg "Loading Virtual Machine Creation Events from vCenter $_..." -ForegroundColor Yellow
+        #logThis -msg "Loading vcFolders from vCenter $_..." -ForegroundColor $global:colours.Information
+        #$vcFolders = get-folder * -Server $_ | select -unique    
+        logThis -msg "Loading Virtual Machine Creation Events from vCenter $_..." -ForegroundColor $global:colours.Information
         if (!$skipEvents)
         {
             # only load events for virtual machines which 
@@ -69,7 +66,7 @@ $dataTable =  $srvConnection | %{
         $vms | %{
 			$vm = $_;
             #$vmView = $vmsView | ?{$_.Name -eq $vm.Name}
-			logThis -msg "Processing $index of $($vms.Count) :- $vm" -ForegroundColor Yellow;
+			logThis -msg "Processing $index of $($vms.Count) :- $vm" -ForegroundColor $global:colours.Information;
 			$row = "" | Select-Object Name; 
 			$row.Name = $vm.Name;
             $row | Add-Member -Type NoteProperty -Name "State" -Value $([string]([string]$vm.PowerState).Replace("Powered",""))
@@ -80,9 +77,6 @@ $dataTable =  $srvConnection | %{
 			$memStats = -1
 			$netStats = -1
 			#$balloonStats = -1
-			
-			
-			
 			
 			$row | Add-Member -Type NoteProperty -Name "Tools Status" -Value $([string]([string]$vm.ExtensionData.Guest.ToolsStatus).Replace("tools",""));
             $row | Add-Member -Type NoteProperty -Name "CPU" -Value  "$(formatNumbers ($vm.ExtensionData.Summary.Config.NumCPU))"

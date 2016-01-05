@@ -55,9 +55,9 @@ if ($srvConnection)
 			$proposedPolicy = "upgradeAtPowerCycle"
 			if ($vm.ExtensionData.Config.Tools.ToolsUpgradePolicy.ToString() -eq $proposedPolicy)
             {
-				Write-Host "-> [SKIPPING] - Current policy = [$($_.ExtensionData.Config.Tools.ToolsUpgradePolicy)], Proposed = [$proposedPolicy] " -Foregroundcolor Green;
+				Write-Host "-> [SKIPPING] - Current policy = [$($_.ExtensionData.Config.Tools.ToolsUpgradePolicy)], Proposed = [$proposedPolicy] " -ForegroundColor $global:colours.Highlight;
 			} else {
-            	write-Host "-> [UPDATING] - Current policy = [$($_.ExtensionData.Config.Tools.ToolsUpgradePolicy)], Proposed = [$proposedPolicy] " -Foregroundcolor Yellow            
+            	write-Host "-> [UPDATING] - Current policy = [$($_.ExtensionData.Config.Tools.ToolsUpgradePolicy)], Proposed = [$proposedPolicy] " -ForegroundColor $global:colours.Information            
 				$vmConfigSpec.Tools.ToolsUpgradePolicy = $proposedPolicy
         	}
 			Remove-Variable proposedPolicy
@@ -68,9 +68,9 @@ if ($srvConnection)
 			$proposedPolicy = "true"
 			if ($vm.ExtensionData.Config.Tools.SyncTimeWithHost -eq $proposedPolicy)
         	{
-				Write-Host "-> [SKIPPING] - Current policy = [$($vm.ExtensionData.Config.Tools.SyncTimeWithHost)], Proposed = [$proposedPolicy] " -Foregroundcolor Green;
+				Write-Host "-> [SKIPPING] - Current policy = [$($vm.ExtensionData.Config.Tools.SyncTimeWithHost)], Proposed = [$proposedPolicy] " -ForegroundColor $global:colours.Highlight;
 			} else {
-				Write-Host "-> [UPDATING] - Current policy = [$($vm.ExtensionData.Config.Tools.SyncTimeWithHost)], Proposed = [$proposedPolicy] " -Foregroundcolor Yellow;
+				Write-Host "-> [UPDATING] - Current policy = [$($vm.ExtensionData.Config.Tools.SyncTimeWithHost)], Proposed = [$proposedPolicy] " -ForegroundColor $global:colours.Information;
 				$vmConfigSpec.Tools.syncTimeWithHost = $proposedPolicy
 			}
 			Remove-Variable proposedPolicy
@@ -79,9 +79,9 @@ if ($srvConnection)
 		# Time to execute it
 		if ($readonly)
 		{
-			Write-Host "==> [READONLY] - Skipping the update" -ForegroundColor Red
+			Write-Host "==> [READONLY] - Skipping the update" -ForegroundColor $global:colours.Error
 		} else {
-			Write-Host "[EXECUTING]" -ForegroundColor Blue
+			Write-Host "[EXECUTING]" -ForegroundColor $global:colours.ChangeMade
 			if ($vmConfigSpec.Tools.syncTimeWithHost -or $vmConfigSpec.Tools.ToolsUpgradePolicy)
 			{
 				(Get-View $_.ID).ReconfigVM($vmConfigSpec)

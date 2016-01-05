@@ -42,7 +42,7 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 #Variables and Constants
 $TechContact="INF-VMWARE"
@@ -58,9 +58,9 @@ $defaults_NA="[N/A]"
 
 $run1Report = $srvConnection | %{
         $vCenterServer = $_.Name;
-        Write-Host "Processing VMHosts from vCenter server ""$vCenterServer""..." -ForegroundColor Cyan
+        Write-Host "Processing VMHosts from vCenter server ""$vCenterServer""..." -ForegroundColor $global:colours.Information
         $vmhostsView = Get-VMHost -Server $_ | sort Name | Get-View
-        Write-Host "Found $($vmhostsView.Count)" -ForegroundColor Yellow
+        Write-Host "Found $($vmhostsView.Count)" -ForegroundColor $global:colours.Information
         $hostCount = 1;
         $vmhostsView | %{
             Write-Host "Processing $hostCount/$($vmhostsView.Count) - $($vmhostView.Name)..."

@@ -19,7 +19,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 
 # Meta data needed by the porting engine to 
 $metaInfo = @()
-$metaInfo +="tableHeader=Virtual Machines List without VMware Tools"
+$metaInfo +="tableHeader=Virtual Machines List without/old VMware Tools"
 $metaInfo +="introduction=This report exports a list Virtual Machines with tools missing or out-of-date. It is recommended to run an up to date version of VMware Tools inside each Virtual Machine. Idealy this list should be empty."
 $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"

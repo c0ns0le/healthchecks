@@ -49,23 +49,23 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 
 $run1Report =  $srvConnection | %{
     $vcenterName = $_.Name
     if ($showOnlyTemplates) 
     {
-        Write-Host "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor Red
+        Write-Host "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         $vms = Get-Template -Server $_ | Sort-Object Name
         
-        #Write-Host "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor Red
+        #Write-Host "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         #$vmsViews = $vms | Get-View;
     } else {
-        Write-Host "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor Red
+        Write-Host "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         $vms = Get-VM -Server $_ | Sort-Object Name 
         
-        #Write-Host "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor Red
+        #Write-Host "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         #$vmsViews = $vms | Get-View;
     }
     
@@ -75,7 +75,7 @@ $run1Report =  $srvConnection | %{
         $vms | %{
 			$vm = $_;
             #$vmView = $vmsView | ?{$_.Name -eq $vm.Name}
-			Write-Host "$index/$($vms.Count) :- $vm" -ForegroundColor Yellow;
+			Write-Host "$index/$($vms.Count) :- $vm" -ForegroundColor $global:colours.Information;
 			$GuestConfig = "" | Select-Object Name; 
 			$GuestConfig.Name = $vm.Name;
             $GuestConfig | Add-Member -Type NoteProperty -Name "GuestHostname" -Value $vm.ExtensionData.Guest.HostName;
@@ -95,7 +95,7 @@ $run1Report =  $srvConnection | %{
 			{
 				$ifConfig=Import-Csv $configFile
 				$currentConfig = $ifConfig | ?{$_.vCenterSrvName -eq $vcenterName}
-				#Write-Host "[$currentConfig]" -BackgroundColor Red -ForegroundColor Yellow
+				#Write-Host "[$currentConfig]" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 				
 				$GuestConfig | Add-Member -Type NoteProperty -Name "Environment" -Value $currentConfig.MoreInfo
 			} else {

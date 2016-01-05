@@ -26,13 +26,13 @@ $chartColorChoices=@("#E3B64C,#0000CC","#00CC00","#FF0000","#2F4F4F","#006400","
 #chartTypes are: Line, Column, StackedColumn, StackedBar
 $scriptpath = Split-Path -parent $outputImageName
 $headers = $datasource | Get-Member -membertype NoteProperty | select -Property Name
-#LogThis -msg "+++++++++++++++++++++++++++++++++++++++++++" -ForegroundColor Yellow
-#LogThis -msg "Output image: $outputImageName" -ForegroundColor Yellow
+#LogThis -msg "+++++++++++++++++++++++++++++++++++++++++++" -ForegroundColor $global:colours.Information
+#LogThis -msg "Output image: $outputImageName" -ForegroundColor $global:colours.Information
 
-#LogThis -msg "Table to chart:" -ForegroundColor Yellow
-#LogThis -msg "" -ForegroundColor Yellow
-#LogThis -msg $datasource  -ForegroundColor Yellow
-#LogThis -msg "+++++++++++++++++++++++++++++++++++++++++++ " -ForegroundColor Yellow
+#LogThis -msg "Table to chart:" -ForegroundColor $global:colours.Information
+#LogThis -msg "" -ForegroundColor $global:colours.Information
+#LogThis -msg $datasource  -ForegroundColor $global:colours.Information
+#LogThis -msg "+++++++++++++++++++++++++++++++++++++++++++ " -ForegroundColor $global:colours.Information
 # chart object
 $chart1 = New-object System.Windows.Forms.DataVisualization.Charting.Chart
 $chart1.Width = $width

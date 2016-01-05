@@ -38,9 +38,9 @@ if ($includeTemplates)
 $index=1;
  $Report =  $vms | %{
 	$vm = $_;
-	#Write-Host "Processing $index of $($vms.Count) :- $($vm.name_label)" -ForegroundColor Yellow;
+	#Write-Host "Processing $index of $($vms.Count) :- $($vm.name_label)" -ForegroundColor $global:colours.Information;
     #$vmView = $vmsView | ?{$_.Name -eq $vm.Name}
-	logThis -msg "Processing $index of $($vms.Count) :- $vm" -ForegroundColor Yellow;
+	logThis -msg "Processing $index of $($vms.Count) :- $vm" -ForegroundColor $global:colours.Information;
 	$vmConfig = "" | Select-Object Name; 
 	$vmConfig.Name = $vm.name_label;
 	if ($vBlockDevices) {remove-variable vBlockDevices}
@@ -134,4 +134,4 @@ launchReport
 #$Report | Export-Csv -NoTypeInformation $of
 
 
-logThis -msg "Log file written to $of" -ForegroundColor Yellow
+logThis -msg "Log file written to $of" -ForegroundColor $global:colours.Information

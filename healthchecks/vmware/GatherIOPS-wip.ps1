@@ -38,7 +38,7 @@ if ($comment -eq "" ) {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
 
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 
 # add VMware PS snapin

@@ -31,7 +31,7 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 Write-Host "Enumerating datacenters..."
 $run1Report = $srvConnection | %{ 
@@ -158,7 +158,7 @@ $run1Report = $srvConnection | %{
     				# Increment the port group counter
     				$i++;
     				# Return the $vSwitchConfig object to the pipeline (added to $Report)
-            		#Write-Host $vSwitchConfig -ForegroundColor green
+            		#Write-Host $vSwitchConfig -ForegroundColor $global:colours.Highlight
     				$vSwitchConfig
     	    	} 
    	  		}

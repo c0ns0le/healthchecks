@@ -25,7 +25,7 @@ function MoveToVCFolder {
 
 	if ($vmname -eq "" -or $folderName -eq "" -or $targetDatacenter -eq "" -or $targetCluster -eq "")
 	{
-		Write-Host "Unable to process this VM [name="$vmname",resourcePoolName="$resourcePoolName",targetDatacenter"$targetDatacenter",targetCluster="$targetCluster"]" -ForegroundColor Red;
+		Write-Host "Unable to process this VM [name="$vmname",resourcePoolName="$resourcePoolName",targetDatacenter"$targetDatacenter",targetCluster="$targetCluster"]" -ForegroundColor $global:colours.Error;
 	} else {
 		if ($executeMode -eq "readonly") {
 			Write-Host "Move-VM -VM (Get-VM -Name "$vmname" -Location "$targetCluster") -Destination (Get-Folder -Name "$folderName" -Location "$targetDatacenter")"
@@ -41,7 +41,7 @@ function MoveToRP {
 	
 	if ($vmname -eq "" -or $resourcePoolName -eq "" -or $targetDatacenter -eq "" -or $targetCluster -eq "")
 	{
-		Write-Host "Unable to process this VM [name="$vmname",resourcePoolName="$resourcePoolName",targetDatacenter="$targetDatacenter",cluster="$targetCluster"]" -ForegroundColor Red;
+		Write-Host "Unable to process this VM [name="$vmname",resourcePoolName="$resourcePoolName",targetDatacenter="$targetDatacenter",cluster="$targetCluster"]" -ForegroundColor $global:colours.Error;
 	} else {
 		#Move-VM -VM (Get-VM -Name XP_VC_Tech) -Destination (Get-Folder -Name Marketing-VM)
 		if ($executeMode -eq "readonly") {
@@ -73,11 +73,11 @@ if ((Test-Path -path $logDir) -ne $true) {
 }
 
 $of = $logDir + "\reorganiseVMs.csv"
-Write-Host "This script log to " $of -ForegroundColor Yellow 
-Write-Host "Host is running in processing mode: " $executeMode -ForegroundColor Black -BackgroundColor Red;
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
+Write-Host "Host is running in processing mode: " $executeMode -ForegroundColor Black -BackgroundColor $global:colours.Error;
 
 
-Write-Host "Reading in input file " $if -ForegroundColor Cyan;
+Write-Host "Reading in input file " $if -ForegroundColor $global:colours.Information;
 $csvImport = Import-Csv $if;
 if (!$csvImport)
 { 
@@ -88,7 +88,7 @@ if (!$csvImport)
 switch ($executeMode)
 {
 	"readonly" {
-		Write-Host "Script running in [readonly] mode.." -ForegroundColor Yellow
+		Write-Host "Script running in [readonly] mode.." -ForegroundColor $global:colours.Information
 	}
 	"doit" { 
 		Write-Host "Executing this script in write mode. Changes will be executed automatically" 
@@ -113,15 +113,15 @@ foreach ($row in $csvImport) {
 	switch ($action)
 	{
 	"vfoldersonly" {
-		Write-host "Moving"$row.GuestName" to vFolder ["$row.VCFolder "] specified in the input file "$if -ForegroundColor Cyan
+		Write-host "Moving"$row.GuestName" to vFolder ["$row.VCFolder "] specified in the input file "$if -ForegroundColor $global:colours.Information
 		MoveToVCFolder -vmname $row.GuestName -folderName $row.VCFolder -targetCluster  $cluster -targetDatacenter $datacenter
 	}
 	"rpsonly" {
-		Write-host "Moving"$row.GuestName" to ResourcePools ["$row.ResourcePool"] as specified in the input file "$if -ForegroundColor Cyan
+		Write-host "Moving"$row.GuestName" to ResourcePools ["$row.ResourcePool"] as specified in the input file "$if -ForegroundColor $global:colours.Information
 		MoveToRP -vmname $row.GuestName -resourcePoolName $row.ResourcePool -targetCluster  $cluster -targetDatacenter $datacenter
 	}
 	"both" {
-		Write-host "Moving" $row.GuestName "to both ResourcePools [" $row.ResourcePool "] and vFolder ["$row.VCFolder"] specified in the input file "$if -ForegroundColor Cyan
+		Write-host "Moving" $row.GuestName "to both ResourcePools [" $row.ResourcePool "] and vFolder ["$row.VCFolder"] specified in the input file "$if -ForegroundColor $global:colours.Information
 		MoveToVCFolder -vmname $row.GuestName -folderName $row.VCFolder -targetCluster  $cluster -targetDatacenter $datacenter
 		MoveToRP -vmname $row.GuestName -resourcePoolName $row.ResourcePool -targetCluster $cluster -targetDatacenter $datacenter
 	}

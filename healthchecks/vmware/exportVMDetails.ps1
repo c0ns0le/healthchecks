@@ -81,7 +81,7 @@ $vms | %{
 
 	#$of = $logDir + "\"+$guestName+$comment+$timeStampt+$fileExtension
 	$of = $logDir + "\"+$guestName+$comment+$fileExtension
-	logThis -msg "$index/$($vms.Count) :- $($($srvConnection).Name)/$($vm.host.name)/$($vm.name)" -ForegroundColor Yellow;
+	logThis -msg "$index/$($vms.Count) :- $($($srvConnection).Name)/$($vm.host.name)/$($vm.name)" -ForegroundColor $global:colours.Information;
 	
 	###############################################################################################################################
 	# PART 1 :- INCLUDE SYSTEM INFORMATION
@@ -601,7 +601,7 @@ $vms | %{
 				New-Item -type directory -Path "$global:logdir\$imgDir"
 			}
 			
-			logThis -msg "$tmpreport" -ForegroundColor Cyan
+			logThis -msg "$tmpreport" -ForegroundColor $global:colours.Information
 			$imageFileLocation = createChart -datasource $tmpreport -outputImage "$global:logdir\$imgDir\$guestname-rpoViolations.$chartImageFileType" -chartTitle $chartTitle `
 				-xAxisTitle $xAxisTitle -yAxisTitle $yAxisTitle -imageFileType $chartImageFileType -chartType $chartType `
 				-width $chartStandardWidth -height $chartStandardHeight -startChartingFromColumnIndex $startChartingFromColumnIndex -yAxisInterval $yAxisInterval `
@@ -628,7 +628,7 @@ $vms | %{
 			$htmlPage += header2 "Raw data"
 			$htmlPage += paragraph "The following table shows a trend of vsphere replication violations. Values are in minutes."
 
-			#logThis -msg $imageFileLocation -BackgroundColor Red -ForegroundColor Yellow
+			#logThis -msg $imageFileLocation -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 			#$attachments += $imageFileLocation			
 			#$htmlPage += "<div><img src=""$imageFilename""></img></div>"
 			#$attachments += $imageFileLocation
@@ -665,8 +665,8 @@ $vms | %{
 	#############
 	if ($includeIssues)
 	{
-		logThis -msg "######################################################################" -ForegroundColor Green
-		logThis -msg "Checking the overall status of this system and its depending objects..."  -ForegroundColor Green
+		logThis -msg "######################################################################" -ForegroundColor $global:colours.Highlight
+		logThis -msg "Checking the overall status of this system and its depending objects..."  -ForegroundColor $global:colours.Highlight
 		$title="Issues Register"
 		$description = "Find below a list of issues discovered for this system and its dependent components. Such components can be datastores, hosts, clusters, and datacenters."
 		$objMetaInfo = @()

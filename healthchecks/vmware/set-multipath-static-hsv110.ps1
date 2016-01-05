@@ -45,29 +45,29 @@ $Error.Clear()
 
 Function ShowDisclaimer()
 {
-Write-Host "!!! READ FIRST !!!" -ForegroundColor Red
+Write-Host "!!! READ FIRST !!!" -ForegroundColor $global:colours.Error
 Write-Host ""
-Write-Host "ESX Administrator" -ForegroundColor Yellow
-Write-Host "=================" -ForegroundColor Yellow
-Write-Host "This script will recalibrate the multipathing policy of each hsv110 LUN using the following placement configuration:" -ForegroundColor Yellow
+Write-Host "ESX Administrator" -ForegroundColor $global:colours.Information
+Write-Host "=================" -ForegroundColor $global:colours.Information
+Write-Host "This script will recalibrate the multipathing policy of each hsv110 LUN using the following placement configuration:" -ForegroundColor $global:colours.Information
 Write-Host ""
-Write-Host "--> All presented ESX LUNs will be configured with a Fixed Multipathing Policy using Preferred Paths" -ForegroundColor Yellow
-Write-Host "--> Even LUN IDs will be exclusively assigned to EVA Controller A and statically load-balanced between defined Controller Ports" -ForegroundColor Yellow
-Write-Host "--> Odd LUN IDs will be exclusively assigned to EVA Controller B and statically load-balanced between defined Controller Ports" -ForegroundColor Yellow
-Write-Host "--> Controller Port assignment is based on modular arithmetic using LUN Identifier (i.e. LUN ID / # of Controller Ports to determine recommended Path)" -ForegroundColor Yellow
-Write-Host "    e.g. LUN ID 5 = Controller B (5 = Odd = "B"), Port 1 (5 MOD 4 = "1")" -ForegroundColor Yellow 
-Write-Host "--> Load-Balancing is based on Controller WWN not LUN SCSI Target" -ForegroundColor Yellow
-Write-Host "--> This script is for ESX 3.X hosts recalibration ONLY - ESX 4.X supports native ALUA and Round-Robin" -ForegroundColor Yellow
+Write-Host "--> All presented ESX LUNs will be configured with a Fixed Multipathing Policy using Preferred Paths" -ForegroundColor $global:colours.Information
+Write-Host "--> Even LUN IDs will be exclusively assigned to EVA Controller A and statically load-balanced between defined Controller Ports" -ForegroundColor $global:colours.Information
+Write-Host "--> Odd LUN IDs will be exclusively assigned to EVA Controller B and statically load-balanced between defined Controller Ports" -ForegroundColor $global:colours.Information
+Write-Host "--> Controller Port assignment is based on modular arithmetic using LUN Identifier (i.e. LUN ID / # of Controller Ports to determine recommended Path)" -ForegroundColor $global:colours.Information
+Write-Host "    e.g. LUN ID 5 = Controller B (5 = Odd = "B"), Port 1 (5 MOD 4 = "1")" -ForegroundColor $global:colours.Information 
+Write-Host "--> Load-Balancing is based on Controller WWN not LUN SCSI Target" -ForegroundColor $global:colours.Information
+Write-Host "--> This script is for ESX 3.X hosts recalibration ONLY - ESX 4.X supports native ALUA and Round-Robin" -ForegroundColor $global:colours.Information
 Write-Host ""  
-Write-Host "SAN Administrator" -ForegroundColor Green
-Write-Host "=================" -ForegroundColor Green
-Write-Host "It is important that each EVA 5000 vDisk (LUN) used for ESX is configured with the following parameters:" -ForegroundColor Green
+Write-Host "SAN Administrator" -ForegroundColor $global:colours.Highlight
+Write-Host "=================" -ForegroundColor $global:colours.Highlight
+Write-Host "It is important that each EVA 5000 vDisk (LUN) used for ESX is configured with the following parameters:" -ForegroundColor $global:colours.Highlight
 Write-Host ""
-Write-Host "--> Even LUNs will be configured for Preferred Path/Mode - Path A Failover/Failback"-ForegroundColor Green
-Write-Host "--> Odd LUNs will be configured for Preferred Path/Mode - Path B Failover/Failback"-ForegroundColor Green
-Write-Host "--> All shared ESX LUNs are presented with the same LUN IDs to all nodes to ensure consistent controller ownership" -ForegroundColor Green
+Write-Host "--> Even LUNs will be configured for Preferred Path/Mode - Path A Failover/Failback"-ForegroundColor $global:colours.Highlight
+Write-Host "--> Odd LUNs will be configured for Preferred Path/Mode - Path B Failover/Failback"-ForegroundColor $global:colours.Highlight
+Write-Host "--> All shared ESX LUNs are presented with the same LUN IDs to all nodes to ensure consistent controller ownership" -ForegroundColor $global:colours.Highlight
 Write-Host ""
-Write-Host "!!! READ FIRST !!!" -ForegroundColor Red
+Write-Host "!!! READ FIRST !!!" -ForegroundColor $global:colours.Error
 Write-Host ""
 }
 Function check_even ($num) {[bool]!($num%2)}
@@ -93,7 +93,7 @@ $eva_5000_paths.getEnumerator() |sort-object Name |ft @{Expression ={$_.Name};La
 
 Disconnect-VIServer $DefaultVIServer -Force
 $VIServer = Read-Host "Enter vCenter Server Name"
-Write-Host "Connecting to vCenter Server $VIServer ..." -ForegroundColor Cyan
+Write-Host "Connecting to vCenter Server $VIServer ..." -ForegroundColor $global:colours.Information
 $connect = Connect-VIServer -Server $VIServer -ErrorAction SilentlyContinue -ErrorVariable +err
 if ($err.count -ge 1) {Write-Warning "Cannnot connect to vCenter Server $VIServer - Script Halted";Exit} Else {Write-Host "-> vCenter Server Connected <-" -ForegroundColor Magenta}
 Write-Host ""
@@ -103,11 +103,11 @@ $global:defaultviserver = $connect;
 if ($args.Length -ne 0) 
 {
 	$clusterName = $args[0]
-	Write-Host "-> Script Parameter (Cluster Name) : $clustername <-" -ForegroundColor Green
+	Write-Host "-> Script Parameter (Cluster Name) : $clustername <-" -ForegroundColor $global:colours.Highlight
 	Write-Host ""
 }
 
-Write-Host "Enumerating ESX Clusters connected to vCenter Server $VIServer ..." -ForegroundColor Cyan
+Write-Host "Enumerating ESX Clusters connected to vCenter Server $VIServer ..." -ForegroundColor $global:colours.Information
 $VIclusters = Get-Cluster | Select Name |Sort Name
 Get-Cluster |Sort Name|ft -AutoSize|out-default #script bug
 
@@ -136,7 +136,7 @@ write-host ""
 
 $VMhosts = Get-Cluster $clusterName | Get-vmHost
 $VMhosts = $vmhosts |sort-object
-Write-Host "ESX Host Summary for Cluster:" $clusterName -ForegroundColor Cyan
+Write-Host "ESX Host Summary for Cluster:" $clusterName -ForegroundColor $global:colours.Information
 $vmhosts|ft Name,State -AutoSize|out-default #script bug
 
 $continue = $true
@@ -146,7 +146,7 @@ while($continue)
 	switch ($answer.ToUpper())
 	{
 		"C" {Write-Host "-> Check-Only and Recommend Mode <-" -foregroundcolor Magenta;write-host "";$continue = $false}
-		"Y" {Write-Host "-> Repair Mode <-" -foregroundcolor Red;write-host "";$continue = $false}
+		"Y" {Write-Host "-> Repair Mode <-" -ForegroundColor $global:colours.Error;write-host "";$continue = $false}
 		"N" {Exit}
 		default {Write-Warning "Incorrect - Select C, Y or N"}
 	}
@@ -194,7 +194,7 @@ foreach ($vmhost in $VMhosts)
 	Write-Progress -id 1 -activity "Cluster\ESX Progress" -status $clusterName\$vmhost -percentcomplete ($vmhostcount/$numOfVMhosts.Count*100)
 	Start-Sleep -Seconds 1
 	write-host ""
-	Write-Host "ESX Progress -" $vmhostcount "of" $numOfVMhosts.Count "ESX Hosts ("$vmhost.Name")" -ForegroundColor Green
+	Write-Host "ESX Progress -" $vmhostcount "of" $numOfVMhosts.Count "ESX Hosts ("$vmhost.Name")" -ForegroundColor $global:colours.Highlight
 	Write-Host "-> Connected to ESX Host" $vmhost.Name "<-" -ForegroundColor Magenta
 	write-Host ""
 	$luns = $VMHost|get-scsilun -luntype disk|where-object {$_.ConsoleDeviceName -like "/vmfs/devices/disks/vml*" -AND $_.Model -like "*hsv110*"}|sort-object CanonicalName
@@ -203,17 +203,17 @@ foreach ($vmhost in $VMhosts)
 	$TotalCapacityGB = $TotalCapacityMB.Sum/1024
 	$numOfLuns = $luns |measure-object # Replace luns.Count
 	$numOfPaths = $luns_report |measure-object # Replace luns_report.Count
-	Write-Host "Current : ESX Multipathing Summary for all hsv110 LUNs on" $vmhost.Name -ForegroundColor Cyan
+	Write-Host "Current : ESX Multipathing Summary for all hsv110 LUNs on" $vmhost.Name -ForegroundColor $global:colours.Information
 	$luns_report|ft -AutoSize|out-default #script bug
-	write-host "TOTAL hsv110 LUNS:" $numOfLuns.Count "("$numOfPaths.Count "PATHS )"-ForegroundColor Red
-	write-host "TOTAL hsv110 Capacity:" $TotalCapacityGB "GB"-ForegroundColor Red
+	write-host "TOTAL hsv110 LUNS:" $numOfLuns.Count "("$numOfPaths.Count "PATHS )"-ForegroundColor $global:colours.Error
+	write-host "TOTAL hsv110 Capacity:" $TotalCapacityGB "GB"-ForegroundColor $global:colours.Error
 	write-host ""
 	$esx_object | Add-Member -MemberType noteProperty -name Total_hsv110_LUNs -value $numOfLuns.Count
 	$esx_object | Add-Member -MemberType noteProperty -name Total_hsv110_Paths -value $numOfPaths.Count
 	$esx_object | Add-Member -MemberType noteProperty -name Total_hsv110_CapacityGB -value $TotalCapacityGB
 
 	#Check AdvancedConfiguration for SAN Best Practice	
-	Write-Host "Checking ESX Configuration for Cluster SAN supportability" -ForegroundColor Cyan
+	Write-Host "Checking ESX Configuration for Cluster SAN supportability" -ForegroundColor $global:colours.Information
 	$LunResetValue = ($vmhost |Get-VMHostAdvancedConfiguration).get_Item("Disk.UseLunReset")
 	$DeviceResetValue = ($vmhost |Get-VMHostAdvancedConfiguration).get_Item("Disk.UseDeviceReset")
 	$esx_object | Add-Member -MemberType noteProperty -name DeviceResetValue -value $DeviceResetValue
@@ -221,11 +221,11 @@ foreach ($vmhost in $VMhosts)
 	switch ($DeviceResetValue) # 0 Recommended
 	{
 		"0" 	{
-				Write-Host "-> ESX UseDeviceReset Value:" $DeviceResetValue "is Correct" -ForegroundColor Green
+				Write-Host "-> ESX UseDeviceReset Value:" $DeviceResetValue "is Correct" -ForegroundColor $global:colours.Highlight
 				$esx_object | Add-Member -MemberType noteProperty -name DeviceResetStatus -value "OK"
 			}
 		"1" 	{
-				Write-Host "-> ESX UseDeviceReset Value:" $DeviceResetValue "is Incorrect - Update Value to 0 for SAN support" -ForegroundColor Red
+				Write-Host "-> ESX UseDeviceReset Value:" $DeviceResetValue "is Incorrect - Update Value to 0 for SAN support" -ForegroundColor $global:colours.Error
 				$esx_object | Add-Member -MemberType noteProperty -name DeviceResetStatus -value "REPAIR"
 			}
 		default	{
@@ -237,11 +237,11 @@ foreach ($vmhost in $VMhosts)
 	switch ($LunResetValue) # 1 Recommended
 	{
 		"1" 	{
-				Write-Host "-> ESX UseLunReset Value:" $LunResetValue "is Correct" -ForegroundColor Green
+				Write-Host "-> ESX UseLunReset Value:" $LunResetValue "is Correct" -ForegroundColor $global:colours.Highlight
 				$esx_object | Add-Member -MemberType noteProperty -name LunResetStatus -value "OK"
 			}
 		"0" 	{
-				Write-Host "-> ESX UseLunReset Value:" $LunResetValue "is Incorrect - Update Value to 1 for SAN support" -ForegroundColor Red
+				Write-Host "-> ESX UseLunReset Value:" $LunResetValue "is Incorrect - Update Value to 1 for SAN support" -ForegroundColor $global:colours.Error
 				$esx_object | Add-Member -MemberType noteProperty -name LunResetStatus -value "REPAIR"
 			}
 		default	{
@@ -254,7 +254,7 @@ foreach ($vmhost in $VMhosts)
 
 	# Main Inner LUN Loop	
 	$luncount = 0
-	Write-Host "Reviewing ESX Multipathing for hsv110 LUNs" -ForegroundColor Cyan
+	Write-Host "Reviewing ESX Multipathing for hsv110 LUNs" -ForegroundColor $global:colours.Information
 	
 	foreach ($lun in $luns)
 	{	
@@ -268,8 +268,8 @@ foreach ($vmhost in $VMhosts)
 		$object | Add-Member -MemberType noteProperty -name LUN_ID -value $lunid
 		Write-Progress -id 2 -parentid 1 -activity "LUN Progress" -status $lun.Canonicalname -percentcomplete ($luncount/$numOfLuns.Count*100)
 		Start-Sleep -Seconds 0.75
-		Write-Host "LUN Progress -" $luncount "of" $numOfLuns.Count "LUNs ("$vmhost.Name")" -ForegroundColor Green
-		Write-Host "-> Checking Multipathing for hsv110 LUN" $lunid "on" $vmhost.Name "<-" -ForegroundColor Cyan
+		Write-Host "LUN Progress -" $luncount "of" $numOfLuns.Count "LUNs ("$vmhost.Name")" -ForegroundColor $global:colours.Highlight
+		Write-Host "-> Checking Multipathing for hsv110 LUN" $lunid "on" $vmhost.Name "<-" -ForegroundColor $global:colours.Information
 		write-host "-> Cluster =" $clusterName -ForegroundColor Magenta
 		write-host "-> ESX Host =" $vmhost.Name -ForegroundColor Magenta
 		write-host "-> LUN ID =" $lunid -ForegroundColor Magenta
@@ -310,7 +310,7 @@ foreach ($vmhost in $VMhosts)
 		write-host "-> Recommended WWN Path ="$newpath.LunPath "("$newpath.SanID")" -ForegroundColor Magenta # new
 		if ($lun.MultipathPolicy -ieq "RoundRobin") {write-host "";write-warning "Active MPP = Round Robin - Requires Investigation!";$mppRR=$true} 
 		write-host ""
-		Write-Host "Current : ESX Multipathing Summary for LUN" $lunid -ForegroundColor Cyan
+		Write-Host "Current : ESX Multipathing Summary for LUN" $lunid -ForegroundColor $global:colours.Information
 		$paths_report = $lun |get-scsilunpath | select Lunpath, SanID, @{Name="EVA Controller Path"; Expression = {$eva_5000_paths.Get_Item($_.SanID)}}, State, Preferred, @{Name="Recommended"; Expression = {if ($_.SanId -eq $newpath.SanID) {"Y"}}}
 		$paths_report|ft -AutoSize|out-default #script bug
 		if ($activepath.LunPath -ne $newpath.LunPath -or $mppRR) # Pathing Incorrect or MPP-RR Enabled
@@ -349,12 +349,12 @@ foreach ($vmhost in $VMhosts)
 				else 
 				{
 					$object | Add-Member -MemberType noteProperty -name Change -value "OK"
-					write-host "SUCCESS: Active Path = Recommended Path" -ForegroundColor Green
+					write-host "SUCCESS: Active Path = Recommended Path" -ForegroundColor $global:colours.Highlight
 				}
 				write-host ""
 				$paths = Get-ScsiLunPath -scsilun $lun
 				$paths_report = $lun |get-scsilunpath | select Lunpath, SanID, @{Name="EVA Controller Path"; Expression = {$eva_5000_paths.Get_Item($_.SanID)}}, State, Preferred, @{Name="Recommended"; Expression = {if ($_.SanId -eq $newpath.SanID) {"Y"}}}
-				Write-Host "Updated : ESX Multipathing Summary for LUN" $lunid -ForegroundColor Cyan
+				Write-Host "Updated : ESX Multipathing Summary for LUN" $lunid -ForegroundColor $global:colours.Information
 				$paths_report|ft -AutoSize|out-default #script bug
 			}
 			else # "C" Check-Only implied
@@ -373,7 +373,7 @@ foreach ($vmhost in $VMhosts)
 		{
 			$object | Add-Member -MemberType noteProperty -name Change -value "N/A"
 			$object | Add-Member -MemberType noteProperty -name Change_Date -value "N/A"
-			write-host "NO CHANGE: LUN" $lunid "connected to Path" $activepath.LunPath "("$activepath.SanID") is the correct Path" -foregroundColor Green
+			write-host "NO CHANGE: LUN" $lunid "connected to Path" $activepath.LunPath "("$activepath.SanID") is the correct Path" -ForegroundColor $global:colours.Highlight
 			write-host ""
 		}
 		$lun_history += $object
@@ -385,7 +385,7 @@ foreach ($vmhost in $VMhosts)
 		write-host ""
 	} # End LUN Loop
 $luns_report = $luns |get-scsilunpath | select LunPath, State, Preferred, SanID, @{Name="EVA Controller Path"; Expression = {$eva_5000_paths.Get_Item($_.SanID)}}
-Write-Host "Updated : ESX Multipathing Summary for all hsv110 LUNs on" $vmhost.Name -ForegroundColor Cyan
+Write-Host "Updated : ESX Multipathing Summary for all hsv110 LUNs on" $vmhost.Name -ForegroundColor $global:colours.Information
 $luns_report|ft -AutoSize|out-default #script bug
 Write-Progress -id 2 -parentid 1 -activity "LUN Progress" -status $lun.Canonicalname -percentcomplete ($luncount/$numOfLuns.Count*100) -Completed
 $esx_config += $esx_object
@@ -397,19 +397,19 @@ Write-Progress -id 1 -activity "Cluster\ESX Progress" -status $clusterName\$vmho
 $date = get-date -uformat "%d/%m/%y %T"
 $whoami = $connect.User
 # Screen Report
-Write-Host "VI Cluster $VIServer\$clusterName Multipathing Changes @ $date - Run By : $whoami" -ForegroundColor Red
+Write-Host "VI Cluster $VIServer\$clusterName Multipathing Changes @ $date - Run By : $whoami" -ForegroundColor $global:colours.Error
 Write-Host ""
-if ($answer -eq "C"){Write-Host "Run Mode: Check-Only" -ForegroundColor Yellow} Else {Write-Host "Run Mode: Repair" -ForegroundColor Yellow}
-Write-Host "Script Execution Time:" $exec_time.TotalSeconds "seconds" -ForegroundColor Yellow
+if ($answer -eq "C"){Write-Host "Run Mode: Check-Only" -ForegroundColor $global:colours.Information} Else {Write-Host "Run Mode: Repair" -ForegroundColor $global:colours.Information}
+Write-Host "Script Execution Time:" $exec_time.TotalSeconds "seconds" -ForegroundColor $global:colours.Information
 Write-Host ""
-Write-Host "ESX Host Status" -ForegroundColor Green
-Write-Host "===============" -ForegroundColor Green
+Write-Host "ESX Host Status" -ForegroundColor $global:colours.Highlight
+Write-Host "===============" -ForegroundColor $global:colours.Highlight
 $esx_config | select VMhost, Total_hsv110_LUNs, Total_hsv110_Paths, Total_hsv110_CapacityGB, DeviceResetValue, DeviceResetStatus, LunResetValue, LunResetStatus|ft -AutoSize|out-default #script bug
-Write-Host "SAN Controller Configuration" -ForegroundColor Green
-Write-Host "============================" -ForegroundColor Green
+Write-Host "SAN Controller Configuration" -ForegroundColor $global:colours.Highlight
+Write-Host "============================" -ForegroundColor $global:colours.Highlight
 $eva_5000_paths.getEnumerator() |sort-object Name |ft @{Expression ={$_.Name};Label="EVA Controller WWN";width=25}, @{Expression ={$_.Value};Label="EVA Port Definition"}|out-default #script bug
-Write-Host "ESX Host Multipathing Changes" -ForegroundColor Green
-Write-Host "=============================" -ForegroundColor Green
+Write-Host "ESX Host Multipathing Changes" -ForegroundColor $global:colours.Highlight
+Write-Host "=============================" -ForegroundColor $global:colours.Highlight
 $lun_history | select VMhost, LUN_ID, Active_Path, Active_Path_Controller, Active_MPP, Recommended_Path, Recommended_Path_Controller, Change, Change_Date |sort VMhost,LUN_ID|ft -AutoSize|out-default #script bug
 Write-Host ""
 
@@ -421,8 +421,8 @@ $total_changes_required = $lun_history | where {$_.Change -eq "REPAIR" -or $_.Ch
 $total_lunresetvalue_incorrect = $esx_config | where {$_.LunResetStatus -eq "REPAIR" -or $_.LunResetStatus -eq "INVALID"}|measure-object
 $total_deviceresetvalue_incorrect = $esx_config | where {$_.DeviceResetStatus -eq "REPAIR" -or $_.DeviceResetStatus -eq "INVALID"}|measure-object
 
-Write-Host "Script Execution Summary" -ForegroundColor Green
-Write-Host "========================" -ForegroundColor Green
+Write-Host "Script Execution Summary" -ForegroundColor $global:colours.Highlight
+Write-Host "========================" -ForegroundColor $global:colours.Highlight
 Write-Host ""
 Write-Host "Total LUNs Configured Correctly :"$total_changes_na.Count
 Write-Host "Total LUNs Requiring Path Updates :"$total_changes_required.Count
@@ -461,6 +461,6 @@ $lun_history | select VMhost, LUN_ID, Active_Path, Active_Path_Controller, Activ
 "" | out-file $filepath\"set-multipath-static-hsv110-"$VIServer"-"$clusterName.txt -NoClobber -Append
 
 if ($Error.Count -ne 0) {Write-Warning $error.count "outstanding errors have occurred during set-multipath-static-hsv110.ps1 execution."}
-else {Write-Host "No outstanding errors detected during execution" -ForegroundColor Green}
+else {Write-Host "No outstanding errors detected during execution" -ForegroundColor $global:colours.Highlight}
 Write-Host ""
 # Disconnect-VIServer $connect -Force

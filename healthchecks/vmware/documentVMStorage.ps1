@@ -35,7 +35,7 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 #$vCenterServers = "srvds3350x001.corporate.transgrid.local","SRVDWX3350X003.corporate.transgrid.local","SRVDSX3850X001.corporate.transgrid.local"
 s = Connect-VIServer -Server $vCenterServers 

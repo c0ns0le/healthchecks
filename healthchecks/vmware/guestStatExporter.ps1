@@ -29,7 +29,7 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 if ($location -eq "")
 {

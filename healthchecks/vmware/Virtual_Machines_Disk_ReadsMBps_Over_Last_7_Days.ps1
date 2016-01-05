@@ -17,7 +17,7 @@ $IOPSReport = @()
 #$myDatastore = Get-Datastore -Name $datastore -server $server
 $IOPSReport = $srvconnection | %{
 	$myVMs = Get-VM * -server $_ | Where {$_.PowerState -eq "PoweredOn"}
-	LogThis -msg "$($myVMs.Count) Powered On found in $_" -ForegroundColor Yellow
+	LogThis -msg "$($myVMs.Count) Powered On found in $_" -ForegroundColor $global:colours.Information
 	$vmIndex=1;
 	$myVMs | %{
 		$vm = $_;	

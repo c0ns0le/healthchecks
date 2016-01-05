@@ -256,8 +256,8 @@ updateReportIndexer -string $global:scriptName
 $enable = $true
 if ($enable)
 { 
-	logThis -msg "######################################################################" -ForegroundColor Green
-	logThis -msg "Checking OverallSatus of all systems..."  -ForegroundColor Green
+	logThis -msg "######################################################################" -ForegroundColor $global:colours.Highlight
+	logThis -msg "Checking OverallSatus of all systems..."  -ForegroundColor $global:colours.Highlight
 	$title="Overall System Status"
 	$description = "Quick health Check"
 	$objMetaInfo = @()
@@ -276,7 +276,7 @@ if ($enable)
 		$row | Add-Member -MemberType NoteProperty -Name "Name" -Value $type
 		
 		Write-Progress -Activity "Checking Overall Status" -Id 1 -Status "$deviceTypeIndex/$($objectsArray.Count) :- $type..." -PercentComplete  (($deviceTypeIndex/$($objectsArray.Count))*100)
-		logThis -msg "[$type]" -ForegroundColor Green -NoNewLine $true
+		logThis -msg "[$type]" -ForegroundColor $global:colours.Highlight -NoNewLine $true
 		$index=0; 
 		$statusColours = [string]($objArray.ExtensionData.OverallStatus | Sort -Unique)
 		if ($statusColours -like "*red*")
@@ -289,7 +289,7 @@ if ($enable)
 			$colour="green"
 		}
 		$row | Add-Member -MemberType NoteProperty -Name "Status" -Value $colour
-		logThis -msg " - $colour" -ForegroundColor Green
+		logThis -msg " - $colour" -ForegroundColor $global:colours.Highlight
 		Write-Output $row
 		$deviceTypeIndex++
 	}
@@ -307,8 +307,8 @@ if ($enable)
 $enable = $true
 if ($enable)
 {
-	logThis -msg "######################################################################" -ForegroundColor Green
-	logThis -msg "Checking Individual Systems / component issues and action items"  -ForegroundColor Green
+	logThis -msg "######################################################################" -ForegroundColor $global:colours.Highlight
+	logThis -msg "Checking Individual Systems / component issues and action items"  -ForegroundColor $global:colours.Highlight
 	$title= "Systems Issues and Actions"
 	#$htmlPage += "$(header2 $title)"
 	$deviceTypeIndex=1
@@ -316,10 +316,10 @@ if ($enable)
 		$objArray = $_
 		$firstObj = $objArray | select -First 1
 		$type = $firstObj.GetType().Name.Replace("Impl","")
-		logthis -msg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>   $type    >>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor Yellow
+		logthis -msg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>   $type    >>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $global:colours.Information
 		Write-Progress -Activity "Processing report" -Id 1 -Status "$deviceTypeIndex/$($objectsArray.Count) :- $type..." -PercentComplete  (($deviceTypeIndex/$($objectsArray.Count))*100)
 		$index=0;
-		logThis -msg "[`t`t$type`t`t]" -foregroundcolor Green
+		logThis -msg "[`t`t$type`t`t]" -ForegroundColor $global:colours.Highlight
 		switch($type)
 		{
 			"VirtualMachine" {	
@@ -731,8 +731,8 @@ if ($enable)
 					{
 						# The parent resource is a cluster.
 						$clusterNodes = get-vmhost -Location $parent.Name -Server $myvCenter 
-						#logThis -msg "Parent Object: $($parent.Name)" -ForegroundColor Yellow -BackgroundColor Red
-						#logThis -msg "Cluster nodes: $($clusterNodes.Count)" -ForegroundColor Yellow -BackgroundColor Red
+						#logThis -msg "Parent Object: $($parent.Name)" -ForegroundColor $global:colours.Information -BackgroundColor $global:colours.Error
+						#logThis -msg "Cluster nodes: $($clusterNodes.Count)" -ForegroundColor $global:colours.Information -BackgroundColor $global:colours.Error
 						# Check to see if the ESX servers in the same cluster have the same amount of datastores that the cluster has 
 						$datastoreCount = (get-datastore -VMHost $clusterNodes -Server $myvCenter).Count
 						if ($obj.DatastoreIdList.Count -ne $datastoreCount)
@@ -962,8 +962,8 @@ if ($enable)
 
 					if ($orphanDisksOutput)
 					{
-						logThis -msg "------------" -ForegroundColor Blue
-						#logThis -msg $orphanDisksOutput	 -ForegroundColor Blue
+						logThis -msg "------------" -ForegroundColor $global:colours.ChangeMade
+						#logThis -msg $orphanDisksOutput	 -ForegroundColor $global:colours.ChangeMade
 						$orphanDisksTotalSizeGB = $($orphanDisksOutput | measure -Property SizeGB -Sum).Sum
 						if ($orphanDisksOutput.Count -eq 1)
 						{
@@ -974,7 +974,7 @@ if ($enable)
 						$objectIssuesRegister += "$themTxt`n"
 						$objectIssuesRegister += $orphanDisksOutput | ConvertTo-Html -Fragment
 						$objectIssues++
-						#logThis -msg "$objectIssuesRegister" -ForegroundColor Blue
+						#logThis -msg "$objectIssuesRegister" -ForegroundColor $global:colours.ChangeMade
 					}
 					
 					if ($obj.ExtensionData.Summary.MaintenanceMode -ne "normal")

@@ -39,7 +39,7 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 function logThis ([string] $msg, [string] $colour = "yellow", [string] $logFile=$of)
 {
 	Write-Host $msg -ForegroundColor $colour;

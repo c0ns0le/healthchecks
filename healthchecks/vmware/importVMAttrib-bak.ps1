@@ -26,17 +26,17 @@ $1VRU_MEMORY=1024
 # List all vailable attributes
 $if = $args[0] #".\vmattributes.csv"
 
-Write-Host "I recommend running documentGuests.ps1 before proceeding to backup all attributes"  -ForegroundColor cyan 
+Write-Host "I recommend running documentGuests.ps1 before proceeding to backup all attributes"  -ForegroundColor $global:colours.Information 
 if ((Read-Host "Do you want to run this script anyway? (y/n)") -match "y") { 	
-	Write-Host "+" -ForegroundColor cyan 
-	Write-Host "Reading in input file " $if "..." -ForegroundColor red 
+	Write-Host "+" -ForegroundColor $global:colours.Information 
+	Write-Host "Reading in input file " $if "..." -ForegroundColor $global:colours.Error 
 	$cmdb = Import-Csv $if | Select-Object -Property * | Sort-Object "Name" 
-	Write-Host "Identifying Table Headers.." -ForegroundColor red
+	Write-Host "Identifying Table Headers.." -ForegroundColor $global:colours.Error
 	$cmdbColumsCount = ($cmdb | get-member -type NoteProperty).Count
 	$cmdbColums = $cmdb | get-member -type NoteProperty | Select-Object -property Name
 	$cmdbRows = $cmdb.Count
 	
-	Write-Host "Loading Infrastructure Custom Attributes..." -ForegroundColor red
+	Write-Host "Loading Infrastructure Custom Attributes..." -ForegroundColor $global:colours.Error
 	$validFields  = (Get-VM BNEVCM01 | Get-View).AvailableField | Select-Object -Property Name
 	$fieldsCount = $validFields
 	
@@ -44,9 +44,9 @@ if ((Read-Host "Do you want to run this script anyway? (y/n)") -match "y") {
 	
 	# Validate that all colums in the CMDB to import contain valid fields
 	if (($cmdbColumsCount - 2) -ne $validFields.Count) {
-		Write-Host "+"  -ForegroundColor cyan
-		Write-Host "There are additional columns or may be missing colums in the attachment." -ForegroundColor cyan
-		Write-Host "Only attributes that match in virtualcenter will be updated" -ForegroundColor cyan
+		Write-Host "+"  -ForegroundColor $global:colours.Information
+		Write-Host "There are additional columns or may be missing colums in the attachment." -ForegroundColor $global:colours.Information
+		Write-Host "Only attributes that match in virtualcenter will be updated" -ForegroundColor $global:colours.Information
 		$answer = Read-Host "Do you want proceed? (y/n) "
 	}
 	
@@ -54,8 +54,8 @@ if ((Read-Host "Do you want to run this script anyway? (y/n)") -match "y") {
 	# Backup current Attributes List
 		$row = 0;
 		foreach ($ci in $cmdb) {
-			Write-Host "+"  -ForegroundColor cyan
-			Write-Host "Loading VM " + $ci.Name + "for processing.." -ForegroundColor red
+			Write-Host "+"  -ForegroundColor $global:colours.Information
+			Write-Host "Loading VM " + $ci.Name + "for processing.." -ForegroundColor $global:colours.Error
 			Get-VM -Name $ci.Name | Get-View | Sort-Object $_.Name | %{
 				$vmConfig = "" | Select-Object "Name"
 				$vmConfig.Name = $ci.Name	
@@ -69,24 +69,24 @@ if ((Read-Host "Do you want to run this script anyway? (y/n)") -match "y") {
 								$fieldFound = $true
 								if ($column.Name -eq "Application")
 								{
-									Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value $row.$($column.Name)  -ForegroundColor yellow
+									Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value $row.$($column.Name)  -ForegroundColor $global:colours.Information
 									#Set-CustomField -Entity $_.Name -Name $column.Name -Value $row.$($column.Name)
 								} else {
 								if ($column.Name -eq "VRU-C") {
-									Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value ([math]::ROUND($_.Config.Hardware.NumCPU * $1VRU_CPU))  -ForegroundColor yellow
+									Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value ([math]::ROUND($_.Config.Hardware.NumCPU * $1VRU_CPU))  -ForegroundColor $global:colours.Information
 									#Set-CustomField -Entity $_.Name -Name $column.Name -Value ([math]::ROUND($_.Config.Hardware.NumCPU * $1VRU_CPU))
 								} elseif ($column.Name -eq "VRU-M") {
-									Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value ([math]::ROUND($_.Config.Hardware.MemoryMB / $1VRU_MEMORY))  -ForegroundColor yellow
+									Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value ([math]::ROUND($_.Config.Hardware.MemoryMB / $1VRU_MEMORY))  -ForegroundColor $global:colours.Information
 									#Set-CustomField -Entity $_.Name -Name $column.Name -Value ([math]::ROUND($_.Config.Hardware.MemoryMB / $1VRU_MEMORY))
 								} elseif ($column.Name -eq "Veeam.ems_node") {
-									Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value $_.Guest.Hostname  -ForegroundColor yellow
+									Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value $_.Guest.Hostname  -ForegroundColor $global:colours.Information
 									#Set-CustomField -Entity $_.Name -Name $column.Name -Value $_.Guest.Hostname
 								} elseif ($column.Name -eq "Name"){ 
 									# do nothing
 								} else {
 									#if ($row.$($column.Name))
 									#{
-										Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value $row.$($column.Name)  -ForegroundColor yellow
+										Write-Host exec cmd: Set-CustomField -Entity $_.Name -Name $column.Name -Value $row.$($column.Name)  -ForegroundColor $global:colours.Information
 										#Set-CustomField -Entity $_.Name -Name $column.Name -Value $row.$($column.Name)
 									#}
 								}
@@ -98,8 +98,8 @@ if ((Read-Host "Do you want to run this script anyway? (y/n)") -match "y") {
 			}
 		}
 	} else {
-		Write-Host "User canceled the import."    -ForegroundColor cyan
-		Write-Host "Do you want to view all virtual center custom attributes " -ForegroundColor cyan
+		Write-Host "User canceled the import."    -ForegroundColor $global:colours.Information
+		Write-Host "Do you want to view all virtual center custom attributes " -ForegroundColor $global:colours.Information
 		if( (Read-Host "Proceed ? (y/n)") -match "y") {
 			$allFields = "" | Select-Object Name,Notes
 			foreach ($field in $validFields) {
@@ -108,7 +108,7 @@ if ((Read-Host "Do you want to run this script anyway? (y/n)") -match "y") {
 			Write-Output $allFields 
 		}
 	}
-} else { Write-Host "User canceled utility. Exiting.." -ForegroundColor cyan }
+} else { Write-Host "User canceled utility. Exiting.." -ForegroundColor $global:colours.Information }
 
 Write-Host "+"
 Write-Host "Script started at "  $startTime

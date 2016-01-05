@@ -18,23 +18,27 @@ if ($logDir -and !$global:logDir) { Set-Variable -Name logDir -Value $logDir -Sc
 
 # Report Meta Data
 $metaInfo = @()
-$metaInfo +="tableHeader=Infrastructure"
+$metaInfo +="tableHeader=Infrastructure Summary"
 $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=List" # options are List or Table
 $metaInfo +="introduction=The table below contains some capacity overview for your infrastructure."
 $metaInfo +="chartable=false"
 
 
-logThis -msg "-> Loading clusters"
+#logThis -msg "-> Loading clusters"
 $clusters = getClusters -server $srvConnection
-logThis -msg "-> Loading Datacenters"
+#logThis -msg "-> Loading Datacenters"
 $datacenters = getDatacenters -server $srvConnection
-logThis -msg "-> Loading VMs"
+#logThis -msg "-> Loading VMs"
 $vms = getVMs -Server $srvConnection
-logThis -msg "-> Loading datastores"
+#logThis -msg "-> Loading datastores"
 $datastores = getDatastores -Server $srvConnection
-logThis -msg "-> Loading VMHosts"
+#logThis -msg "-> Loading VMHosts"
 $vmhosts = GetVMHosts -Server $srvConnection
+$snapshots = getSnapshots -Server $srvConnection
+$portGroups = getPortGroups -server $srvConnection
+$stdSwitches = getvSwitches -server $srvConnection
+$dvSwitches = getdvSwitches -server $srvConnection
 
 <#
 #Write-Output "ScriptName: $($global:scriptName)" | Out-File $runtimeLogFile
@@ -86,11 +90,11 @@ $ftConfiguredVMs=($vms.ExtensionData.Config.ExtraConfig | ?{$_.key -like "*repla
 $dataTable | Add-Member -MemberType NoteProperty -Name "VMware ESX/ESXi Servers" -Value "Total $($vmhosts.Count) Servers $([string] $vmhostsStates) | $vmhostsInMaintenanceMode In Maintenance | $($($vmhosts.ExtensionData.OverallStatus -ne ""green"").Count) Need Attention"
 $dataTable | Add-Member -MemberType NoteProperty -Name "Clusters" -Value "Total $($clusters.Count) Clusters | $($($clusters | ?{$_.HAEnabled}).Count) HA Enabled | $($($clusters | ?{!$_.HAEnabled}).Count) HA Disabled | $($($clusters | ?{$_.DrsEnabled}).Count) DRS Enabled | $($($clusters | ?{!$_.DrsEnabled}).Count) DRS Disabled | $($($clusters.ExtensionData.OverallStatus -ne ""green"").Count) Need Attention"
 $dataTable | Add-Member -MemberType NoteProperty -Name "Datastores" -Value "Total $($datastores.Count) | $(formatNumbers $dtCapacity)TB Capacity | $(formatNumbers $dtFreespace)TB Free ($(formatNumbers $dtFreespacePerc)%) $([string]$dtTypes) $([string]$dtVmfs) | $($($datastores.ExtensionData.OverallStatus -ne ""green"").Count) Need Attention"
-$dataTable | Add-Member -MemberType NoteProperty -Name "Virtual Machines" -Value "Total $($vms.Count) VMs | $vmsOn Powered On ($vmsOnPerc) | $vmsNeedingAttention Needing Attention | $(formatNumbers ($vms | measure -Property MemoryGB -Sum).Sum)GB Memory | $(($vms | measure -Property NumCPU -Sum).Sum) vCPU | $((($vms | measure -Property NumCPU -Sum).Sum) / $($vmhosts | measure NumCPU -Sum).Sum) vCPU-pCore ratio" 
-
+$dataTable | Add-Member -MemberType NoteProperty -Name "Virtual Machines" -Value "Total $($vms.Count) VMs | $vmsOn Powered On ($vmsOnPerc) | $vmsNeedingAttention Needing Attention | $(formatNumbers ($vms | measure -Property MemoryGB -Sum).Sum)GB Memory | $(($vms | measure -Property NumCPU -Sum).Sum) vCPU | $((($vms | measure -Property NumCPU -Sum).Sum) / $($vmhosts | measure NumCPU -Sum).Sum) vCPU-pCore ratio | $(($snapshots | measure).Count) Snapshots"
 $dataTable | Add-Member -MemberType NoteProperty -Name "VMs Disk Usage" -Value "$(getsize -unit 'B' -val $vmdkProvisionedBytes) Provisioned, $(getsize -unit 'B' -val $vmdkConsumedBytes) Consumed, $(getsize -unit 'B' -val $vmdkSpaceSavingsThinBytes) Savings through Thin Disk deployment"
 $dataTable | Add-Member -MemberType NoteProperty -Name "vSphere Replication" -Value "$($vmsWithvSphereReplication.Count) configured"
 $dataTable | Add-Member -MemberType NoteProperty -Name "Fault Tolerance" -Value "$ftConfiguredVMs Virtual Machines configured for FT, $ftSupportYes Virtuals Machines support it"
+$dataTable | Add-Member -MemberType NoteProperty -Name "Networking" -Value "$(($portGroups | measure).Count) Port Groups | $(($stdSwitches | measure).Count) Standard vSwitches | $(($dvSwitches | measure).Count) Distributed vSwitches"
 
 if ($dataTable)
 {

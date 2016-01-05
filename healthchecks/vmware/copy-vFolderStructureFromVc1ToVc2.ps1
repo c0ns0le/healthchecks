@@ -41,7 +41,7 @@ if ($comment -eq "" ) {
 	$of = $logDir + "\"+$runtime+"-"+$filename+"-"+$sourcevCenterName+"_to_"+$targetvCenterName+"-"+$comment+"_.csv"
 }
 
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 function Copy-VCFolderStructure {
 <#
@@ -176,7 +176,7 @@ http://psvmware.wordpress.com
   	{
 		Write-Host "[READ-ONLY] Will create new folder [$NewVC\$ParentOfNewFolder\$($OldFolder.Name)]" -ForegroundColor Magenta
   	} else {
-  		Write-Host "[WRITE] New folder [$NewVC\$ParentOfNewFolder\$($OldFolder.Name)]" -ForegroundColor Blue
+  		Write-Host "[WRITE] New folder [$NewVC\$ParentOfNewFolder\$($OldFolder.Name)]" -ForegroundColor $global:colours.ChangeMade
   		$NewFolder = New-Folder -Location $ParentOfNewFolder -Name $OldFolder.Name -Server $NewVC
   	}
 	Write-Host "[Old Folders MoRef]"
@@ -243,15 +243,15 @@ $datacenter = ""
 				} else {	
 					if ($userResponse -ge $indexStartValue -and $userResponse -lt $datacenters.Count)
 					{
-						Write-Host "" -ForegroundColor Yellow
-						Write-Host "--> User choice value = [$userResponse]" -ForegroundColor Yellow
-						Write-Host "--> Source datacenter is ""$($sourcevCenterName.ToUpper())\$($datacenters[$userResponse].Name)"""  -ForegroundColor Yellow;
+						Write-Host "" -ForegroundColor $global:colours.Information
+						Write-Host "--> User choice value = [$userResponse]" -ForegroundColor $global:colours.Information
+						Write-Host "--> Source datacenter is ""$($sourcevCenterName.ToUpper())\$($datacenters[$userResponse].Name)"""  -ForegroundColor $global:colours.Information;
 						$continue = $false; 
 						$datacenter = $datacenters[$userResponse]
 						
 					} elseif ($userResponse -eq $exitValue)
 					{
-						Write-Host "User selected to exit" -ForegroundColor yellow; $continue = $false; 
+						Write-Host "User selected to exit" -ForegroundColor $global:colours.Information; $continue = $false; 
 						exit;
 					} else {
 						Write-Host "Invalid selection [$userResponse - $($userResponse.Type)]-- please try again"; $userResponse="";
@@ -259,22 +259,22 @@ $datacenter = ""
 				}
 			}
 		} else {
-			Write-Host "[1] Datacenter found in $sourcevCenterName" -ForegroundColor Yellow
-			Write-Host "--> Auto-selecting [$sourcevCenterName\$datacenters]" -ForegroundColor Yellow
+			Write-Host "[1] Datacenter found in $sourcevCenterName" -ForegroundColor $global:colours.Information
+			Write-Host "--> Auto-selecting [$sourcevCenterName\$datacenters]" -ForegroundColor $global:colours.Information
 			$datacenter = $datacenters
 		}
 	
 		if ($datacenter)
 		{
 			#Write-Host "[Source vcenter = $sourcevCenterName]"
-			#Write-Host "[Target Folder = $targetFolderOnNewVC]" -BackgroundColor Red -ForegroundColor Yellow
+			#Write-Host "[Target Folder = $targetFolderOnNewVC]" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 			if (!$sourceFolderToRecreateFromOldVC -or $sourceFolderToRecreateFromOldVC -eq "*")
 			{
 				$sourceFolderToRecreateFromOldVC = "*"; # The top root folder is called VM
 			}
 			#$sourceFolderToRecreateFromOldVCObj = Get-folder -Name $sourceFolderToRecreateFromOldVC -Server ($srvConnections | ?{$_.Name -eq $sourcevCenterName}) -Type VM | ?{$_.Parent.Name -eq $datacenter.Name}
 			$sourceFolderToRecreateFromOldVCObj = Get-folder -Name $sourceFolderToRecreateFromOldVC -Type VM -Location $datacenter -Server ($srvConnections | ?{$_.Name -eq $sourcevCenterName}) |?{$_.Name -ne "vm"}
-			#Write-host "$sourceFolderToRecreateFromOldVCObj.Name $datacenter.Name" -ForegroundColor Green
+			#Write-host "$sourceFolderToRecreateFromOldVCObj.Name $datacenter.Name" -ForegroundColor $global:colours.Highlight
 			if ($sourceFolderToRecreateFromOldVCObj.Name -eq $datacenter.Name)
 			{
 				
@@ -287,10 +287,10 @@ $datacenter = ""
 				} else {
 					$sourceFolderCount = 1
 				}	
-				Write-Host "   --> $sourceFolderCount Folders found in $sourcevCenterName\$datacenter" -ForegroundColor Red
+				Write-Host "   --> $sourceFolderCount Folders found in $sourcevCenterName\$datacenter" -ForegroundColor $global:colours.Error
 			} else {
-				Write-Host "   --> NO Folders found in $sourcevCenterName\$datacenter" -ForegroundColor Red
-				Write-Host "Exiting.." -ForegroundColor Yellow;
+				Write-Host "   --> NO Folders found in $sourcevCenterName\$datacenter" -ForegroundColor $global:colours.Error
+				Write-Host "Exiting.." -ForegroundColor $global:colours.Information;
 				exit
 			}
 			
@@ -348,15 +348,15 @@ $datacenter = ""
 				} else {				
 					if ($userResponse -ge $indexStartValue -and $userResponse -lt $datacenters.Count)
 					{
-						Write-Host "" -ForegroundColor Yellow
-						Write-Host "--> User choice value = [$userResponse]" -ForegroundColor Yellow
-						Write-Host "--> Target datacenter is ""$($targetvCenterName.ToUpper())\$($datacenters[$userResponse].Name)"""  -ForegroundColor Yellow;
+						Write-Host "" -ForegroundColor $global:colours.Information
+						Write-Host "--> User choice value = [$userResponse]" -ForegroundColor $global:colours.Information
+						Write-Host "--> Target datacenter is ""$($targetvCenterName.ToUpper())\$($datacenters[$userResponse].Name)"""  -ForegroundColor $global:colours.Information;
 						$continue = $false; 
 						$datacenter = $datacenters[$userResponse]
 						
 					} elseif ($userResponse -eq $exitValue)
 					{
-						Write-Host "User selected to exit" -ForegroundColor yellow; $continue = $false; 
+						Write-Host "User selected to exit" -ForegroundColor $global:colours.Information; $continue = $false; 
 						exit;
 					} else {
 						Write-Host "Invalid selection [$userResponse - $($userResponse.Type)]-- please try again"; $userResponse="";
@@ -364,15 +364,15 @@ $datacenter = ""
 				}
 			}
 		} else {
-			Write-Host "[1] Datacenter found in $targetvCenterName" -ForegroundColor Yellow
-			Write-Host "--> Auto-selecting [$targetvCenterName\$datacenters]" -ForegroundColor Yellow
+			Write-Host "[1] Datacenter found in $targetvCenterName" -ForegroundColor $global:colours.Information
+			Write-Host "--> Auto-selecting [$targetvCenterName\$datacenters]" -ForegroundColor $global:colours.Information
 			$datacenter = $datacenters
 		}
 	
 		if ($datacenter)
 		{
 			#Write-Host "[Target vcenter = $targetvCenterName]"
-			#Write-Host "[Target Folder = $targetFolderOnNewVC]" -BackgroundColor Red -ForegroundColor Yellow
+			#Write-Host "[Target Folder = $targetFolderOnNewVC]" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 			if (!$targetFolderOnNewVC -or $targetFolderOnNewVC -eq "*")
 			{
 				$targetFolderOnNewVC = "vm"; # The top root folder is called VM
@@ -381,7 +381,7 @@ $datacenter = ""
 			$targetFolderOnNewVCObj = Get-folder -Name $targetFolderOnNewVC -Server ($srvConnections | ?{$_.Name -eq $targetvCenterName}) -Type VM -Location $datacenter # | ?{((get-view $_.Parent).Parent).Type -eq "Datacenter"}
 			Write-Host "`ttargetFolderOnNewVCObj=$targetFolderOnNewVCObj"
 			#Get-Folder -Type VM -Server ($srvConnections | ?{$_.Name -eq $sourcevCenterName}) -Name $sourceFolderToRecreateFromOldVC | ?{((get-view $_.Parent).Parent).Type -eq "Datacenter"}
-			#Write-Host "   --> $($targetFolderOnNewVCObj.Count) Folders found in $targetvCenterName\$datacenter" -ForegroundColor Red
+			#Write-Host "   --> $($targetFolderOnNewVCObj.Count) Folders found in $targetvCenterName\$datacenter" -ForegroundColor $global:colours.Error
 		} else {
 			Write-Host "No datacenter was selected. Cannot proceed";
 			exit;
@@ -400,17 +400,17 @@ if (!$sourceFolderToRecreateFromOldVC -or !$targetFolderOnNewVC -or !$targetFold
 	#$targetFolderOnNewVCObj = Get-Folder -Type VM -Server ($srvConnections | ?{$_.Name -eq $targetvCenterName}) -Name $targetFolderOnNewVC
 	if (!$sourceFolderToRecreateFromOldVC)
 	{
-		Write-Host "Invalid sourceFolderToRecreateFromOldVC value [$sourceFolderToRecreateFromOldVC]" -ForegroundColor Red
+		Write-Host "Invalid sourceFolderToRecreateFromOldVC value [$sourceFolderToRecreateFromOldVC]" -ForegroundColor $global:colours.Error
 	}
 	if (!$targetFolderOnNewVCObj)
 	{
-		Write-Host "Invalid object targetFolderOnNewVCObj [$targetFolderOnNewVCObj]" -ForegroundColor Red
+		Write-Host "Invalid object targetFolderOnNewVCObj [$targetFolderOnNewVCObj]" -ForegroundColor $global:colours.Error
 	}
 	
 	ShowSyntax
 	
 } else {
-	#Write-Host "You have selected to write the content of [$sourcevCenterName\$sourceFolderToRecreateFromOldVC] to [$targetvCenterName\$targetFolderOnNewVC]" -ForegroundColor Yellow
+	#Write-Host "You have selected to write the content of [$sourcevCenterName\$sourceFolderToRecreateFromOldVC] to [$targetvCenterName\$targetFolderOnNewVC]" -ForegroundColor $global:colours.Information
 	#Write-Host "Gathering a list of folders from to [$sourcevCenterName]..."
 	#$sourceFolderToRecreateFromOldVCObj=Get-Folder -Type VM -Server ($srvConnections | ?{$_.Name -eq $sourcevCenterName}) -Name $sourceFolderToRecreateFromOldVC | ?{((get-view $_.Parent).Parent).Type -eq "Datacenter"}
 	$folderCount=0
@@ -427,8 +427,8 @@ if (!$sourceFolderToRecreateFromOldVC -or !$targetFolderOnNewVC -or !$targetFold
 	
 	$index=1
 	$vmlist = $sourceFolderToRecreateFromOldVCObj | %{
-			Write-Host "  [$index/$folderCount] - $_" -ForegroundColor Yellow		
-			#Write-Host "Processing folder(s) and sub-folder(s) from [$sourcevCenterName\$($_.Name)]" -ForegroundColor Green
+			Write-Host "  [$index/$folderCount] - $_" -ForegroundColor $global:colours.Information		
+			#Write-Host "Processing folder(s) and sub-folder(s) from [$sourcevCenterName\$($_.Name)]" -ForegroundColor $global:colours.Highlight
 			$foldervmlist=Copy-VCFolderStructure -OldFolder $_.ExtensionData -NewVC ($srvConnections | ?{$_.Name -eq $targetvCenterName}) -OldVC  ($srvConnections | ?{$_.Name -eq $sourcevCenterName}) -ParentOfNewFolder $targetFolderOnNewVCObj -readonly $readonly
 			Write-Output $foldervmlist
 			Write-host $foldervmlist
@@ -441,6 +441,6 @@ if (!$sourceFolderToRecreateFromOldVC -or !$targetFolderOnNewVC -or !$targetFold
 	if ($vmlist)
 	{
 		$vmlist | Export-csv -Path $of -NoTypeInformation	
-		Write-Host "Output written to $of" -ForegroundColor Yellow
+		Write-Host "Output written to $of" -ForegroundColor $global:colours.Information
 	}
 }

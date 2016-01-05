@@ -6,11 +6,11 @@
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[bool]$verbose=$true)
 
 function ShowSyntax() {
-	Write-host "" -ForegroundColor Yellow 
-	Write-host " Syntax: ./CapacityReport-AllDepartments.ps1 -srvConnection `$srvConnection" -ForegroundColor Yellow 
-	Write-host "" -ForegroundColor Yellow 
-	Write-host "`$srvConnection: You can obtain this variable by first executing a command like this: `$srvConnection = Connect-VIServer vcenterServerFQDN" -ForegroundColor Yellow 
-	Write-host "" -ForegroundColor Yellow 
+	Write-host "" -ForegroundColor $global:colours.Information 
+	Write-host " Syntax: ./CapacityReport-AllDepartments.ps1 -srvConnection `$srvConnection" -ForegroundColor $global:colours.Information 
+	Write-host "" -ForegroundColor $global:colours.Information 
+	Write-host "`$srvConnection: You can obtain this variable by first executing a command like this: `$srvConnection = Connect-VIServer vcenterServerFQDN" -ForegroundColor $global:colours.Information 
+	Write-host "" -ForegroundColor $global:colours.Information 
 }
 
 function VerboseToScreen([string]$msg,[string]$color="White",[bool]$newline=$false)

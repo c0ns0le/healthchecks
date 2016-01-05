@@ -23,25 +23,25 @@ $run1Report =  $srvConnection | %{
     $vcenterName = $_.Name
     if ($showOnlyTemplates) 
     {
-        logThis -msg "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor Yellow
+        logThis -msg "Enumerating Virtual Machines Templates only from vCenter $_ inventory..." -ForegroundColor $global:colours.Information
         $vms = Get-Template -Server $_ | Sort-Object Name
         
-        #logThis -msg "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor Red
+        #logThis -msg "Enumerating Virtual Machines Templates Views from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         #$vmsViews = $vms | Get-View;
     } else {
-        logThis -msg "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor Yellow
+        logThis -msg "Enumerating Virtual Machines from vCenter $_ inventory..." -ForegroundColor $global:colours.Information
         $vms = Get-VM -Server $_ | Sort-Object Name 
         
-        #logThis -msg "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor Red
+        #logThis -msg "Enumerating Virtual Machines Views from vCenter $_ inventory..." -ForegroundColor $global:colours.Error
         #$vmsViews = $vms | Get-View;
     }
     
     if ($vms) 
     {
-        logThis -msg "Loading vcFolders from vCenter $_..." -ForegroundColor Yellow
+        logThis -msg "Loading vcFolders from vCenter $_..." -ForegroundColor $global:colours.Information
         $vcFolders = get-folder * -Server $_ | select -unique
     
-        logThis -msg "Loading Virtual Machine Creation Events from vCenter $_..." -ForegroundColor Yellow
+        logThis -msg "Loading Virtual Machine Creation Events from vCenter $_..." -ForegroundColor $global:colours.Information
         if (!$skipEvents)
         {
             # only load events for virtual machines which 
@@ -52,7 +52,7 @@ $run1Report =  $srvConnection | %{
         $vms | %{
 			$vm = $_;
             #$vmView = $vmsView | ?{$_.Name -eq $vm.Name}
-			logThis -msg "Processing $index of $($vms.Count) :- $vm [$($vm.PowerState)]" -ForegroundColor Yellow;
+			logThis -msg "Processing $index of $($vms.Count) :- $vm [$($vm.PowerState)]" -ForegroundColor $global:colours.Information;
 			$GuestConfig = "" | Select-Object Name; 
 			$GuestConfig.Name = $vm.Name;
             
@@ -272,7 +272,7 @@ $run1Report =  $srvConnection | %{
 				foreach ($vmdk in $vmdks) 
 				{
 					#$diskpath = $vmdk.Filename;
-					#logThis -msg $vmdk.Filename -ForegroundColor blue
+					#logThis -msg $vmdk.Filename -ForegroundColor $global:colours.ChangeMade
 					$datastore,$onDiskName = $vmdk.Filename.Split(" ");
 					$datastore = $datastore -replace "\[","";
 					$datastore = $datastore -replace "\]","";
@@ -368,4 +368,4 @@ if ($srvConnection -and $disconnectOnExist) {
 	logThis -msg "-> Disconnected from $srvConnection.Name <-" -ForegroundColor Magenta
 }
 
-logThis -msg "Log file written to $($global:logfile)" -ForegroundColor Yellow
+logThis -msg "Log file written to $($global:logfile)" -ForegroundColor $global:colours.Information

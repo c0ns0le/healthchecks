@@ -13,41 +13,38 @@ param(
 	[bool]$returnResults=$true,
 	[bool]$showDate=$false
 )
+
 $silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 
-
-
 # Report Meta Data
 $metaInfo = @()
-$metaInfo +="tableHeader=Virtual Machine Capacity Quickstats"
+$metaInfo +="tableHeader=Virtual Machine Quick Stats"
 $metaInfo +="introduction=The table below provides usage information for all virtual Machines across all data centers."
 $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=List" # options are List or Table
 $metaInfo +="chartable=false"
 
-
-
 #Definitions for max vCPU/core and Mem reservations
 $vCPUPerpCorePolicyLimit = 4; #max of 4vCPU per core
 $mem = 100; # 100%
 
-$vms = Get-VM * -Server $srvConnection
+$vms = GetVMs -Server $srvConnection
 
-logThis -msg "Processing VMs in vCenter $($_.Name)" -Foregroundcolor Green
-logThis -msg "Getting Virtual Machines" -ForegroundColor Yellow
+logThis -msg "Processing VMs in vCenter $($_.Name)" -ForegroundColor $global:colours.Highlight
+logThis -msg "Getting Virtual Machines" -ForegroundColor $global:colours.Information
 
 $vmsCount = $vms.Count    
-logThis -msg "vCPU Count" -ForegroundColor Yellow
+logThis -msg "vCPU Count" -ForegroundColor $global:colours.Information
 $vCPUCount = $($vms | measure -property NumCPU -sum).Sum
-logThis -msg "vRAM Count" -ForegroundColor Yellow
+logThis -msg "vRAM Count" -ForegroundColor $global:colours.Information
 $vRAMCount = $($vms | measure -property MemoryMB -sum).Sum
-logThis -msg "Powered ON " -ForegroundColor Yellow
+logThis -msg "Powered ON " -ForegroundColor $global:colours.Information
 $poweredOn = $($vms | ?{$_.PowerState -eq "PoweredOn"}).Count
-logThis -msg "Powered OFF " -ForegroundColor Yellow
+logThis -msg "Powered OFF " -ForegroundColor $global:colours.Information
 $poweredOff = $($vms | ?{$_.PowerState -eq "PoweredOff"}).Count
-logThis -msg "Powered OTHER " -ForegroundColor Yellow
+logThis -msg "Powered OTHER " -ForegroundColor $global:colours.Information
 $poweredOther = $($vms | ?{$_.PowerState -ne "PoweredOn" -and $_.PowerState -ne "PoweredOff"}).Count
 $vmdkProvisionedBytes = $($VMs.ExtensionData.Summary.Storage.Committed | measure -Sum).Sum + $($VMs.ExtensionData.Summary.Storage.Uncommitted | measure -Sum).Sum
 $vmdkConsumedBytes = $($VMs.ExtensionData.Summary.Storage.Committed | measure -Sum).Sum

@@ -51,21 +51,21 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script output will be written to " $of -ForegroundColor Yellow 
+Write-Host "This script output will be written to " $of -ForegroundColor $global:colours.Information 
 
-Write-Host "Enumerating datacenters..." -ForegroundColor Cyan
+Write-Host "Enumerating datacenters..." -ForegroundColor $global:colours.Information
 $run1Report = Get-Datacenter -Server $srvConnection | %{
 	$dc = $_.Name;
-	Write-Host "Enumerating clusters in datacenter "$dc"..." -ForegroundColor Cyan
+	Write-Host "Enumerating clusters in datacenter "$dc"..." -ForegroundColor $global:colours.Information
 	Get-Cluster -Location $dc | % { 
 		$clustername = $_.Name;
-		Write-Host "Enumerating Hosts in cluster "$clustername"..." -ForegroundColor Cyan
+		Write-Host "Enumerating Hosts in cluster "$clustername"..." -ForegroundColor $global:colours.Information
 		Get-VMHost -Location $clustername | Select-Object -First 1 | %{
 			$vmhost = $_;
-			Write-Host "Enumerating Datastores on first cluster node"($vmhost.Name)"..." -ForegroundColor Cyan
+			Write-Host "Enumerating Datastores on first cluster node"($vmhost.Name)"..." -ForegroundColor $global:colours.Information
 			Get-Datastore -VMHost $vmhost | Get-View | % {
 				$datastoreView = $_;
-				Write-Host "Processing Datastores "$($datastoreView.info.Name)"..." -ForegroundColor Yellow
+				Write-Host "Processing Datastores "$($datastoreView.info.Name)"..." -ForegroundColor $global:colours.Information
 				$datastoreFreeSpaceKB = $_.Summary.FreeSpace; # In KB
 				foreach ($vmItem in $datastoreView.Vm) {
 					$vmView = Get-View $vmItem;

@@ -57,8 +57,8 @@ param(
 	$eventManager = Get-view $si.Content.EventManager
 		
 	if($eventManager.Client.Version -eq "Vim4" -and $eventnumber -gt 1000){
-		Write-Host "Sorry, API 4.0 only allows a maximum event window of 1000 entries!" -foregroundcolor red
-		Write-Host "Please set the variable `$eventnumber to 1000 or less" -foregroundcolor red
+		Write-Host "Sorry, API 4.0 only allows a maximum event window of 1000 entries!" -ForegroundColor $global:colours.Error
+		Write-Host "Please set the variable `$eventnumber to 1000 or less" -ForegroundColor $global:colours.Error
 		exit
 	}
 	if ($ofverbose) 
@@ -80,7 +80,7 @@ param(
 	}
 	if ($MoRef -and $name -ne "")
 	{
-		Write-Host "Pass either a Entity MoRef or Name, but not both" -ForegroundColor red
+		Write-Host "Pass either a Entity MoRef or Name, but not both" -ForegroundColor $global:colours.Error
 		return
 	}
 	if ($MoRef)

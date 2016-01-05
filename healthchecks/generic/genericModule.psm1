@@ -1,4 +1,21 @@
-﻿function setLoggingDirectory([string]$dirPath)
+﻿############## CUSTOMER PROPERTIES DECLARATION
+$global:colours = @{
+	"Information"="Yellow";
+	"Error"="Red";
+	"ChangeMade"="Blue";
+	"Highlight"="Green";
+	"Note"=""
+}
+
+## LOGING OPTIONS
+[bool]$global:logTofile = $false
+[bool]$global:logInMemory = $true
+[bool]$global:logToScreen = $true
+
+<#
+		function declarations
+#>
+function setLoggingDirectory([string]$dirPath)
 {
 	if (!$dirPath)
 	{
@@ -8,7 +25,7 @@
 	}
 }
 
-function showError ([Parameter(Mandatory=$true)][string] $msg, $errorColor="Red")
+function showError ([Parameter(Mandatory=$true)][string] $msg, $errorColor=$global:colours.Error)
 {
 	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
 	logThis ">> " -ForegroundColor $errorColor
@@ -17,55 +34,13 @@ function showError ([Parameter(Mandatory=$true)][string] $msg, $errorColor="Red"
 	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
 }
 
-function verboseThis ([Parameter(Mandatory=$true)][object] $msg, $errorColor="Cyan")
+function verboseThis ([Parameter(Mandatory=$true)][object] $msg, $colour=$global:colours.Highlight)
 {
-	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
-	logThis ">> " -ForegroundColor $errorColor
-	logThis ">> $msg" -ForegroundColor $errorColor
-	logThis ">> " -ForegroundColor $errorColor
-	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $errorColor
-}
-
-function logThis (
-	[Parameter(Mandatory=$true)][string] $msg, 
-	[Parameter(Mandatory=$false)][string] $logFile,
-	[Parameter(Mandatory=$false)][string] $ForegroundColor = "yellow",
-	[Parameter(Mandatory=$false)][string] $BackgroundColor = "black",
-	[Parameter(Mandatory=$false)][bool]$logToScreen = $false,
-	[Parameter(Mandatory=$false)][bool]$NoNewline = $false,
-	[Parameter(Mandatory=$false)][bool]$keepLogInMemoryAlso=$false
-	)
-{
-	if ($global:logToScreen -or $logToScreen -and !$global:silent)
-	{
-		# Also verbose to screent
-		if ($NoNewline)
-		{
-			Write-Host $msg -ForegroundColor $ForegroundColor -NoNewline;
-		} else {
-			Write-Host $msg -ForegroundColor $ForegroundColor;
-		}
-	} 
-	if ($global:logTofile)
-	{
-		Write-Host "Also writing message to file.log"		
-		if ($logFile) { $msg  | out-file -filepath $logFile -append}
-		if ((Test-Path -path $global:logDir) -ne $true) {
-					
-			New-Item -type directory -Path $global:logDir
-			$childitem = Get-Item -Path $global:logDir
-			$global:logDir = $childitem.FullName
-		}	
-		if ($global:runtimeLogFile)
-		{
-			$msg  | out-file -filepath $global:runtimeLogFile -append
-		} 
-	}
-	
-	if ($global:logInMemory -or $keepLogInMemoryAlso)
-	{
-		$global:runtimeLogFileInMemory += $msg
-	}
+	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $colour
+	logThis ">> " -ForegroundColor $colour
+	logThis ">> $msg" -ForegroundColor $colour
+	logThis ">> " -ForegroundColor $colour
+	logThis ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" -ForegroundColor $colour
 }
 
 function getRuntimeLogFileContent()
@@ -166,10 +141,10 @@ function sendEmail
 		
 	) 
 {
-	logThis -msg "[$attachments]" -ForegroundColor Blue
+	logThis -msg "[$attachments]" -ForegroundColor $global:colours.ChangeMade
 	if (!$smtpServer -or !$from -or !$replyTo -or !$toAddress -or !$subject -or !$body)
 	{
-		logThis -msg "Cannot Send email. Missing parameters for this function. Note that All fields must be specified" -BackgroundColor Red -ForegroundColor Yellow
+		logThis -msg "Cannot Send email. Missing parameters for this function. Note that All fields must be specified" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 		logThis -msg "smtpServer = $smtpServer"
 		logThis -msg "from = $from"
 		logThis -msg "replyTo = $replyTo"
@@ -181,7 +156,7 @@ function sendEmail
 		{
 			
 			<#$attachments | %{
-				#logThis -msg $_ -ForegroundColor Blue
+				#logThis -msg $_ -ForegroundColor $global:colours.ChangeMade
 				$attachment = new-object System.Net.Mail.Attachment($_,"Application/Octet")
 				$msg.Attachments.Add($attachment)
 			}
@@ -361,13 +336,13 @@ function ChartThisTable( [Parameter(Mandatory=$true)][array]$datasource,
 
 	$headers = $datasource | Get-Member -membertype NoteProperty | select -Property Name
 
-	logThis -msg  "+++++++++++++++++++++++++++++++++++++++++++" -ForegroundColor Yellow
-	logThis -msg  "Output image: $outputImageName" -ForegroundColor Yellow
+	logThis -msg  "+++++++++++++++++++++++++++++++++++++++++++" -ForegroundColor $global:colours.Information
+	logThis -msg  "Output image: $outputImageName" -ForegroundColor $global:colours.Information
 
-	logThis -msg  "Table to chart:" -ForegroundColor Yellow
-	logThis -msg  "" -ForegroundColor Yellow
-	logThis -msg  $datasource  -ForegroundColor Yellow
-	logThis -msg  "+++++++++++++++++++++++++++++++++++++++++++ " -ForegroundColor Yellow
+	logThis -msg  "Table to chart:" -ForegroundColor $global:colours.Information
+	logThis -msg  "" -ForegroundColor $global:colours.Information
+	logThis -msg  $datasource  -ForegroundColor $global:colours.Information
+	logThis -msg  "+++++++++++++++++++++++++++++++++++++++++++ " -ForegroundColor $global:colours.Information
 
 	# chart object
 	$chart1 = New-object System.Windows.Forms.DataVisualization.Charting.Chart
@@ -893,14 +868,14 @@ function logThis (
 		{
 			Write-host $msg -ForegroundColor $ForegroundColor -NoNewline;
 		} else {
-			Write-host $msg -ForegroundColor $ForegroundColor;
+			Write-host "$msg" -ForegroundColor $ForegroundColor;
 		}
 	} 
 	if ($global:logTofile)
 	{
 		#logThis -msg "Also writing message to file.log"
 		
-		if ($logFile) { $msg  | out-file -filepath $logFile -append}
+		if ($logFile) { "$msg`n"  | out-file -filepath $logFile -append}
 		if ((Test-Path -path $global:logDir) -ne $true) {
 					
 			New-Item -type directory -Path $global:logDir
@@ -909,12 +884,12 @@ function logThis (
 		}	
 		if ($global:runtimeLogFile)
 		{
-			$msg  | out-file -filepath $global:runtimeLogFile -append
+			"$msg`n" | out-file -filepath $global:runtimeLogFile -append
 		} 
 	}	
 	if ($global:logInMemory -or $keepLogInMemoryAlso)
 	{
-		$global:runtimeLogFileInMemory += $msg
+		$global:runtimeLogFileInMemory += "$msg`n"
 	}
 }
 
@@ -945,7 +920,7 @@ function SetmyCSVOutputFile(
 		[Parameter(Mandatory=$true)][string] $filename
 	)
 {
-	logThis -msg "[SetmyCSVOutputFile] This script will log all data output to CSV file called $global:runtimeCSVOutput"
+	#logThis -msg "[SetmyCSVOutputFile] This script will log all data output to CSV file called $global:runtimeCSVOutput"
 	$global:runtimeCSVOutput = $filename
 }
 
@@ -1156,9 +1131,7 @@ function getSize($TotalKB,$unit,$val)
     }
 	If ($bytes -ge 1PB) 
   	 { 
-		#logThis -msg  $bytes
-		#pause
-    	 	$value = "{0:N} PB" -f $($bytes/1PB) # TeraBytes 
+		$value = "{0:N} PB" -f $($bytes/1PB) # TeraBytes 
     }
 	return $value
 }
@@ -1362,12 +1335,14 @@ function generateHTMLReport(
 	$htmlPage = htmlHeader
 	$htmlPage += "`n<h1>$reportHeader</h1>"
 	$htmlPage += "`n<p>$reportIntro</p>"
-	$reportTitles = $xml.keys | ?{$_ -ne "Runtime"}
+	$reportTitles = $xml.keys | ?{$_ -ne "Runtime"}	
 	logThis -msg "Keys = $([string]$reportTitles)"
-	$reportTitles | %{	
+	$index=1
+	$reportTitles | %{		
 		#$subReportXML = $_
 		$reportTitle = $_
-		logThis -msg "reportTitle = $_"
+		Write-Progress -Id 1 -Activity "Processing $reportTitle" -CurrentOperation "$index/$($reportTitles.Count)" -PercentComplete $($index/$($reportTitles.Count)*100)
+		logThis -msg "[$index / $($reportTitles.Count)] reportTitle = $_"
 		$htmlPage += "`n<h1>$($reportTitle)</h1>"
 		
 		#LogThis -msg "$($xml.$reportTitle.
@@ -1379,9 +1354,12 @@ function generateHTMLReport(
 			logThis -msg "subReportsTitle = $subReportsTitle"
 			for ($jindex = 0 ; $jindex -lt $xml.$reportTitle.Reports.$subReportsTitle.Count; $jindex++)
 			{			
-				$metaData = convertTextVariablesIntoObject ($xml.$reportTitle.Reports.$subReportsTitle[$jindex].MetaData)		
+				if ($xml.$reportTitle.Reports.$subReportsTitle[$jindex].MetaData)
+				{
+					$metaData = convertTextVariablesIntoObject ($xml.$reportTitle.Reports.$subReportsTitle[$jindex].MetaData)		
+				} 
 				$dataTable = $xml.$reportTitle.Reports.$subReportsTitle[$jindex].DataTable
-				
+				logThis -msg ">> [$($jindex+1)/$($xml.$reportTitle.Reports.$subReportsTitle.Count)] $($metaData.tableHeader)"
 				<## if ($metaData)
 				{
 					Write-Output "<$($metaData.titleHeaderType)>$($metaData.tableHeader)</$($metaData.titleHeaderType)>"
@@ -1417,7 +1395,7 @@ function generateHTMLReport(
 					} else {
 						$extraText = ""
 					}
-
+					
 					if ($metaData.titleHeaderType)
 					{	
 						logThis -msg "`t-> Using header Type $($metaData.titleHeaderType) found in NFO $extraText" # -foregroundColor $color
@@ -1427,7 +1405,7 @@ function generateHTMLReport(
 						#pause
 					} else 
 					{
-						logThis -msg "`t-> No header types found in NFO, using H2 instead $extraText"  -foregroundColor Yellow
+						logThis -msg "`t-> No header types found in NFO, using H2 instead $extraText"  -ForegroundColor $global:colours.Information
 						$headerType = "h3"
 					}
 
@@ -1453,6 +1431,7 @@ function generateHTMLReport(
 						logThis -msg "`t`t-> $title $extraText" -foreground yellow
 					
 					}
+
 					if ($metaData.introduction)
 					{
 						logThis -msg "`t-> Special introduction found in the NFO $extraText"  -foreground blue
@@ -1467,7 +1446,7 @@ function generateHTMLReport(
 					}
 				
 					$style="class=$setTableStyle"
-					
+					#pause
 					if($dataTable)
 					{
 						if ($passesSoFar -eq $expectedPassesToMakeForTopConsumers)
@@ -1492,7 +1471,7 @@ function generateHTMLReport(
 							#$chartStandardWidth
 							#$chartStandardHeight
 							#$imageFileType
-							logThis -msg $dataTable -ForegroundColor Cyan
+							logThis -msg $dataTable -ForegroundColor $global:colours.Information
 							$report["OutputChartFile"] = createChart -sourceCSV $metaData.File -outputFileLocation $(($metaData.ImageDirectory)+"\"+$metaData.Filename.Replace(".csv",".$chartImageFileType")) -chartTitle $chartTitle `
 								-xAxisTitle $xAxisTitle -yAxisTitle $yAxisTitle -imageFileType $chartImageFileType -chartType $chartType `
 								-width $chartStandardWidth -height $chartStandardHeight -startChartingFromColumnIndex $startChartingFromColumnIndex -yAxisInterval $yAxisInterval `
@@ -1514,7 +1493,7 @@ function generateHTMLReport(
 							#$htmlPage += $metaData.DataTableCSV | ConvertTo-HTML -Fragment
 							#$htmlPage += "`n</td></tr></table>"
 							$htmlPage += "`n</td></tr>"
-							#logThis -msg $imageFileLocation -BackgroundColor Red -ForegroundColor Yellow
+							#logThis -msg $imageFileLocation -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 							#$attachments += $imageFileLocation			
 							#$htmlPage += "`n<div><img src=""$outputChartFileName""></img></div>"
 							#$attachments += $imageFileLocation
@@ -1564,7 +1543,8 @@ function generateHTMLReport(
 					$passesSoFar++
 				}
 			}
-		}		
+		}
+		$index++
 	}
 	$htmlPage += "`n<p>If you need clarification or require assistance, please contact $itoContactName ($replyToRecipients)</p><p>Regards,</p><p>$itoContactName</p>"		
 	$htmlPage += "`n"	
@@ -1645,19 +1625,19 @@ function convertTextVariablesIntoObject ([Parameter(Mandatory=$true)][object]$ob
 						}
 					}
 					$updatedValue = [string]$newstring_array
-					#Write-Host "-t>>>$updatedValue" -ForegroundColor Blue
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor $global:colours.ChangeMade
 				} elseif ($curr_string -eq $true)
 				{
 					$updatedValue = $true
-					#Write-Host "-t>>>$updatedValue" -ForegroundColor Cyan
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor $global:colours.Information
 				} elseif ($curr_string -eq $false)
 				{
 					$updatedValue = $false
-					#Write-Host "-t>>>$updatedValue" -ForegroundColor Green
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor $global:colours.Highlight
 				} else {
 					
 					$updatedValue = $curr_string
-					#Write-Host "-t>>>$updatedValue" -ForegroundColor Yellow
+					#Write-Host "-t>>>$updatedValue" -ForegroundColor $global:colours.Information
 				}
 				$updatedValue
 			}
@@ -1671,3 +1651,70 @@ function convertTextVariablesIntoObject ([Parameter(Mandatory=$true)][object]$ob
 		return $null
 	}
 }
+
+#######################################################################################
+# MAIN 
+if ((Test-Path -path $global:logDir) -ne $true) {
+	
+	New-Item -type directory -Path $global:logDir
+	$childitem = Get-Item -Path $global:logDir
+	$global:logDir = $childitem.FullName
+}
+$global:runtime="$(date -f dd-MM-yyyy)"	
+$global:today = Get-Date
+$global:startDate = (Get-Date (forThisdayGetFirstDayOfTheMonth -day $today) -Format "dd-MM-yyyy midnight")
+$global:lastDate = (Get-date ( forThisdayGetLastDayOfTheMonth -day $(Get-Date $today).AddMonths(-$showLastMonths) ) -Format "dd-MM-yyyy midnight")
+$global:runtimeLogFileInMemory=""
+
+SetmyCSVOutputFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".csv"))
+SetmyCSVMetaFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo"))
+SetmyLogFile -filename $($global:logDir + "\"+$global:scriptName.Replace(".ps1",".log"))
+
+logThis -msg "****************************************************************************" -foregroundColor $global:colours.Highlight
+logThis -msg "Script Started @ $(get-date)" -ForegroundColor $global:colours.Highlight
+logThis -msg "Executing script: $global:scriptName " -ForegroundColor $global:colours.Highlight
+logThis -msg "Output Dir = $global:logDir" -ForegroundColor $global:colours.Highlight
+#logThis -msg " Runtime log file = $global:runtimeLogFile" -ForegroundColor $global:colours.Highlight
+#logThis -msg " Runtime CSV File = $global:runtimeCSVOutput" -ForegroundColor $global:colours.Highlight
+#logThis -msg " Runtime Meta File = $global:runtimeCSVMetaFile" -ForegroundColor $global:colours.Highlight
+#logThis -msg " Runtime Meta File (In Memory) = $global:runtimeLogFileInMemory" -ForegroundColor $global:colours.Highlight
+logThis -msg "****************************************************************************" -ForegroundColor $global:colours.Highlight
+
+<# OLD STUFF TO CLEAR OUT
+#$global:runtime="$(date -f dd-MM-yyyy)"
+	
+#$childitem = Get-Item -Path $global:logDir
+#$global:logDir = $childitem.FullName
+#$runtimeLogFile = $global:logDir + "\"+$runtime+"_"+$global:scriptName.Replace(".ps1",".log")
+#$global:runtimeCSVOutput = $global:logDir + "\"+$runtime+"_"+$global:scriptName.Replace(".ps1",".csv")
+#$runtimeCSVMetaFile = $global:logDir + "\"+$runtime+"_"+$global:scriptName.Replace(".ps1",".nfo")
+
+$runtimeLogFile = $global:logDir + "\"+$global:scriptName.Replace(".ps1",".log")
+$global:runtimeCSVOutput = $global:logDir+"\"+$global:scriptName.Replace(".ps1",".csv")
+$runtimeCSVMetaFile = $global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo")
+$scriptsHomeDir = split-path -parent $global:scriptName
+	
+$global:today = Get-Date
+$global:startDate = (Get-Date (forThisdayGetFirstDayOfTheMonth -day $today) -Format "dd-MM-yyyy midnight")
+$global:lastDate = (Get-date ( forThisdayGetLastDayOfTheMonth -day $(Get-Date $today).AddMonths(-$showLastMonths) ) -Format "dd-MM-yyyy midnight")
+
+if (!$global:reportIndex)
+{
+		
+	Write-Host "Creating the Indexer File $global:logDir\index.txt"
+	setReportIndexer -fullName "$global:logDir\index.txt"
+}
+
+SetmyLogFile -filename $runtimeLogFile
+logThis -msg " ****************************************************************************"
+logThis -msg "Script Started @ $(get-date)" -ForegroundColor $global:colours.Information
+logThis -msg "Executing script: $global:scriptName " -ForegroundColor $global:colours.Information
+logThis -msg "Logging Directory: $global:logDir" -ForegroundColor  $global:colours.Yellow
+logThis -msg "Script Log file: $global:logfile" -ForegroundColor  $global:colours.Yellow
+logThis -msg "Indexer: $global:reportIndex" -ForegroundColor  $global:colours.Yellow
+logThis -msg " ****************************************************************************"
+logThis -msg "Loading Session Snapins.."
+#loadSessionSnapings
+SetmyCSVOutputFile -filename $global:runtimeCSVOutput
+SetmyCSVMetaFile -filename $runtimeCSVMetaFile
+#>

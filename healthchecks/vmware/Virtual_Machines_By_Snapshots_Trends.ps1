@@ -33,7 +33,7 @@ $viEvents  | Export-csv ".\output\snapshotsEvents.csv"
 #$report = $clusters | %{
     #$cluster = $_    
     #$of = $logDir + "\"+$filename+"-"+$cluster.Name.replace(" ","_")+".csv"
-    #logThis -msg "The stats for cluster ""$cluster"" will output to " $of -ForegroundColor Yellow 
+    #logThis -msg "The stats for cluster ""$cluster"" will output to " $of -ForegroundColor $global:colours.Information 
     $report = do {
         $date = $now.AddMonths(-$i)
         $output = "" | Select "Months"

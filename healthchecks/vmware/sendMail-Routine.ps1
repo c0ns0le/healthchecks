@@ -7,10 +7,10 @@ param(	[string] $smtpServer,
 		[object] $attachments # An array of filenames with their full path locations
 		)  
 
-#Write-Host "[$attachments]" -ForegroundColor Blue
+#Write-Host "[$attachments]" -ForegroundColor $global:colours.ChangeMade
 if (!$smtpServer -or !$from -or !$replyTo -or !$toAddress -or !$subject -or !$body)
 {
-	Write-Host "Cannot Send email. Missing parameters for this function. Note that All fields must be specified" -BackgroundColor Red -ForegroundColor Yellow
+	Write-Host "Cannot Send email. Missing parameters for this function. Note that All fields must be specified" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 	Write-Host "smtpServer = $smtpServer"
 	Write-Host "from = $from"
 	Write-Host "replyTo = $replyTo"
@@ -35,7 +35,7 @@ if (!$smtpServer -or !$from -or !$replyTo -or !$toAddress -or !$subject -or !$bo
 	{
 		$attachments | %{
 			Write-Host "Attachment from within the routine: $_"
-			Write-Host $_ -ForegroundColor Blue
+			Write-Host $_ -ForegroundColor $global:colours.ChangeMade
 			$attachment = new-object System.Net.Mail.Attachment($_, ‘Application/Octet’)
 			$msg.Attachments.Add($attachment)
 		}

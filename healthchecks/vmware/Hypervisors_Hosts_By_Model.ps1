@@ -27,7 +27,7 @@ $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=Table" # options are List or Table
 $metaInfo +="chartable=false"
 
-$vmhosts = Get-VMhost -Server $srvconnection
+$vmhosts = GetVMhosts -Server $srvconnection
 $stats = $vmhosts | Group-Object -property Model | select-Object -property "Name","Count"
 $dataTable = $stats | %{
 	$row  = New-Object System.Object

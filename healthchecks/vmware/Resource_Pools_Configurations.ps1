@@ -29,7 +29,7 @@ $Report = $srvConnection | %{
         logThis -msg "$rpCount found.."
         
         $resourcePools |  %{
-            logThis -msg "Processing resource pool $index/$rpCount - $($_.Name)" -Foregroundcolor Yellow
+            logThis -msg "Processing resource pool $index/$rpCount - $($_.Name)" -ForegroundColor $global:colours.Information
             if ($_.ExtensionData.gettype().Name -eq "ResourcePool") {	
     		    $rpConfig = "" | Select-Object "vCenter";
     			$currRp = $_;

@@ -33,7 +33,7 @@ function Stop-Session
 #Clear-Host;
 Write-Host "Executing script $($MyInvocation.MyCommand.path)" -ForegroundColor  green;
 Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;
-Write-Host "Comment is $comment" -BackgroundColor Green;
+Write-Host "Comment is $comment" -BackgroundColor $global:colours.Highlight;
 if ($srvConnection -eq "") {
 	if ($vcenterName -eq "" -or $userid -eq "") 
 	{
@@ -48,7 +48,7 @@ if ($srvConnection -eq "") {
 if ($logDir -eq "") {
 	$logDir = $pwd.path + "\" + (get-date -format "dd-MM-yyyy");
 }
-Write-Host "Logs will be written to $($logDir)" -ForegroundColor yellow;
+Write-Host "Logs will be written to $($logDir)" -ForegroundColor $global:colours.Information;
 
 if ((Test-Path -path $logDir) -ne $true) {
 	Write-Host "Creating output directory as [" $logDir "]";
@@ -72,7 +72,7 @@ if ($srvConnection -eq "") {
 	}
 }
 
-Write-Host "Connecting to vCenter server ["$vcenterName"]..." -ForegroundColor yellow;
+Write-Host "Connecting to vCenter server ["$vcenterName"]..." -ForegroundColor $global:colours.Information;
 if ($srvConnection -eq "") {
 	if ($promptForCredentials) {
 		$srv = Connect-VIServer -Server $vcenterName -Credential $credential
@@ -85,10 +85,10 @@ if ($srvConnection -eq "") {
 
 if ($srv)
 {
-	Write-Host "Connected to $srv" -ForegroundColor Black -BackgroundColor green; 
+	Write-Host "Connected to $srv" -ForegroundColor Black -BackgroundColor $global:colours.Highlight; 
 	Get-Session | Where { ((Get-Date) – $_.LastActiveTime).TotalHours -ge $hours } | Stop-Session
 	Disconnect-VIServer $srvConnection -Confirm:$false;
-	Write-Host "Disconnected from $srvConnection.Name " -ForegroundColor Black -BackgroundColor green;
+	Write-Host "Disconnected from $srvConnection.Name " -ForegroundColor Black -BackgroundColor $global:colours.Highlight;
 
 } else { 
 	Write-Host "Error while connecting to $srv using userid" $userid;

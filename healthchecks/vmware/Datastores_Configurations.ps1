@@ -24,13 +24,13 @@ $metaInfo +="titleHeaderType=h$($headerType)"
 logThis -msg "Exporting datastores..."
 #$datastores = Get-Datastore -Server $srvConnection" -Name ""DTE-EXCHANGE" | sort name;
 #$datastores = Get-Datastore -Server $srvConnection | sort name;
-$infrastructure = collectAllEntities -server $srvConnection
+#$infrastructure = collectAllEntities -server $srvConnection
 $datastores = GetDatastores -Server $srvConnection
 
 $index=1;
 $dataTable = $datastores | %{
     $datastore = $_;
-    logThis -msg "Processing datastore $index of $($datastores.Count) - ""$($datastore.Name)""" -Foregroundcolor Yellow;    
+    logThis -msg "Processing datastore $index of $($datastores.Count) - ""$($datastore.Name)""" -ForegroundColor $global:colours.Information;    
     #logThis -msg "Processig extent " . $diskExtent.DiskName ." on the datastore" -ForegroundColor white;	
     # Process each extents as an individual LUN
 	$datastore.ExtensionData.Info.Vmfs.Extent | %{
@@ -200,4 +200,4 @@ if ($srvConnection -and $disconnectOnExist) {
 	logThis -msg "-> Disconnected from $srvConnection.Name <-" -ForegroundColor Magenta
 }
 
-logThis -msg "Log file written to $of" -ForegroundColor Yellow
+logThis -msg "Log file written to $of" -ForegroundColor $global:colours.Information

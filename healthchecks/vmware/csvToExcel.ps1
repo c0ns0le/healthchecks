@@ -43,24 +43,24 @@ foreach ($file in $files) {
 	$sheetName = $name.replace("document","").Replace("compliance","").Replace(".csv","")
 	
 	if ($fileNum -gt $book.Worksheets.Count) {
-		#Write-Host "$fileNum ###################################### "-BackgroundColor Cyan -ForegroundColor Red
+		#Write-Host "$fileNum ###################################### "-BackgroundColor Cyan -ForegroundColor $global:colours.Error
 		$book.Worksheets.Add()
 	}
 
-	Write-Host "Verifying if Sheet $name already exists " -BackgroundColor Cyan -ForegroundColor Red
+	Write-Host "Verifying if Sheet $name already exists " -BackgroundColor Cyan -ForegroundColor $global:colours.Error
 	$fileNameIndexer=2;
 	$tempSheetName = $sheetName
 	while ($book.Worksheets | where{$_.Name -eq $tempSheetName })
 	{
 		$tempSheetName = $sheetName +""+ $fileNameIndexer
 		$fileNameIndexer++
-		Write-Host "Trying new Name: $tempSheetName " -ForegroundColor Cyan
+		Write-Host "Trying new Name: $tempSheetName " -ForegroundColor $global:colours.Information
 	}
 	$currSheet = $book.Worksheets.Item($fileNum)
-	Write-Host "Naming Sheet ""$sheetName""" -BackgroundColor Cyan -ForegroundColor Red
+	Write-Host "Naming Sheet ""$sheetName""" -BackgroundColor Cyan -ForegroundColor $global:colours.Error
 	$currSheet.Name = $tempSheetName;
-	Write-Host "Activating Sheet $($currenSheet.Name)"-BackgroundColor Cyan -ForegroundColor Red
-	Write-Host $currenSheet.Name -BackgroundColor Cyan -ForegroundColor Red
+	Write-Host "Activating Sheet $($currenSheet.Name)"-BackgroundColor Cyan -ForegroundColor $global:colours.Error
+	Write-Host $currenSheet.Name -BackgroundColor Cyan -ForegroundColor $global:colours.Error
 	$currSheet.Activate()
 	
 

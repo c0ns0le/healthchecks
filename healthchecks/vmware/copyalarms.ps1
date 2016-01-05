@@ -40,9 +40,9 @@ Write-Host "Current path is $($pwd.path)" -ForegroundColor  yellow;
 
 $disconnectOnExist = $true;
 
-Write-Host "Forcing disconnections of existing vCenter servers (Ignore error if you were not connected to vCenter yet)..." -ForegroundColor  Red -BackgroundColor Yellow
+Write-Host "Forcing disconnections of existing vCenter servers (Ignore error if you were not connected to vCenter yet)..." -ForegroundColor  Red -BackgroundColor $global:colours.Information
 Disconnect-VIServer -Server * -Force -Confirm:$false
-Write-Host "Done! (Ignore error if you were not connected to vCenter yet)..." -ForegroundColor  Red -BackgroundColor Yellow
+Write-Host "Done! (Ignore error if you were not connected to vCenter yet)..." -ForegroundColor  Red -BackgroundColor $global:colours.Information
 
 if ($srvconnection -eq "" -or $destVCenter -eq "" )
 {
@@ -288,10 +288,10 @@ if ($vc1conn)
         		}
                 if ($readonly)
 				{
-					write-host "Executing[readonly]: $ existingAlarm. ReconfigureAlarm ( $alSpec )" -ForegroundColor Green
+					write-host "Executing[readonly]: $ existingAlarm. ReconfigureAlarm ( $alSpec )" -ForegroundColor $global:colours.Highlight
 				} else
 				{
-					write-host "Executing: $ existingAlarm. ReconfigureAlarm ( $alSpec )" -ForegroundColor Blue
+					write-host "Executing: $ existingAlarm. ReconfigureAlarm ( $alSpec )" -ForegroundColor $global:colours.ChangeMade
 					$existingAlarm.ReconfigureAlarm($alSpec)
 				}
               }

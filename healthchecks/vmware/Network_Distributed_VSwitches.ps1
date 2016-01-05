@@ -41,7 +41,7 @@ $dataTable = Get-VirtualSwitch -Distributed * -Server $srvConnection | Select -F
 	$row | Add-Member -Type NoteProperty -Name "ForgedTransmits" -Value $vswitch.ExtensionData.Config.DefaultPortConfig.SecurityPolicy.ForgedTransmits.value
 	
 	# output
-	logThis -msg $row -ForegroundColor green
+	logThis -msg $row -ForegroundColor $global:colours.Highlight
 	$row
 }
 

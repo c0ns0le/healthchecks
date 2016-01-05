@@ -22,12 +22,12 @@ logThis -msg "Enumerating datacenters..."
 
 $run1Report = Get-Datacenter -Server $srvConnection | %{
 	$dc = $_.Name
-	logThis -msg "Enumerating clusters in datacenter $dc..." -ForegroundColor Yellow 
+	logThis -msg "Enumerating clusters in datacenter $dc..." -ForegroundColor $global:colours.Information 
 	Get-Cluster -Location $dc -Server $srvConnection | Get-View | Sort Name | %{
 		$compute = "" | Select "Datacenters"
 		$compute.Datacenters = $dc;
 		$clusterName = $_.Name;
-		logThis -msg "Processing cluster $clusterName in datacenters $dc..." -ForegroundColor Cyan
+		logThis -msg "Processing cluster $clusterName in datacenters $dc..." -ForegroundColor $global:colours.Information
 		$compute | Add-Member -Type NoteProperty -Name "Clusters" -Value $clusterName;		
 		$vms = Get-VM -Location $_.Name | Get-View;
 

@@ -104,7 +104,7 @@ param(
 				#####################################
 				#  Commissioned Date
 				#####################################
-				#Write-Host "[$($currEntityCommissionDate.Value)]" -ForegroundColor Red -BackgroundColor Yellow
+				#Write-Host "[$($currEntityCommissionDate.Value)]" -ForegroundColor $global:colours.Error -BackgroundColor $global:colours.Information
 				
 		        if ($row.CommissionedDate) {
 					# If something already exist in the field, then just overwrite

@@ -24,7 +24,7 @@ $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=Table" # options are List or Table
 
-$dataTable = Get-VM -Server $srvConnection | %{
+$dataTable = GetVMs -Server $srvConnection | %{
 	$vm = $_
 	logThis -msg "Checking VM $vm"
 	$advanceSettings = $vm.ExtensionData.Config.ExtraConfig

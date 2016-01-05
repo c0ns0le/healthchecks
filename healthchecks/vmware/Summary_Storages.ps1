@@ -34,8 +34,8 @@ $thickLUNs = 0
 
 $table = @{}
 
-logThis -msg "Processing VMs in vCenter $_" -Foregroundcolor Green
-logThis -msg "Datastores" -ForegroundColor Yellow
+logThis -msg "Processing VMs in vCenter $_" -ForegroundColor $global:colours.Highlight
+logThis -msg "Datastores" -ForegroundColor $global:colours.Information
 if ($clusterName)
 {
 	$datastores = Get-Cluster $clusterName -Server $srvConnection | Get-VMhosts -Server $srvconnection | Get-Datastore -Server $srvconnection
@@ -56,7 +56,7 @@ $table.Add("Total Datastores Freespace","$([math]::ROUND($freeperc,2))%")
 #$vmsView = Get-VM -Server $srvconnection | Get-View
 #$table.Add("Disk",$count);
 
-logThis -msg "Get SCSI LUNs to determine the different types of storage" -ForegroundColor Yellow
+logThis -msg "Get SCSI LUNs to determine the different types of storage" -ForegroundColor $global:colours.Information
 $scsiLuns = $datastores | Get-ScsiLUN
 
 $scsiLunVendorModel = $scsiLUNs | %{

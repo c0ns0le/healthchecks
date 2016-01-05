@@ -11,12 +11,12 @@ param(
 	[bool]$returnResults=$true,
 	[bool]$showDate=$false
 )
+[bool]$global:logTofile = $false
+[bool]$global:logInMemory = $true
+[bool]$global:logToScreen = $true
 $silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
-
-
-
 
 $metaInfo = @()
 $metaInfo +="tableHeader=Snapshots"
@@ -25,12 +25,15 @@ $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
 
 # do the job here#####################################
-$dataTable = Get-VM * -Server $srvConnection
-
+if ($srvConnection.count -gt 1)
+{
+	$dataTable = getSnapshots -Server $srvConnection | Select VM,Created,PowerState,Description,vCenter,Age
+} else {
+	$dataTable = getSnapshots -Server $srvConnection | Select VM,Created,PowerState,Description,Age
+}
 
 if ($dataTable)
-{
-	
+{	
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics="+$metaAnalytics

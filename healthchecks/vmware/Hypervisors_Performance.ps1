@@ -15,8 +15,7 @@ param([object]$srvConnection="",
 	[bool]$returnResults=$true	
 )
 
-Write-Host -msg "Importing Module vmwareModules.psm1 (force)"
-$silencer = Import-Module -Name vmwareModules.psm1 -Force -PassThru -Verbose:$false
+$silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
 Set-Variable -Name scriptName -Value $($MyInvocation.MyCommand.name) -Scope Global
 Set-Variable -Name logDir -Value $logDir -Scope Global
 

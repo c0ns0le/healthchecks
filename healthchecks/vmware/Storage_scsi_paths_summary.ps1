@@ -23,7 +23,7 @@ $report = Get-VMHost * -Server $srvconnection | %{
 		$sruntimename = $scsiLun.RuntimeName
 		$datastoreName = ($datastores | ?{$_.ExtensionData.Info.Vmfs.Extent.DiskName -eq $cname}).Name
 		
-		Write-Host "Processing volume $($esxServer.name)\$datastoreName" -ForegroundColor Yellow
+		Write-Host "Processing volume $($esxServer.name)\$datastoreName" -ForegroundColor $global:colours.Information
 		$scsiPaths = $scsiLun | Get-ScsiLunPath
 		$scsiPaths | %{	
 			$scsiPath = $_
@@ -39,17 +39,17 @@ $report = Get-VMHost * -Server $srvconnection | %{
 			$row | Add-Member -Type NoteProperty -Name "Adapter" -Value $scsiPath.ExtensionData.Adapter
 			$row | Add-Member -Type NoteProperty -Name "CtrlPort" -Value $scsiPath.SanId			
 			$row | Add-Member -Type NoteProperty -Name "Cluster" -Value $clusterName
-			Write-Host $row -ForegroundColor Green
+			Write-Host $row -ForegroundColor $global:colours.Highlight
 			$row
 		}
 	}
 }
 
-Write-Host "############################" -ForegroundColor Yellow
-Write-Host "[ Report SUMMARY ] "  -ForegroundColor Yellow
+Write-Host "############################" -ForegroundColor $global:colours.Information
+Write-Host "[ Report SUMMARY ] "  -ForegroundColor $global:colours.Information
 $report | Get-Member -MemberType NoteProperty  | select Name | %{
 	#$report | select $_ -Unique | measure -Property $_
-	Write-Host "$(($report | select $($_.Name) -Unique | measure -Property $($_.Name)).Count) $($_.Name)(s) found"  -ForegroundColor Yellow
+	Write-Host "$(($report | select $($_.Name) -Unique | measure -Property $($_.Name)).Count) $($_.Name)(s) found"  -ForegroundColor $global:colours.Information
 }
 
 ExportCSV -table $Report

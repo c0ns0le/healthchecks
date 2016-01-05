@@ -5,12 +5,12 @@
 param([object]$srvConnection="",[string]$logDir="output",[string]$comment="",[string]$vmName="",[bool]$verbose=$true)
 
 function ShowSyntax() {
-	Write-host "" -ForegroundColor Yellow 
-	Write-host " Syntax: ./moveVMsToResourcePools.ps1 -srvConnection `$srvConnection -vmName ""yourPrefix""" -ForegroundColor Yellow 
-	Write-host "" -ForegroundColor Yellow 
-	Write-host "`$srvConnection: You can obtain this variable by first executing a command like this: `$srvConnection = Connect-VIServer vcenterServerFQDN" -ForegroundColor Yellow 
-	Write-host "vmName: Can any string such as MSD*, *, *BNE*" -ForegroundColor Yellow 
-	Write-host "" -ForegroundColor Yellow 
+	Write-host "" -ForegroundColor $global:colours.Information 
+	Write-host " Syntax: ./moveVMsToResourcePools.ps1 -srvConnection `$srvConnection -vmName ""yourPrefix""" -ForegroundColor $global:colours.Information 
+	Write-host "" -ForegroundColor $global:colours.Information 
+	Write-host "`$srvConnection: You can obtain this variable by first executing a command like this: `$srvConnection = Connect-VIServer vcenterServerFQDN" -ForegroundColor $global:colours.Information 
+	Write-host "vmName: Can any string such as MSD*, *, *BNE*" -ForegroundColor $global:colours.Information 
+	Write-host "" -ForegroundColor $global:colours.Information 
 }
 
 function VerboseToScreen([string]$msg,[string]$color="White")

@@ -12,7 +12,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 # Want to initialise the module and blurb using this 1 function
 
 
-#LogThis -msg "This script log to " $of -ForegroundColor Yellow 
+#LogThis -msg "This script log to " $of -ForegroundColor $global:colours.Information 
 
 $now = get-date #(get-date).AddMonths(-1) #use now but because we are half way thought the month, i only want up to the last day of the previous month
 #$lastMonths = 12 # Overwrite default here 
@@ -36,7 +36,7 @@ if ($includeThisMonth -eq $true)
 #$report = $clusters | %{
     #$cluster = $_    
     #$of = $logDir + "\"+$filename+"-"+$cluster.Name.replace(" ","_")+".csv"
-    #LogThis -msg "The stats for cluster ""$cluster"" will output to " $of -ForegroundColor Yellow 
+    #LogThis -msg "The stats for cluster ""$cluster"" will output to " $of -ForegroundColor $global:colours.Information 
 	$i = $lastMonths
     $report = do {
 	#do {
@@ -51,7 +51,7 @@ if ($includeThisMonth -eq $true)
         $vmCreationsEvents = $viEvents  | Where {  $_.Gettype().Name -eq "VmBeingDeployedEvent" -and $_.Gettype().Name -eq "VmCreatedEvent" -and (get-date $_.Createdtime).Month -eq (Get-Date $date).Month}
         $vmDeletionEvents = $viEvents  | Where { $_.Gettype().Name -eq "VmRemovedEvent" -and (get-date $_.Createdtime).Month -eq (Get-Date $date).Month}
 		
-		LogThis -msg "Month $(Get-Date $date -format y) :- Registered = $($vmsRegisteredEvents.Count), Deployed = $($vmCreationsEvents.count), Deleted = $($vmDeletionEvents.Count)" -ForegroundColor Red -BackgroundColor Yellow		
+		LogThis -msg "Month $(Get-Date $date -format y) :- Registered = $($vmsRegisteredEvents.Count), Deployed = $($vmCreationsEvents.count), Deleted = $($vmDeletionEvents.Count)" -ForegroundColor $global:colours.Error -BackgroundColor $global:colours.Information		
 		
         if ($vmCreationsEvents) {
             if (!$vmCreationsEvents.Count) {

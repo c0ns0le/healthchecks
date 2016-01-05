@@ -36,7 +36,7 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$filename+"-"+$comment+"-Last"+$lastDays+"days.csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 
 $report = @()
@@ -53,7 +53,7 @@ $Report = $srvConnection | %{
     Write-Host "Processing stats"
     $vmStats | %{
         $vmStat = $_;
-        Write-Host "Processing VM $index/$($vmStats.Count) - $($_.Group[0].Entity.Name)" -Foregroundcolor yellow
+        Write-Host "Processing VM $index/$($vmStats.Count) - $($_.Group[0].Entity.Name)" -ForegroundColor $global:colours.Information
         $row = ""| Select "Name" # "MinCpu", "AvgCpu", "MaxCpu", "MemAlloc", "MinMem", "AvgMem", "MaxMem", "vCenter"
         $row.Name = $_.Group[0].Entity.Name
         $row | Add-Member -Type NoteProperty -Name "Timestamp" -Value ($_.Group | Sort-Object -Property Timestamp)[0].Timestamp

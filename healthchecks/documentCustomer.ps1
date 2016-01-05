@@ -27,9 +27,6 @@ param(
 	[bool]$silent=$false	
 )
 
-[bool]$global:logTofile = $false
-[bool]$global:logInMemory = $true
-[bool]$global:logToScreen = $true
 $script=$MyInvocation.MyCommand.Path
 $global:scriptName = Split-Path $MyInvocation.MyCommand.Path -Leaf
 $scriptsLoc=$(Split-Path $script)
@@ -136,9 +133,9 @@ function startProcess()
 		
 		if (!$srvconnection)
 		{
-			logThis -msg ">>>>" -ForegroundColor Yellow
+			logThis -msg ">>>>" -ForegroundColor $global:colours.Information
 			logThis -msg "$($global:report.Runtime.Configs.vCenterServers)"
-			logThis -msg ">>>>" -ForegroundColor Yellow
+			logThis -msg ">>>>" -ForegroundColor $global:colours.Information
 			#$credentials = & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\get-mycredentials-fromFile.ps1" -User $vcUser -SecureFileLocation  $passwordFile
 			$credentials = getmycredentialsfromFile -User $global:report.Runtime.Configs.vcUser -SecureFileLocation $passwordFile
 			$global:report.Runtime.Configs.vCenterServers=$global:report.Runtime.Configs.vCenterServers -split ','
@@ -176,11 +173,11 @@ function startProcess()
 
 			$global:report["$type"] = & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
 		}  else {
-			logThis -msg ">>" -ForegroundColor Red  -logfile $logfile 
-			logThis -msg ">> Unable to connect to vCenter Server(s) ""$($global:report.Runtime.Configs.vCenterServers)""."  -ForegroundColor Red  -logfile $logfile 
-			logThis -msg ">> Check the address, credentials, and network connectivity"  -ForegroundColor Red  -logfile $logfile 
-			logThis -msg ">> between your script and the vCenter server and try again." -ForegroundColor Red  -logfile $logfile 
-			logThis -msg ">>" -ForegroundColor Red  -logfile $logfile 
+			logThis -msg ">>" -ForegroundColor $global:colours.Error  -logfile $logfile 
+			logThis -msg ">> Unable to connect to vCenter Server(s) ""$($global:report.Runtime.Configs.vCenterServers)""."  -ForegroundColor $global:colours.Error  -logfile $logfile 
+			logThis -msg ">> Check the address, credentials, and network connectivity"  -ForegroundColor $global:colours.Error  -logfile $logfile 
+			logThis -msg ">> between your script and the vCenter server and try again." -ForegroundColor $global:colours.Error  -logfile $logfile 
+			logThis -msg ">>" -ForegroundColor $global:colours.Error  -logfile $logfile 
 		}
 	}
 
@@ -431,11 +428,12 @@ try {
 		$htmlPage = generateHTMLReport @reportParamters			
 		$htmlPage | Out-File "$htmlFile"
 		logThis -msg "---> Opening $htmlFile"
-		if ($global:report.Runtime.Configs.$openReportOnCompletion)
+		if ($global:report.Runtime.Configs.openReportOnCompletion)
 		{
+			
 			Invoke-Expression "$htmlFile"
 		}
-
+		
 		if ($global:report.Runtime.Configs.emailReport)
 		{
 			$emailParams = @{ 
@@ -452,12 +450,14 @@ try {
 			sendEmail @emailParams
 		}
 	}
-
+	
+	$issueEncountered=$false
 	if ($global:report ) { return $global:report }
 } catch [system.exception]
 {
-	logThis -msg "Caught a system exception:"  
+	logThis -msg "Caught a system exception: $_"
 	showError -msg $_
+	$issueEncountered=$true
   
 } Finally
 {
@@ -466,5 +466,12 @@ try {
 	if ($srvconnection) { Remove-Variable srvconnection -Scope Global }	
 	if ($configObj) { Remove-Variable configObj -Scope local }
 	#if ($preconfig) {Remove-Variable preconfig -Scope local }
-	logThis -msg "Script Exited."
+
+	if ($issueEncountered)
+	{
+		logThis -msg "Script completed with one or more issue."
+	} else {
+		logThis -msg "Script completed successfully without issues."
+	}
+	
 }

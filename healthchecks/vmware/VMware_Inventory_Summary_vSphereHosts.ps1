@@ -33,9 +33,9 @@ $defaults_NA="[N/A]"
 
 $run1Report = $srvConnection | %{
         $vCenterServer = $_.Name;
-        logThis -msg "Processing VMHosts from vCenter server ""$vCenterServer""..." -ForegroundColor Cyan
+        logThis -msg "Processing VMHosts from vCenter server ""$vCenterServer""..." -ForegroundColor $global:colours.Information
         $vmhosts = Get-VMHost -Server $_ | sort Name | Get-View
-        logThis -msg "Found $($vmhosts.Count)" -ForegroundColor Yellow
+        logThis -msg "Found $($vmhosts.Count)" -ForegroundColor $global:colours.Information
         $cluster = Get-Datacenter -VMHost $vmhosts[0].Name
         $hostCount = 1;
         $vmhosts | %{

@@ -33,7 +33,7 @@ if ($comment -eq "" ) {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
 
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 #Definitions for max vCPU/core and Mem reservations
 $vCPUPerpCorePolicyLimit = 4; #max of 4vCPU per core
@@ -58,8 +58,8 @@ function getTableResults([Object]$clusters="",[Object]$vms="",[Object]$vmhosts="
 	$dvNetworksCount = 0
 	$dvNetworksNotSharedCount = 0
 	$table = @{}
-   # Write-Host "Processing $($_.Name)" -Foregroundcolor Green
-	#Write-Host "Getting Clusters" -ForegroundColor Yellow
+   # Write-Host "Processing $($_.Name)" -ForegroundColor $global:colours.Highlight
+	#Write-Host "Getting Clusters" -ForegroundColor $global:colours.Information
     #$clusters = Get-Cluster * -Server $_
     if ($clusters) {
         if ($clusters.Count) {
@@ -68,7 +68,7 @@ function getTableResults([Object]$clusters="",[Object]$vms="",[Object]$vmhosts="
             $clustersCount = 1
         }
     }
-    #Write-Host "Getting Hosts" -ForegroundColor Yellow
+    #Write-Host "Getting Hosts" -ForegroundColor $global:colours.Information
     #$vmhosts =  $clusters | get-VMhost -Server $_
     if ($vmhosts)
 	{
@@ -80,7 +80,7 @@ function getTableResults([Object]$clusters="",[Object]$vms="",[Object]$vmhosts="
 		}
 	}
 
-    #Write-Host "Getting Virtual Machines" -ForegroundColor Yellow
+    #Write-Host "Getting Virtual Machines" -ForegroundColor $global:colours.Information
     #$vms = get-vm -Server $_
 	$vmsOtherCount=0
 	$vmsOffCount=0
@@ -90,11 +90,11 @@ function getTableResults([Object]$clusters="",[Object]$vms="",[Object]$vmhosts="
 		if ($vms.Count) {
 			$vmsCount = $vms.Count
 			
-			Write-Host "Powered ON " -ForegroundColor Yellow
+			Write-Host "Powered ON " -ForegroundColor $global:colours.Information
     		$vmsOnCount = $($vms | ?{$_.PowerState -eq "PoweredOn"}).Count
-    		Write-Host "Powered OFF " -ForegroundColor Yellow
+    		Write-Host "Powered OFF " -ForegroundColor $global:colours.Information
     		$vmsOffCount = $($vms | ?{$_.PowerState -eq "PoweredOff"}).Count
-	    	Write-Host "Powered OTHER " -ForegroundColor Yellow
+	    	Write-Host "Powered OTHER " -ForegroundColor $global:colours.Information
     		$vmsOtherCount = $($vms | ?{$_.PowerState -ne "PoweredOn" -and $_.PowerState -ne "PoweredOff"}).Count
 		} else {
 			$vmsCount = 1
@@ -103,7 +103,7 @@ function getTableResults([Object]$clusters="",[Object]$vms="",[Object]$vmhosts="
 			if ($vms.PowerState -ne "PoweredOn" -and $vms.PowerState -ne "PoweredOff") {$vmsOtherCount = 1}	
 		}
 	}
-    #Write-Host "Getting Datastores" -ForegroundColor Yellow
+    #Write-Host "Getting Datastores" -ForegroundColor $global:colours.Information
     #$datastores = Get-Datastore -Server $_
 	
 	$datastoresClusters = $vms | get-datastorecluster
@@ -135,15 +135,15 @@ function getTableResults([Object]$clusters="",[Object]$vms="",[Object]$vmhosts="
     $sharedStorageFreeMB = $($datastores | measure FreeSpaceMB -sum).Sum
     $sharedStorageFreeTB = [math]::ROUND($sharedStorageFreeMB / 1024 / 1024 , 2)
 
-    Write-Host "Getting CPU" -ForegroundColor Yellow
+    Write-Host "Getting CPU" -ForegroundColor $global:colours.Information
     $cpuMhz = $($vmhosts | Measure-Object -property "CpuTotalMhz" -sum).Sum
     $cpuGhz += [math]::ROUND($cpuMhz / 1024,2)
 
-    Write-Host "Getting RAM" -ForegroundColor Yellow
+    Write-Host "Getting RAM" -ForegroundColor $global:colours.Information
     $ramMB = $($vmhosts | measure -property "MemoryTotalMB" -sum).Sum
     $ramGB += [math]::ROUND($ramMB / 1024,2)
     
-    Write-Host "Getting Networks" -ForegroundColor Yellow
+    Write-Host "Getting Networks" -ForegroundColor $global:colours.Information
     $portGroups = $vmhosts | Get-VirtualPortGroup
     $uniquePG = $portGroups | sort -property Name | select -unique
     $networksCount = $uniquePG.Count
@@ -197,8 +197,8 @@ Write-Host "Summarising infrastructure at the clusters level";
 get-cluster -Server $srvConnection | %{
 	$filename = ($($MyInvocation.MyCommand.Name)).TrimEnd('.ps1');
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"_"+$($_.Name)+".csv"
-	Write-Host "This script log to " $of -ForegroundColor Yellow 
-    Write-Host "Getting Hosts" -ForegroundColor Yellow
+	Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
+    Write-Host "Getting Hosts" -ForegroundColor $global:colours.Information
 	$results = getTableResults -Clusters $_ -VMs (Get-vm -Location $_) -Vmhosts (get-vmhost  -Location $_)  -Datastores (get-vmhost  -Location $_ | Get-datastore) -vCenter $srvConnection
 	$results | Select-Object -property Name,Value |  Sort-Object -Property Name 
 	$results.GetEnumerator() | select-object -property "Name","Value" | sort-object -Property Name |  Export-Csv $of -NoTypeInformation

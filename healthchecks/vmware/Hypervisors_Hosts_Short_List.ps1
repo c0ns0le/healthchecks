@@ -39,22 +39,18 @@ $defaults_NA="[N/A]"
 
 $dataTable = $srvConnection | %{
     $vCenterServer = $_;	
-    logThis -msg "Processing VMHosts from vCenter server ""$($vCenterServer.Name)""..." -ForegroundColor Cyan
-    $vmhosts = Get-VMHost -Server $vCenterServer | sort Name #| Get-View
-    logThis -msg "Found $($vmhosts.Count)" -ForegroundColor Yellow
-	logThis -msg "-> Getting the licence manager to check the host Licence types" -ForegroundColor Yellow
+    logThis -msg "Processing VMHosts from vCenter server ""$($vCenterServer.Name)""..." -ForegroundColor $global:colours.Information
+    $vmhosts = getVMHosts -Server $vCenterServer #| sort Name #| Get-View
+	#pause
+    logThis -msg "Found $($vmhosts.Count)" -ForegroundColor $global:colours.Information
+	logThis -msg "-> Getting the licence manager to check the host Licence types" -ForegroundColor $global:colours.Information
 	$lm = Get-view $vCenterServer.ExtensionData.Content.LicenseManager | Select -First 1
     $hostCount = 1;
     $vmhosts | sort -Property Name | %{
     	$vmhost = $_
         logThis -msg "Processing $hostCount/$($vmhosts.Count) - $($vmhost.Name)..."
-		$datacenter= Get-Datacenter -VMHost $vmhost
-		$cluster=get-cluster -VMhost $vmhost
-
 		$row = "" | Select-Object "VMhost";
-
 		$row.VMHost =$vmhost.Name
-		
 		#$row | Add-Member -Type NoteProperty -Name "FQDN" -Value  $vmhost.Name
         $row | Add-Member -Type NoteProperty -Name "Hypervisor" -Value  $($vmhost.ExtensionData.Config.Product.Name +" "+$vmhost.ExtensionData.Config.Product.Version+"-"+$vmhost.ExtensionData.Config.Product.Build)
 		$licenceName = "Unknown"
@@ -66,15 +62,14 @@ $dataTable = $srvConnection | %{
 		$row | Add-Member -Type NoteProperty -Name "CPUCores" -Value  $vmhost.ExtensionData.Hardware.CpuInfo.NumCpuCores
 		$row | Add-Member -Type NoteProperty -Name "MemoryMB" -Value  "$([math]::ROUND($vmhost.ExtensionData.Hardware.MemorySize/1Mb))"
         $row | Add-Member -Type NoteProperty -Name "Datastores" -Value  $vmhost.ExtensionData.Datastore.Count            
-        $row | Add-Member -Type NoteProperty -Name "Cluster" -Value $cluster.name
-		$row | Add-Member -Type NoteProperty -Name "Datacenter" -Value $datacenter.Name
+        $row | Add-Member -Type NoteProperty -Name "Cluster" -Value $vmhost.cluster.name
+		$row | Add-Member -Type NoteProperty -Name "Datacenter" -Value $vmhost.Datacenter.Name
 
    		if ($verbose)
-            {
-                logThis -msg $row
-            }
-	    logThis -msg $row
-    	$row
+        {
+            logThis -msg $row
+        }
+	    $row
         $hostCount++;
     }
 }

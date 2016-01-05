@@ -6,7 +6,7 @@ param(
 	[object]$srvConnection="",
 	[string]$logDir="output",
 	[string]$comment="",
-	[bool]$verbose=$false,
+	[bool]$verbose=$true,
 	[int]$headerType=1,
 	[bool]$returnResults=$true,
 	[bool]$showDate=$false,
@@ -28,25 +28,19 @@ $metaInfo +="introduction=The table below groups Virtual Machines based on the F
 $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
 
-# Folders needed to be listed in v0.1
-#$folders = @("Production","Disaster Recovery","Test And Development")
+$allVMs = GetVMs -server $srvConnection 
+$allfolders = GetvcFolders -Server $srvConnection 
 
 # Get the list of root folders
 logThis -msg "-> Getting List of folders from [$srvConnection\$startinFolder] (see ""Virtual Machine and Templates"" panel view)"
 $defaultFolder="rootFolder"
-LogThis -msg $srvConnection
 if ($startinFolder -eq $defaultFolder)
 {
-	$folders = Get-Folder -Server $srvConnection -Type "VM" | ?{$_.Parent -like "vm"} | select -Property Name -unique
+	$folders = $allfolders | ?{$_.Type -eq "VM" -and $_.Parent -like "vm"} | sort Name -unique
 	logThis -msg  "   --> Getting list of VMs from [$startinFolder]"
-	#$allVms = Get-VM -Server $vCenter
-	#$allVms | Add-Member -Type NoteProperty -Name "Environment" -Value $vcenterName;
 } else {
-	#Get-folder -Server $srvConnection -Type "VM"
-	$folders = Get-folder -Server $srvConnection -Type "VM" | ?{(Get-view $_.ExtensionData.Parent).Name -eq $startinFolder} | select -Property Name -unique
+	$folders = $allfolders | ?{$_.Type -eq "VM" -and $_.Parent -eq $startinFolder} | sort Name -unique
 	logThis -msg  "   --> Getting list of VMs from [$startinFolder]"
-	#$allVms = Get-VM -Server $vCenter -Location $startinFolder
-	#$allVms | Add-Member -Type NoteProperty -Name "Environment" -Value $vcenterName;
 }
 
 if($showExtra)
@@ -58,112 +52,51 @@ if($showExtra)
 }
 
 
-$Report = $folders | %{ 
+$dataTable = $folders | %{ 
 	$folder = $_
-	logThis -msg  "Processing VMs in folder ""$folder""";
+	Write-Host "Processing VMs in folder ""$($folder.Name)""";
 	#$vms = $allVms | ?{$_.Folder.Name -like $folder}
-	$vms = Get-VM -Server $srvConnection -Location $folder.Name
-	$obj = "" | Select-Object "Location";
-	$obj.Location = $folder.Name;
-	$vmCount=0 
-	$ramCountGB=0
-	$vCpuCount=0
-	$poweredOnCount = 0
-	$otherStatesCount=0
-	$poweredOffCount=0
-	
-	if ($vms)
-	{
-		if ($vms.GetType().IsArray)
-		{
-			$vmCount = $vms.Count
-		} else {
-			$vmCount = 1
-		}
+	Write-Host "([string]$($folder.VM))"
+	$vms = $folder.VMs |  %{
+		$vmInFolder = $_.Name
+		$vm = $allVMs | ?{$_.Name -eq $vmInFolder}
+		$vm
 	}
+	$row = new-Object System.Object;
+	$row | Add-Member -Type NoteProperty -Name "Location" -Value $folder.Name;
+	$vmCount=0 
+	$vCpuCount=0
+	$ramCountGB=0
+	$poweredOnCount = 0
+	$poweredOffCount=0
+	$otherStatesCount=0
+	$vmCount = ($vms | measure).Count
 	
 	# Skip if there are no virtuals
-	if ($vmCount -ge 1)
+	if ($vmCount -gt 0)
 	{
-		$ramCountGB = [Math]::Round($(($vms | measure-object -property MemoryMB -sum).Sum / 1024),2)
+		
+		$ramCountGB = [Math]::Round($(($vms | measure-object -property MemoryMB -sum).Sum / 1024),2)		
 		$vCpuCount = $(($vms | measure-object -property NumCpu -sum).Sum)
 		#Powered On State
-		$poweredOn = $vms | where{$_.PowerState -eq "PoweredOn"}
-		if ($poweredOn)
-		{
-			if ($poweredOn.GetType().IsArray)
-			{
-				$poweredOnCount = $poweredOn.Count
-			} else {
-				$poweredOnCount = 1
-			}
-		}
-
-		#PoweredOff
-		$poweredOff = $vms | where{$_.PowerState -eq "PoweredOff"}
-		if ($poweredOff)
-		{
-			if ($poweredOff.GetType().IsArray)
-			{
-				$poweredOffCount = $poweredOff.Count
-			} else {
-				$poweredOffCount = 1
-			}
-		}
-		
-		# Other Power States
-		$otherStates = $vms | where{$_.PowerState -ne "PoweredOff" -and $_.PowerState -ne "PoweredOn"}
-		if ($otherStates)
-		{
-			if ($otherStates.GetType().IsArray)
-			{
-				$otherStatesCount = $otherStates.Count
-			} else {
-				$otherStatesCount = 1
-			}
-		}
+		$poweredOnCount = (($vms | where{$_.PowerState -eq "PoweredOn"}) | measure).Count
+		$poweredOffCount = (($vms | where{$_.PowerState -eq "PoweredOff"}) | measure).Count
+		$otherStatesCount = (($vms | where{$_.PowerState -ne "PoweredOff" -and $_.PowerState -ne "PoweredOn"}) | measure).Count
 	}
 	
 	$diskUsageGB = [math]::round(($vms | measure UsedSpaceGB -Sum).Sum/1024,2)
-	$obj | Add-Member -Type NoteProperty -Name "Total VMs" -Value $vmCount;
-	$numberInflexpod=$srvConnection |%{
-		$vCenter = $_
-		if ($configFile)
-		{
-			$ifConfig=Import-Csv $configFile
-			$currentConfig = $ifConfig | ?{$_.vCenterSrvName -eq $vCenter.Name}
-			$vCenterName = $currentConfig.MoreInfo
-		} else {
-			$vcenterName = $vCenter.Name
-		}
-		logThis -msg  "   --> VMs located only on [$vcenterName\$($folder.Name)" -ForegroundColor Yellow
-		$tmpVMs= Get-vm -Server $vCenter -Location $folder.Name
-		$vmTmpCount = 0;
-		if ($tmpVMs)
-		{
-			if ($tmpVMs.GetType().IsArray)
-			{
-				$vmTmpCount = $tmpVMs.Count
-			} else {
-				$vmTmpCount = 1
-			}
-		}
-		if ($vcenterName -eq "Optus-Flexpod")
-		{
-			$vmTmpCount
-		}
-		$obj | Add-Member -Type NoteProperty -Name "VMs in $vcenterName" -Value $vmTmpCount;
-	}
-	
-	#$percStatus =  [Math]::Round($numberInflexpod / $vmCount * 100,2)
-	#$obj | Add-Member -Type NoteProperty -Name "Migration Status" -Value "$percStatus%"
-	
-	$obj | Add-Member -Type NoteProperty -Name "vCPUs" -Value $vCpuCount;
-	$obj | Add-Member -Type NoteProperty -Name "RAM (GB)" -Value $ramCountGB;
-	$obj | Add-Member -Type NoteProperty -Name "Size (TB)" -Value $diskUsageGB;
-	$obj | Add-Member -Type NoteProperty -Name "Powered On" -Value $poweredOnCount
-	$obj | Add-Member -Type NoteProperty -Name "Powered Off" -Value $poweredOffCount
-	$obj | Add-Member -Type NoteProperty -Name "Other State" -Value $otherStatesCount;
+	$row | Add-Member -Type NoteProperty -Name "Total VMs" -Value $vmCount;
+	#if ($srvConnection.Count -gt 1)
+	#{
+	#	$name = $_.Name
+	#	$row | Add-Member -Type NoteProperty -Name "Total VMs in $name" -Value ;
+	#}
+	$row | Add-Member -Type NoteProperty -Name "vCPUs" -Value $vCpuCount;
+	$row | Add-Member -Type NoteProperty -Name "RAM (GB)" -Value $ramCountGB;
+	$row | Add-Member -Type NoteProperty -Name "Size (TB)" -Value $diskUsageGB;
+	$row | Add-Member -Type NoteProperty -Name "Powered On" -Value $poweredOnCount
+	$row | Add-Member -Type NoteProperty -Name "Powered Off" -Value $poweredOffCount
+	$row | Add-Member -Type NoteProperty -Name "Other State" -Value $otherStatesCount;
 	
 	if($showExtra)
 	{
@@ -183,10 +116,9 @@ $Report = $folders | %{
 					$vmVersionsCount = 1
 				}
 			}
-			$obj | Add-Member -Type NoteProperty -Name "$currVersion" -Value "$vmVersionsCount"
+			$row | Add-Member -Type NoteProperty -Name "$currVersion" -Value "$vmVersionsCount"
 			#logThis -msg  $vmVersionsCount
 		}
-		
 		
 		$OSTypes | %{
 			$currOsType = $_;
@@ -203,20 +135,20 @@ $Report = $folders | %{
 					$thisOSTypeCount = 1
 				}
 			}
-			$obj | Add-Member -Type NoteProperty -Name "$currOsType" -Value "$thisOSTypeCount"
+			$row | Add-Member -Type NoteProperty -Name "$currOsType" -Value "$thisOSTypeCount"
 		}
 	}
 	
-	logThis -msg  $obj -ForegroundColor Yellow
-	$obj
+	#logThis -msg  $row -ForegroundColor $global:colours.Information
+	$row
 } | sort -Property "Total VMs"
+
 
 #logThis -msg  $Report
 ############### THIS IS WHERE THE STUFF HAPPENS
 
 if ($dataTable)
-{
-	
+{	
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics="+$metaAnalytics

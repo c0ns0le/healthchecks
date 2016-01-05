@@ -46,13 +46,13 @@ if ($comment -eq "" ) {
 } else {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 #$events = Get-VIEvent -Server $srvConnection
 #
 $Report = $srvConnection | %{ 
     $vcenterServer = $_.Name;
-    Write-Host "Exporting Last 1 month worth of User Logons from $($_.Name)..." -ForegroundColor Cyan
+    Write-Host "Exporting Last 1 month worth of User Logons from $($_.Name)..." -ForegroundColor $global:colours.Information
     $viEvents = Get-VIEvent -Start $now.AddMonths($reportPeriodInMonths) -MaxSamples ([int]::MaxValue) -Server $_.Name | where{$_.fullFormattedMessage -match "User(.*)@\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b logged in"}
     
     if ($viEvents)
@@ -63,10 +63,10 @@ $Report = $srvConnection | %{
             $eventCount = $viEvents.Count
         } 
         
-        Write-Host "$eventCount Found" -ForegroundColor Yellow
+        Write-Host "$eventCount Found" -ForegroundColor $global:colours.Information
         $index=1;        
         $viEvents | %{
-            Write-Host "Processing Event $index/$eventCount" -foregroundcolor Yellow
+            Write-Host "Processing Event $index/$eventCount" -ForegroundColor $global:colours.Information
            	$events = "" | Select-Object "UserName";
             
             $username = ($_.UserName).Replace((get-content env:userdomain),'').Replace('\','');

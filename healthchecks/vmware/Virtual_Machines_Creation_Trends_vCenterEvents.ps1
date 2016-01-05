@@ -17,8 +17,8 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 
 logThis -msg "Collecting all VMs..."
 $vms = Get-VM * -Server $srvConnection;
-logThis -msg "$($vms.Count) found" -ForegroundColor Yellow 
-logThis -msg "Collecting information required...." -ForegroundColor Cyan
+logThis -msg "$($vms.Count) found" -ForegroundColor $global:colours.Information 
+logThis -msg "Collecting information required...." -ForegroundColor $global:colours.Information
 $vmCount = 1
 $vmevts = $vms | %{
 	$vm = $_

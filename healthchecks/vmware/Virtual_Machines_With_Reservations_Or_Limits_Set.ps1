@@ -28,7 +28,7 @@ $metaInfo +="displayTableOrientation=Table" # options are List or Table
 
 
 logThis -msg "Enumerating VMs..."
-$vms = Get-VM * -Server $srvConnection 
+$vms = GetVMs -Server $srvConnection 
 $index=1
 $dataTable = $vms | %{
 	logThis -msg "Processing $index\$($vms.Count) :- $($_.name)"
@@ -45,7 +45,7 @@ $dataTable = $vms | %{
 		$row | Add-Member -Type NoteProperty -Name "Memory (MB)" -Value $vm.MemoryMB
 		$row | Add-Member -Type NoteProperty -Name "Memory Reservation (MB)" -Value $vm.ExtensionData.ResourceConfig.MemoryAllocation.Reservation;
 		$row | Add-Member -Type NoteProperty -Name "Memory Limit" -Value $vm.ExtensionData.ResourceConfig.MemoryAllocation.Limit;
-		logThis -msg "`t-> Found something on this server" -ForegroundCOlor Green
+		logThis -msg "`t-> Found something on this server" -ForegroundColor $global:colours.Highlight
 		$row
 	}
 	$index++

@@ -142,7 +142,7 @@ user42        same42     42A1        42B1        testA42 testB42
             }) -join $Separator
             #Write-Host "-->CurrentID=$CurrentID"
             if (!$SharedColumnHashes[$Counter].ContainsKey($CurrentID)) {
-				Write-Host "-->`$_=$_, `$Counter=$Counter, `$CurrentID=$CurrentID, `$Headers[`$Counter]=$Headers[$Counter]" -ForegroundColor Yellow
+				Write-Host "-->`$_=$_, `$Counter=$Counter, `$CurrentID=$CurrentID, `$Headers[`$Counter]=$Headers[$Counter]" -ForegroundColor $global:colours.Information
 				$rowvalues=$_
 				#Write-Host "`$CurrentID=$CurrentID"
 				#Write-Host "`$(`$Headers[`$Counter])=$($Headers[$Counter])"
@@ -172,7 +172,7 @@ user42        same42     42A1        42B1        testA42 testB42
                     foreach ($Header in $Headers[$InnerCounter]) {
                         if ($Id -notcontains $Header) {
 							$val=$SharedColumnHashes[$InnerCounter].$Key | Select "$Header"
-							Write-Host "Key: $Key, Counter: $Counter, InnerCounter: $InnerCounter, Header=$Header, val=$val" -ForegroundColor Yellow
+							Write-Host "Key: $Key, Counter: $Counter, InnerCounter: $InnerCounter, Header=$Header, val=$val" -ForegroundColor $global:colours.Information
 							#Write-Host "--->>`$header=$header, `$val=$val"
                             Add-Member -InputObject $Obj -MemberType NoteProperty -Name "$Header" -Value "$val"
                         }

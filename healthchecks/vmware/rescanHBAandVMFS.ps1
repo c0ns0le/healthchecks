@@ -18,7 +18,7 @@ function ShowSyntax ()
 switch ($mode.ToUpper())
 {
 	"READONLY" {Write-Host "-> Read-Only (will not rescan, just show command) <-" -foregroundcolor Magenta;write-output "";$continue = $false}
-	"EXECUTE" {Write-Host "-> Execute Mode (will rescan)<-" -foregroundcolor Red;write-output "";$continue = $false}
+	"EXECUTE" {Write-Host "-> Execute Mode (will rescan)<-" -ForegroundColor $global:colours.Error;write-output "";$continue = $false}
 	default {
 		Write-Warning "Invalid execution mode (specified mode=$mode); Choice is: readonly or execute"
 		ShowSyntax
@@ -35,8 +35,8 @@ if ($clustername -eq "")
 		$answer = Read-Host "[Y - All Clusters | N - Exit]"
 		switch ($answer.ToUpper())
 		{
-			"Y" {Write-Host "-> Processing all clusters <-" -foregroundcolor Red; $clustername = "*"; write-output "";$continue = $false}
-			"N" {Write-Host "-> User exit <-" -foregroundcolor Red; $clustername = ""; write-output ""; exit}
+			"Y" {Write-Host "-> Processing all clusters <-" -ForegroundColor $global:colours.Error; $clustername = "*"; write-output "";$continue = $false}
+			"N" {Write-Host "-> User exit <-" -ForegroundColor $global:colours.Error; $clustername = ""; write-output ""; exit}
 			default {Write-Warning "Incorrect - Select Y or N"}
 		}
 	}
@@ -63,17 +63,17 @@ if ((Test-Path -path $logDir) -ne $true) {
 	New-Item -type directory -Path $logDir
 }
 
-Write-Host "Enumerating datacenters in virtualcenter..." -ForegroundColor Yellow
+Write-Host "Enumerating datacenters in virtualcenter..." -ForegroundColor $global:colours.Information
 Get-Datacenter -Server $svConnection | %{
 	$dc = $_.Name;
-	if ($clustername -eq "*") {	Write-Host "Processing all clusters in $dc in processing mode=$mode..." -ForegroundColor Yellow }
-	else { Write-Host "Processing clustername "$dc\$clustername" in processing mode=$mode..." -ForegroundColor Yellow }
+	if ($clustername -eq "*") {	Write-Host "Processing all clusters in $dc in processing mode=$mode..." -ForegroundColor $global:colours.Information }
+	else { Write-Host "Processing clustername "$dc\$clustername" in processing mode=$mode..." -ForegroundColor $global:colours.Information }
 	#Write-Host "-> $clustername <-"
 	Get-Cluster "$clustername" -Location "$dc" |  %{
 		if ($_) {
 			$cluster = $_.Name
 			if ($mode -eq "readonly")  { 
-				Write-Host "[readonly] Rescanning VMHost in $dc\$cluster..." -ForegroundColor Yellow 
+				Write-Host "[readonly] Rescanning VMHost in $dc\$cluster..." -ForegroundColor $global:colours.Information 
 				Write-Host "[cmd] Get-VMHost -Location $cluster | Get-VMHostStorage -RescanAllHba -RescanVmfs"
 			} 
 			else {
@@ -85,7 +85,7 @@ Get-Datacenter -Server $svConnection | %{
 }
 Write-Host ""
 Write-Host ""
-Write-Host "Complete" -ForegroundColor Yellow
+Write-Host "Complete" -ForegroundColor $global:colours.Information
 
 if ($srvConnection -and $disconnectOnExist) {
 	Disconnect-VIServer $srvConnection -Confirm:$false;

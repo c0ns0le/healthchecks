@@ -42,7 +42,7 @@ if ($comment -eq "" ) {
 	$of = $logDir + "\"+$runtime+"_"+$vcenterName.ToUpper()+"_"+$filename+"-"+$comment+".csv"
 }
 
-Write-Host "This script log to " $of -ForegroundColor Yellow 
+Write-Host "This script log to " $of -ForegroundColor $global:colours.Information 
 
 $IOPSReport = @()
 
@@ -51,7 +51,7 @@ $IOPSReport = @()
 # Grab datastore and find VMs on that datastore
 #$myDatastore = Get-Datastore -Name $datastore -server $server
 $myVMs = Get-VM -server $srvconnection | Where {$_.PowerState -eq "PoweredOn"}
-Write-Host "$($myVMs.Count) found" -BackgroundColor Red -ForegroundColor Yellow
+Write-Host "$($myVMs.Count) found" -BackgroundColor $global:colours.Error -ForegroundColor $global:colours.Information
 $vmIndex=1;
 $IOPSReport = $myVMs | %{
 	$vm = $_;	

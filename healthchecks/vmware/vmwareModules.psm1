@@ -34,8 +34,8 @@ function getIssues(
 	
 	if ($enable)
 	{
-		logThis -msg "######################################################################" -ForegroundColor Green
-		logThis -msg "Checking Individual Systems / component issues and action items"  -ForegroundColor Green
+		logThis -msg "######################################################################" -ForegroundColor $global:colours.Highlight
+		logThis -msg "Checking Individual Systems / component issues and action items"  -ForegroundColor $global:colours.Highlight
 		$title= "Systems Issues and Actions"
 		#$htmlPage += "$(header2 $title)"
 		$deviceTypeIndex=1
@@ -49,7 +49,7 @@ function getIssues(
 				$type = $firstObj.GetType().Name.Replace("Impl","")				
 				Write-Progress -Activity "Processing report" -Id 1 -Status "$deviceTypeIndex/$($objectsArray.Count) :- $type..." -PercentComplete  (($deviceTypeIndex/$($objectsArray.Count))*100)
 				$index=0;
-				logThis -msg "[`t`t$type`t`t]" -foregroundcolor Green
+				logThis -msg "[`t`t$type`t`t]" -foregroundcolor $global:colours.Highlight
 				switch($type)
 				{
 					"VirtualMachine" {	
@@ -488,8 +488,8 @@ function getIssues(
 							{
 								# The parent resource is a cluster.
 								$clusterNodes = get-vmhost -Location $parent.Name -Server $myvCenter 
-								#logThis -msg "Parent Object: $($parent.Name)" -ForegroundColor Yellow -BackgroundColor Red
-								#logThis -msg "Cluster nodes: $($clusterNodes.Count)" -ForegroundColor Yellow -BackgroundColor Red
+								#logThis -msg "Parent Object: $($parent.Name)" -ForegroundColor $global:colours.Information -Backgroundcolor $global:colours.Error
+								#logThis -msg "Cluster nodes: $($clusterNodes.Count)" -ForegroundColor $global:colours.Information -Backgroundcolor $global:colours.Error
 								# Check to see if the ESX servers in the same cluster have the same amount of datastores that the cluster has 
 								$datastoreCount = (get-datastore -VMHost $clusterNodes -Server $myvCenter).Count
 								if ($obj.DatastoreIdList.Count -ne $datastoreCount)
@@ -735,8 +735,8 @@ function getIssues(
 
 							if ($orphanDisksOutput)
 							{
-								logThis -msg "------------" -ForegroundColor Blue
-								#logThis -msg $orphanDisksOutput	 -ForegroundColor Blue
+								logThis -msg "------------" -ForegroundColor $global:colours.ChangeMade
+								#logThis -msg $orphanDisksOutput	 -ForegroundColor $global:colours.ChangeMade
 								$orphanDisksTotalSizeGB = $($orphanDisksOutput | measure -Property SizeGB -Sum).Sum
 								if ($orphanDisksOutput.Count -eq 1)
 								{
@@ -747,7 +747,7 @@ function getIssues(
 								$objectIssuesRegister += "$($li)$themTxt`n"
 								$objectIssuesRegister += $orphanDisksOutput # | ConvertTo-Html -Fragment
 								$objectIssues++
-								#logThis -msg "$objectIssuesRegister" -ForegroundColor Blue
+								#logThis -msg "$objectIssuesRegister" -ForegroundColor $global:colours.ChangeMade
 							}
 							
 							if ($obj.ExtensionData.Summary.MaintenanceMode -ne "normal")
@@ -1233,10 +1233,10 @@ function get-events([Parameter(Mandatory=$true)][Object]$obj,[Parameter(Mandator
 
 function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
 {
-
+	
 	if ($force -or !$global:infrastructure) 
 	{
-		logThis -msg "Getting an Infrastructure List"
+		#logThis -msg "Getting an Infrastructure List"
 		$global:infrastructure = @{}
 		logThis -msg "`t-> vCenters"
 		$global:infrastructure["vCenters"] = $server
@@ -1294,6 +1294,7 @@ function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parame
 				$_ | Add-Member -MemberType NoteProperty -Name "DistributedvSwitches" -Value $(get-virtualswitch -VM $_ -Server $vcenter -Distributed | select Name,Id)
 				$_ | Add-Member -MemberType NoteProperty -Name "StandardPortGroups" -Value $(get-virtualportgroup -Vm $_ -Server $vcenter -Standard | select Name,Key)
 				$_ | Add-Member -MemberType NoteProperty -Name "DistributedPortGroups" -Value $(get-virtualportgroup -VM $_ -Server $vcenter -Distributed | select Name,Key)
+				#Folder"
 				$_
 			}
 		}
@@ -1323,15 +1324,15 @@ function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parame
 				$_
 			}
 		}
-		logThis -msg "`t-> Distributed vSwitches"
-		$global:infrastructure["DistributedvSwitches"] = $server | %{
+		<##$logThis -msg "`t-> Distributed vSwitches"
+		#$global:infrastructure["DistributedvSwitches"] = $server | %{
 			$vcenter = $_
 			get-VirtualSwitch -server $vcenter -Distributed | %{
 				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
 				$_
 			}
 		}
-		
+		#>
 		logThis -msg "`t-> Port Groups"
 		$global:infrastructure["PortGroups"] = $server | %{
 			$vcenter = $_
@@ -1345,6 +1346,7 @@ function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parame
 			$vcenter = $_
 			get-Folder -server $vcenter | %{
 				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_ | Add-Member -MemberType NoteProperty -Name "VMs" -Value $(Get-VM -Location $_ -Server $vcenter | select Name,Id)
 				$_
 			}
 		}
@@ -1370,7 +1372,8 @@ function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parame
 		$global:infrastructure["Snapshots"] = $server | %{
 			$vcenter = $_
 			Get-Snapshot * -server $vcenter | %{				
-				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name
+				$_ | Add-Member -MemberType NoteProperty -Name "vCenter" -Value $vcenter.Name				
+				$_ | Add-Member -MemberType NoteProperty -Name "Age" -Value (getTimeSpanFormatted((Get-date) - (get-date $_.Created)))
 				$_
 			}
 		}
@@ -1392,9 +1395,45 @@ function collectAllEntities ([Parameter(Mandatory=$true)][Object]$server,[Parame
 }
 #$infrastructure = collectAllEntities -server $srvconnection -force $true
 
+function getvSwitches([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or (!$global:infrastructure.StandardvSwitches -and !$global:infrastructure))
+	{
+		logThis -msg "Getting list of StandardvSwitches"
+		$infrastructure = collectAllEntities -server $server -force $true		
+		return $global:infrastructure.StandardvSwitches
+	} else {
+		logThis -msg "The list of StandardvSwitches already exists, returning current list"
+		return $global:infrastructure.StandardvSwitches
+	}
+}
+function getdvSwitches([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or (!$global:infrastructure.DistributedvSwitches -and !$global:infrastructure))
+	{
+		logThis -msg "Getting list of DistributedvSwitches"
+		$infrastructure = collectAllEntities -server $server -force $true		
+		return $global:infrastructure.DistributedvSwitches
+	} else {
+		logThis -msg "The list of DistributedvSwitches already exists, returning current list"
+		return $global:infrastructure.DistributedvSwitches
+	}
+}
+function getPortGroups([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or (!$global:infrastructure.PortGroups -and !$global:infrastructure))
+	{
+		logThis -msg "Getting list of PortGroups"
+		$infrastructure = collectAllEntities -server $server -force $true		
+		return $global:infrastructure.PortGroups
+	} else {
+		logThis -msg "The list of PortGroups already exists, returning current list"
+		return $global:infrastructure.PortGroups
+	}
+}
 function getDatastores([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
 {
-	if ($force -or !$global:infrastructure.Datastores)
+	if ($force -or (!$global:infrastructure.Datastores -and !$global:infrastructure))
 	{
 		logThis -msg "Getting list of datastores"
 		$infrastructure = collectAllEntities -server $server -force $true		
@@ -1408,7 +1447,7 @@ function getDatastores([Parameter(Mandatory=$true)][Object]$server,[Parameter(Ma
 
 function getVMs([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force,[Parameter(Mandatory=$false)][object]$vmsToCheck)
 {
-	if ($force -or !$global:infrastructure.VMs)
+	if ($force -or (!$global:infrastructure.VMs -and !$global:infrastructure))
 	{
 		logThis -msg "Getting list of Virtual Machine"
 		$infrastructure = collectAllEntities -server $server -force $true		
@@ -1423,7 +1462,7 @@ function getVMs([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory
 #$hosts = getVmhosts -srvconnection $server -force $true
 function getVMHosts([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
 {
-	if ($force -or !$global:infrastructure.VMhosts)
+	if ($force -or (!$global:infrastructure.VMhosts -and !$global:infrastructure))
 	{
 		logThis -msg "Getting list of VMHosts"
 		$infrastructure = collectAllEntities -server $server -force $true
@@ -1437,7 +1476,7 @@ function getVMHosts([Parameter(Mandatory=$true)][Object]$server,[Parameter(Manda
 #$clusters = getClusters -srvconnection $server -force $true
 function getClusters([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
 {
-	if ($force -or !$global:infrastructure.Clusters)
+	if ($force -or (!$global:infrastructure.Clusters -and !$global:infrastructure))
 	{
 		logThis -msg "Getting list of clusters"
 		$infrastructure = collectAllEntities -server $server -force $true
@@ -1451,7 +1490,7 @@ function getClusters([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mand
 
 function getDatacenters([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
 {
-	if ($force -or !$global:infrastructure.Datacenters)
+	if ($force -or (!$global:infrastructure.Datacenters -and !$global:infrastructure))
 	{
 		logThis -msg "Getting list of Datacenters"
 		$infrastructure = collectAllEntities -server $server -force $true
@@ -1459,6 +1498,33 @@ function getDatacenters([Parameter(Mandatory=$true)][Object]$server,[Parameter(M
 	} else {
 		logThis -msg "The list of Datacenters already exists, returning current list"
 		return $global:infrastructure.Datacenters
+	}
+}
+
+
+function getvcFolders([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or (!$global:infrastructure.vFolders -and !$global:infrastructure))
+	{
+		logThis -msg "Getting list of vCenter Folders"
+		$infrastructure = collectAllEntities -server $server -force $true
+		return $global:infrastructure.vFolders
+	} else {
+		logThis -msg "The list of vFolders already exists, returning current list"
+		return $global:infrastructure.vFolders
+	}
+}
+
+function getSnapshots([Parameter(Mandatory=$true)][Object]$server,[Parameter(Mandatory=$false)][bool]$force)
+{
+	if ($force -or (!$global:infrastructure.Snapshots -and !$global:infrastructure))
+	{
+		logThis -msg "Getting list of Snapshots"
+		$infrastructure = collectAllEntities -server $server -force $true
+		return $global:infrastructure.Snapshots
+	} else {
+		logThis -msg "The list of vFolders already exists, returning current list"
+		return $global:infrastructure.Snapshots
 	}
 }
 
@@ -1497,7 +1563,7 @@ function getVirtualMachinesCapacityBy([Object]$srvConnection,
 		$vCenter = $_
 		Get-VM -Server $vCenter | sort Name | %{
 			$device=$_
-			#logThis -msg "`t`t--> $vcenterName\$_" -ForegroundColor Yellow
+			#logThis -msg "`t`t--> $vcenterName\$_" -ForegroundColor $global:colours.Information
 			$obj = "" | Select-Object "Device"
 			$obj.Device =$device.Name;
 			$setting="`$device.$property"
@@ -1606,7 +1672,7 @@ function getVMhostCapacityBy([Object]$srvConnection,
 		$vCenter = $_
 		Get-VMhost -Server $vCenter | sort Name | %{
 			$device=$_
-			#logThis -msg "`t`t--> $vcenterName\$_" -ForegroundColor Yellow
+			#logThis -msg "`t`t--> $vcenterName\$_" -ForegroundColor $global:colours.Information
 			$obj = New-Object System.Object
 			$obj | Add-Member -MemberType NoteProperty -Name $($device.gettype().Name) -Value $device.Name;
 			$setting="`$device.$property"
@@ -1712,7 +1778,7 @@ function UnloadNFOVariables([Parameter(Mandatory=$true)][string]$file) {
     Get-Content $file | Foreach-Object {
         $var = $_.Split('=')
         $variableName = $var[0]
-		logThis -msg "`t`t-> Removing Variable `$$variableName = $variableName" -ForegroundColor Green		
+		logThis -msg "`t`t-> Removing Variable `$$variableName = $variableName" -ForegroundColor $global:colours.Highlight		
 		Remove-Variable $variableName -Scope Global
 	
     }
@@ -1838,7 +1904,7 @@ function recurseThruObject(
 		#if (!$type.Contains("string") -and !$type.Contains("type") -and !$type.Contains("System.Reflection"))
 		if ($type.Contains("System.Object"))
 		{
-			logThis -msg  "Recursing ...$property " -ForegroundColor Yellow
+			logThis -msg  "Recursing ...$property " -ForegroundColor $global:colours.Information
 			#$table += return recurseThruObject $obj.$field
 		} elseif ($type -eq "string") 
 		{
@@ -1963,7 +2029,6 @@ function getStats(
 		$nameofdate = "Last $(daysSoFarInThisMonth($today)) Days"
 		$tableColumnHeaders += $nameofdate
 		logThis -msg "`t- The last $(daysSoFarInThisMonth($today)) Days [$firstDayOfMonth -> now]";
-		#New-Variable -Name "$($tableColumnHeaders[$tableColumnHeaders.GetUpperBound(0)])" -Value ($sourceVIObject | Get-Stat -Stat $metric -Start $firstDayOfMonth -Finish $today -MaxSamples $maxsamples  -IntervalMins 5  | select *)
 		New-Variable -Name "stats$nameofdate" -Value ($sourceVIObject | Get-Stat -Stat $metric -Start $firstDayOfMonth -Finish $today -MaxSamples $maxsamples  -IntervalMins 5  | select *)
 
 		######################################################
@@ -1973,78 +2038,89 @@ function getStats(
 		logThis -msg "`t- Last 20 minutes";
 		$nameofdate = "Last 20 minutes"
 		$tableColumnHeaders += $nameofdate
-		New-Variable -Name "stats$nameofdate" -Value ( $sourceVIObject | Get-Stat -Stat $metric -Realtime -MaxSamples $maxsamples  -IntervalMins 5 | select *)			
-		
-		if ($showIndividualDevicesStats)
-		{
-			# This will get the "EMpty" instance as well as the Non empty ones. Meaning it will get VM overall performnace + the individual devices (ie. CPU0,CPU2,CPU3 etc..)
-			$uniqueHWInstancesArray = (Get-Variable "stats$($tableColumnHeaders[$tableColumnHeaders.GetLowerBound(0)])" -ValueOnly) | Select-Object -Property Instance -Unique | sort Instance # | %{$_.Instance};
-		} else {
-			# This get the overwall performance stats excluding individual devices such as CPU0, CPU1 etc..
-			$uniqueHWInstancesArray = (Get-Variable "stats$($tableColumnHeaders[$tableColumnHeaders.GetLowerBound(0)])" -ValueOnly) | Select-Object -Property Instance -Unique | sort Instance | Select -First 1 | %{$_.Instance};
-		}
+		New-Variable -Name "stats$nameofdate" -Value ( $sourceVIObject | Get-Stat -Stat $metric -Realtime -MaxSamples $maxsamples  -IntervalMins 5 | select *)
 
-		# if filters is not defined, then ensure that all unique hardware instances are convered 
-		#logThis -msg $uniqueHWInstancesArray.GetType() -ForegroundColor DarkCyan
-		if ($filters.Count -eq 0)
-		{
-			#$filters = @();
-			$filters = $uniqueHWInstancesArray
-		} else {
-			# Implement a device filter for example
-			# not yet
-		}
-		
-		######################################################
-		# Exctract the UNIT & Description for the metric 
-		######################################################
-		$unit = (Get-Variable "stats$($tableColumnHeaders[$tableColumnHeaders.GetLowerBound(0)])" -ValueOnly)[0].Unit;
-		switch($unit)
-		{
-			"Mhz" { $unitToDisplay = "Ghz"; $devider = 1024;  $wordToReplace="megahertz"; $wordToReplaceWith="gigahertz"}
-			"Khz" { $unitToDisplay = "Ghz"; $devider = 1024 * 1024;  $wordToReplace="kilohertz"; $wordToReplaceWith="gigahertz" }
-			#"hz" { $unitToDisplay = "Ghz"; $devider = 1024 * 1024 * 1024;  $wordToReplace="hertz"; $wordToReplaceWith="gigahertz" }
-			#"B" { $unitToDisplay = "GB"; $devider = 1024 * 1024 * 1024;  $wordToReplace="megahertz"; $wordToReplaceWith="gigahertz" }
-			"KB" { $unitToDisplay = "MB"; $devider = 1024 ;  $wordToReplace="kilobyte"; $wordToReplaceWith="megabyte" }
-			"MB" { $unitToDisplay = "GB"; $devider = 1024;  $wordToReplace="megahertz"; $wordToReplaceWith="gigabyte" }
-			"GB" { $unitToDisplay = "GB"; $devider = 1;  $wordToReplace="megahertz"; $wordToReplaceWith="gigabyte" }
-			"KBps" { $unitToDisplay = "MBps"; $devider = 1024 ;  $wordToReplace="kilobytes per second"; $wordToReplaceWith="megabytes per second" }
-			"MBps" { $unitToDisplay = "GBps"; $devider = 1024;  $wordToReplace="megabytes per second"; $wordToReplaceWith="gigabytes per second" }
-			default {$unitToDisplay = $unit; $devider = 1; }
-		}
-		
-		$metricDescription = (Get-Variable "stats$($tableColumnHeaders[$tableColumnHeaders.GetLowerBound(0)])" -ValueOnly)[0].Description
-		logThis -msg "`t-> The Metric unit is: $unitToDisplay"
-		logThis -msg "`t-> Description: $metricDescription"
-		$deviceType, $measure, $frequency = $metric.split('.')
-		if ($deviceType -eq "MEM")
-		{
-			$deviceTypeText = "Memory"
-		} else {
-			$deviceTypeText = $deviceType
-		}
-		
-		if (!$metricDescription.EndsWith('.'))
-		{
-			$introduction = $metricDescription.Insert($metricDescription.Length,'.')
-		} else {
-			$introduction = $metricDescription
-		}
+		#$definitionsFound=$false
+		$lindex=0
+		do {
+			$nameofdate=$tableColumnHeaders[$lindex]
+			#logThis -msg "HERE :- $nameofdate"
+			if ( (Get-Variable "stats$nameofdate" -ValueOnly) -and !$unit)
+			{
+				logThis -msg "`t`t- $nameofdate"
+				if ($showIndividualDevicesStats)
+				{
+					# This will get the "EMpty" instance as well as the Non empty ones. Meaning it will get VM overall performnace + the individual devices (ie. CPU0,CPU2,CPU3 etc..)
+					$uniqueHWInstancesArray = (Get-Variable "stats$nameofdate" -ValueOnly) | Select-Object -Property Instance -Unique | sort Instance # | %{$_.Instance};
+				} else 
+				{
+					# This get the overwall performance stats excluding individual devices such as CPU0, CPU1 etc..
+					$uniqueHWInstancesArray = (Get-Variable "stats$nameofdate" -ValueOnly) | Select-Object -Property Instance -Unique | sort Instance | Select -First 1 | %{$_.Instance};
+				}
 
+				# if filters is not defined, then ensure that all unique hardware instances are convered 
+				#logThis -msg $uniqueHWInstancesArray.GetType() -ForegroundColor DarkCyan
+				if ($filters.Count -eq 0)
+				{
+					#$filters = @();
+					$filters = $uniqueHWInstancesArray
+				} else {
+					# Implement a device filter for example
+					# not yet
+				}
+				######################################################
+				# Exctract the UNIT & Description for the metric 
+				######################################################		
+			
+				$unit = (Get-Variable "stats$nameofdate" -ValueOnly)[0].Unit;
+				switch($unit)
+				{
+					"Mhz" { $unitToDisplay = "Ghz"; $devider = 1024;  $wordToReplace="megahertz"; $wordToReplaceWith="gigahertz"}
+					"Khz" { $unitToDisplay = "Ghz"; $devider = 1024 * 1024;  $wordToReplace="kilohertz"; $wordToReplaceWith="gigahertz" }
+					#"hz" { $unitToDisplay = "Ghz"; $devider = 1024 * 1024 * 1024;  $wordToReplace="hertz"; $wordToReplaceWith="gigahertz" }
+					#"B" { $unitToDisplay = "GB"; $devider = 1024 * 1024 * 1024;  $wordToReplace="megahertz"; $wordToReplaceWith="gigahertz" }
+					"KB" { $unitToDisplay = "MB"; $devider = 1024 ;  $wordToReplace="kilobyte"; $wordToReplaceWith="megabyte" }
+					"MB" { $unitToDisplay = "GB"; $devider = 1024;  $wordToReplace="megahertz"; $wordToReplaceWith="gigabyte" }
+					"GB" { $unitToDisplay = "GB"; $devider = 1;  $wordToReplace="megahertz"; $wordToReplaceWith="gigabyte" }
+					"KBps" { $unitToDisplay = "MBps"; $devider = 1024 ;  $wordToReplace="kilobytes per second"; $wordToReplaceWith="megabytes per second" }
+					"MBps" { $unitToDisplay = "GBps"; $devider = 1024;  $wordToReplace="megabytes per second"; $wordToReplaceWith="gigabytes per second" }
+					default {$unitToDisplay = $unit; $devider = 1; }
+				}
+		
+				$metricDescription = (Get-Variable "stats$nameofdate" -ValueOnly)[0].Description
+				logThis -msg "`t-> The Metric unit is: $unitToDisplay"
+				logThis -msg "`t-> Description: $metricDescription"
+				$deviceType, $measure, $frequency = $metric.split('.')
+				if ($deviceType -eq "MEM")
+				{
+					$deviceTypeText = "Memory"
+				} else {
+					$deviceTypeText = $deviceType
+				}
+		
+				if (!$metricDescription.EndsWith('.'))
+				{
+					$introduction = $metricDescription.Insert($metricDescription.Length,'.')
+				} else {
+					$introduction = $metricDescription
+				}
+
+				$lindex = $tableColumnHeaders.Count
+			}
+			$lindex++
+		} while ($lindex -lt $tableColumnHeaders.Count)
+			
 		if ($returnObjectOnly)
-		{			
-			#$resultsObject["Metric"] = @{}
+		{		
+			logThis -msg "`t`t---->>> $([string]$months)" -foregroundcolor $global:colours.Highlight
 			$resultsObject["Name"] = $sourceVIObject.Name
 			$resultsObject["ObjectType"] = ($sourceVIObject.GetType()).Name
 			$resultsObject["Metric"] = $metric
-			#$resultsObject["DeviceType"] = @{}
 			$resultsObject["DeviceType"] = $deviceTypeText
-			#$resultsObject["Measure"] = @{}
 			$resultsObject["Measure"] = $measure
-			#$resultsObject["Frequency"] = @{}
 			$resultsObject["Frequency"] = $frequency
+			
 			$resultsObject["Months"] = $months
-			#$resultsObject["Unit"] = @{}
 			if ($DEBUG)
 			{
 				$resultsObject["Description"] = "$($sourceVIObject.Name) $introduction"
@@ -2054,16 +2130,20 @@ function getStats(
 			#$resultsObject["Description"] = @{}
 			$resultsObject["Unit"] = $unitToDisplay
 			$resultsObject["FriendlyName"] = formatHeaderString("$frequency $deviceTypeText $measure ($unitToDisplay)")
+		} else {
+			$outputHTML += header2 "$frequency $deviceTypeText $measure ($unitToDisplay)"
+			$outputHTML += paragraph "$introduction"
+			logThis -msg "`t`t---->>> HERE" -foregroundcolor "BLUE"
 		}
-		$outputHTML += header2 "$frequency $deviceTypeText $measure ($unitToDisplay)"
-		$outputHTML += paragraph "$introduction"
-		
+			
 		######################################################
 		# Print the reporting periods
 		######################################################
 		#$tableColumnHeaders | %{
-		#	logThis -msg  $((Get-Variable -Name "$($_)" -ValueOnly)[0])  -ForegroundColor Green
+		#	logThis -msg  $((Get-Variable -Name "$($_)" -ValueOnly)[0])  -ForegroundColor $global:colours.Highlight
 		#}
+		#logThis -msg "HERE  2:- $([string]$($resultsObject["Months"]))"
+		#pause
 		$table = foreach ($currMeasure in $requiredMeasures) 
 		{
 			logThis -msg "`t-> Number of unique Device Instance to process: $($uniqueHWInstancesArray.Count)"
@@ -2072,7 +2152,7 @@ function getStats(
 			{
 				logThis -msg "`t-> $($instance.Instance)"
 				
-				$sourceStats = @{};
+				#$sourceStats = @{};
 				$row = "" | Select "Measure";
 				$row.Measure = $currMeasure				
 				if ($instance.Instance -and $showIndividualDevicesStats)
@@ -2106,17 +2186,17 @@ function getStats(
 					if (!(Get-Variable "results$nameofdate" -ValueOnly))
 					{	
 						$result = printNoData
-						logThis -msg "$results" -ForegroundColor RED
+						logThis -msg "$results" -Foregroundcolor $global:colours.Error
 					}
 					else {
 						
 						#$result = [Math]::Round((Get-Variable "results$nameofdate" -ValueOnly).$currMeasure,2);
 						#using / devider because sometime you may want to set everything to megabyte or gigabyte
 						$result = [Math]::Round((Get-Variable "results$nameofdate" -ValueOnly).$currMeasure / $devider,2);
-						logThis -msg "$results" -ForegroundColor Green
+						logThis -msg "$results" -ForegroundColor $global:colours.Highlight
 					}
 					
-				#	logThis -msg ">> " $(Get-Variable "stats$nameofdate" -ValueOnly) " / $result  <<" -ForegroundColor Green;
+				#	logThis -msg ">> " $(Get-Variable "stats$nameofdate" -ValueOnly) " / $result  <<" -ForegroundColor $global:colours.Highlight;
 					if ($result -is [int] -and $result -lt 1)
 					{
 						#$sourceStats.Add($nameofdate,"< 1");
@@ -2126,11 +2206,13 @@ function getStats(
 						$row | Add-Member -MemberType NoteProperty -Name $nameofdate -Value $result
 					}
 
-				}				
-				#logThis $row				
-				$row
+				}	
+				#logThis $row	
+				logThis -msg "HERE 7"
+				$row				
 			}
 		}
+					
 		# Clear the variables just in case
 		foreach ($nameofdate in $tableColumnHeaders) {
 			Remove-Variable "results$nameofdate"
@@ -2141,6 +2223,7 @@ function getStats(
 		{
 			#$resultsObject["Table"] = @{}
 			$resultsObject["Table"] = $table
+			#$table | Out-file "C:\admin\OUTPUT\AIT\05-01-2016\table.txt"
 			return $resultsObject
 		} else {
 			$outputHTML +=  $table | ConvertTo-Html -Fragment
@@ -2170,18 +2253,9 @@ function getStats(
 	
 	$password = Get-Content $File | ConvertTo-SecureString 
 	$credential = New-Object System.Management.Automation.PsCredential($user,$password)
-	logThis -msg  "Am i in here [$($credential.Username)]" -BackgroundColor Red -ForegroundColor Yellow
+	logThis -msg  "Am i in here [$($credential.Username)]" -Backgroundcolor $global:colours.Error -ForegroundColor $global:colours.Information
 	return $credential
 }#>
-
-
-function loadSessionSnapings ()
-{	
-	if (!(Get-PSsnapin VMware.VimAutomation.Core))
-	{
-		Add-pssnapin VMware.VimAutomation.Core
-	}
-}
 
 
 #Get-MyEvents -name $name -objType $objType -EventTypes $EventTypes -EventCategories $EventCategories -MoRef $MoRef -vCenterObj $vCenterObj -functionlogFile $functionlogFile -MessageFilter $MessageFilter
@@ -2202,8 +2276,8 @@ function Get-MyEvents {
 	$eventManager = get-view $vCenterObj.ExtensionData.Content.EventManager -Server $vCenterObj
 	#logThis -msg "`tGet-MyEvents: $($eventManager.Client.Version) "
 	if($eventManager.Client.Version -eq "Vim4" -and $maxEventsNum -gt 1000){
-		logThis -msg "`tSorry, API 4.0 only allows a maximum event window of 1000 entries!" -foregroundcolor red
-		logThis -msg "`tPlease set the variable `$maxEventsNum to 1000 or less" -foregroundcolor red
+		logThis -msg "`tSorry, API 4.0 only allows a maximum event window of 1000 entries!" -foregroundcolor $global:colours.Error
+		logThis -msg "`tPlease set the variable `$maxEventsNum to 1000 or less" -foregroundcolor $global:colours.Error
 		return
 	} else {		
 	    $eventFilterSpec = New-Object VMware.Vim.EventFilterSpec
@@ -2262,7 +2336,15 @@ function Get-MyEvents {
 	}
 }
 
-function getPerformanceReport ([string]$type,[Object]$objects,[object]$stats,[bool]$showIndividualDevicesStats=$false,[int]$maxsamples=([int]::MaxValue),$unleashAllStats=$false,[int]$headerType=1)
+function getPerformanceReport (
+	[string]$type,
+	[Object]$objects,
+	[object]$stats,
+	[int]$showPastMonths,
+	[bool]$showIndividualDevicesStats=$false,
+	[int]$maxsamples=([int]::MaxValue),
+	[bool]$unleashAllStats=$false,
+	[int]$headerType=1)
 {
 	$title="$type Resource Usage"
 	$metaInfo = @()
@@ -2274,14 +2356,13 @@ function getPerformanceReport ([string]$type,[Object]$objects,[object]$stats,[bo
 	
 	$combinedResults=@{}
 
-	logThis -msg "Collecting stats on a monthly basis for the past $showPastMonths Months..." -foregroundcolor Green
+	logThis -msg "Collecting stats on a monthly basis for the past $showPastMonths Months..." -foregroundcolor $global:colours.Highlight
 
 	$global:logToScreen = $true
 	$objects | sort -Property Name | %{
-		$object = $_
-	
+		$object = $_	
 		$outputString = New-Object System.Object
-		logThis -msg "Processing host $($_.Name)..." -foregroundcolor Green
+		logThis -msg "Processing host $($_.Name)..." -foregroundcolor $global:colours.Highlight
 		$filters = ""
 	
 		#$output.Server = $_.Name
@@ -2312,7 +2393,7 @@ function getPerformanceReport ([string]$type,[Object]$objects,[object]$stats,[bo
 		#updateReportIndexer -string "$(split-path -path $objectCSVFilename -leaf)"
 
 		#$of = getRuntimeCSVOutput
-		#Write-Host "NEW File : $of" -BackgroundColor Red -ForegroundColor White
+		#Write-Host "NEW File : $of" -Backgroundcolor $global:colours.Error -ForegroundColor White
 		#$report = 
 		$metricsDefintions | %{
 			$metric = $_
@@ -2327,84 +2408,83 @@ function getPerformanceReport ([string]$type,[Object]$objects,[object]$stats,[bo
 			}
 			#$report = getStats -sourceVIObject $object -metric $metric -filters $filters -maxsamples $maxsamples -showIndividualDevicesStats $showIndividualDevicesStats -previousMonths $showPastMonths -returnObjectOnly $true
 		
-			$report = getStats @parameters	
+			$report = getStats @parameters
+#			logThis -msg "(get Performance Report) $([string]$($report.Months))"
+			#pause
 			#$subheader = convertMetricToTitle $metric
 			#logThis -msg $report.Table
 			$combinedResults[$object.Name][$metric] = $report			
 		}
 	}
-	#$combinedResults
-	#pause
+
+	# process the results
 	$bigreport = @{}
 	$metricsDefintions | %{
+		$metricName = $_		
+		$keys = $combinedResults.keys
+		#$combinedResults[$keyname].$metricName.Table
+	#	logThis -msg "(get Performance Report :- $metricName) $([string]$($combinedResults.$($combinedResults.keys | Select -First 1).$metricName.Months))"
+		#pause
+		$keys | %{
+			$key=$_
+			if ($combinedResults.$key.$metricName.Months)
+			{
+				logThis -msg "---->>>>>>> $key $metricName"
+				$listOfMonths = $combinedResults.$key.$metricName.Months
+				return			
+			}
+		}
 		
-		$metricName = $_
-		#$combinedResults.keys | %{
-			
-			#$objectName = $_
-			
-			$listOfMonths = $combinedResults.$($combinedResults.keys | Select -First 1).$metricName.Months
-			$row = New-Object System.Object
-			$row | Add-Member -Type NoteProperty -Name  $metricName -Value ""
-			$filerIndex=1
+		$row = New-Object System.Object
+		$row | Add-Member -Type NoteProperty -Name  $metricName -Value ""
+		$filerIndex=1
 	
+		$listOfMonths | %{
+			$monthName = $_
+			$row | Add-Member -Type NoteProperty -Name "$monthName" -Value "Minimum"
+			$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value "Maximum"; $filerIndex++;
+			$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value "Average"; $filerIndex++;
+		}
+
+		$finalreport = @()
+		$finalreport += $row
+		$finalreport += $keys | %{
+			$keyname=$_
+			$table = $combinedResults[$keyname].$metricName.Table
+			#$row | Add-Member -Type NoteProperty -Name "Servers" -Value $keyname
+			$row = New-Object System.Object
+			$row | Add-Member -Type NoteProperty -Name  $metricName -Value $keyname
+			$filerIndex=1
 			$listOfMonths | %{
 				$monthName = $_
-				$row | Add-Member -Type NoteProperty -Name "$monthName" -Value "Minimum"			
-				$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value "Maximum"
+				$row | Add-Member -Type NoteProperty -Name "$monthName" -Value ($table | ?{$_.Measure -eq "Minimum"}).$monthName
+				$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Maximum"}).$monthName 
 				$filerIndex++
-				$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value "Average"
+				$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Average"}).$monthName
 				$filerIndex++
 			}
-
-			$finalreport = @()
-			$finalreport += $row	
-			$finalreport += $combinedResults.keys | %{
-				$keyname=$_
-				$table = $combinedResults[$keyname].$metricName.Table
-				#$row | Add-Member -Type NoteProperty -Name "Servers" -Value $keyname
-				$row = New-Object System.Object
-				$row | Add-Member -Type NoteProperty -Name  $metricName -Value $keyname
-				$filerIndex=1
-				$listOfMonths | %{
-					$monthName = $_
-					$row | Add-Member -Type NoteProperty -Name "$monthName" -Value ($table | ?{$_.Measure -eq "Minimum"}).$monthName
-					$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Maximum"}).$monthName 
-					$filerIndex++
-					$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Average"}).$monthName
-					$filerIndex++
-				}
-				$row
-			}
-			$bigreport[$metricName] = $finalreport
-		#}
+			$row				
+		}
+		$bigreport[$metricName] = $finalreport
 	}
-	$bigreport["net.usage.average"] | Out-file "C:\admin\OUTPUT\AIT\10-12-2015\table.txt"
+	logThis -msg "HERE"
 	return $bigreport,$metaInfo,(getRuntimeLogFileContent)
 }
 
 function InitialiseModule()
 {
-	logThis -msg "Loading Session Snapins.."
-	loadSessionSnapings	
-	$global:runtime="$(date -f dd-MM-yyyy)"	
-	$global:runtimeLogFileInMemory=""
-
-	SetmyCSVOutputFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".csv"))
-	SetmyCSVMetaFile -filename $($global:logDir+"\"+$global:scriptName.Replace(".ps1",".nfo"))
-	SetmyLogFile -filename $($global:logDir + "\"+$global:scriptName.Replace(".ps1",".log"))
-
-	logThis -msg " ****************************************************************************" -foregroundColor Cyan
-	logThis -msg " Script Started @ $(get-date)" -ForegroundColor Cyan
-	logThis -msg " Executing script: $global:scriptName " -ForegroundColor Cyan
-	logThis -msg " Output Dir = $global:logDir" -ForegroundColor Cyan
-	logThis -msg " Runtime log file = $global:runtimeLogFile" -ForegroundColor Cyan
-	logThis -msg " Runtime CSV File = $global:runtimeCSVOutput" -ForegroundColor Cyan
-	logThis -msg " Runtime Meta File = $global:runtimeCSVMetaFile" -ForegroundColor Cyan
-	logThis -msg " Runtime Meta File (In Memory) = $global:runtimeLogFileInMemory" -ForegroundColor Cyan
-	logThis -msg " ****************************************************************************" -foregroundColor Cyan	
+	#loadSessionSnapings
+	if (!(Get-PSsnapin VMware.VimAutomation.Core))
+	{
+		logThis -msg "Loading Session Snapins.."
+		Add-pssnapin VMware.VimAutomation.Core
+	}
+	
 }
 
+# Import the generic module because there are common functions and settings across vmware and non-vmware related modules
+# silencer prevents unecessary strings from showing up on the screen
 $silencer = Import-Module "..\generic\genericModule.psm1" -PassThru -Force -Verbose:$false
 
+# call the InitialiseModule function 
 InitialiseModule
