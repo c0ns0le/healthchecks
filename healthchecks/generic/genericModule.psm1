@@ -1,4 +1,16 @@
 ﻿############## CUSTOMER PROPERTIES DECLARATION
+Add-Type @"
+Class MetaInfo
+{
+	[string]"TableHeader"
+	[string]"Introduction"
+	[string]"Chartable"
+	[int[]]"TitleHeaderType"
+	[string]"ShowTableCaption"
+	#[string[]]"DisplayTableOrientation"="List","Table","None";
+}
+"@
+
 $global:colours = @{
 	"Information"="Yellow";
 	"Error"="Red";
@@ -1330,6 +1342,7 @@ function generateHTMLReport(
 			[Parameter(Mandatory=$true)][string]$farmName,
 			[Parameter(Mandatory=$False)][bool]$openReportOnCompletion=$False,
 			[Parameter(Mandatory=$true)][string]$itoContactName,
+			[Parameter(Mandatory=$false)][string]$css,
 			[Parameter(Mandatory=$true)]$xml)
 {
 	$htmlPage = htmlHeader

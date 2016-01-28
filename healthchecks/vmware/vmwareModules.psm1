@@ -2351,6 +2351,7 @@ function getPerformanceReport (
 	$metaInfo +="tableHeader=$title"
 	$metaInfo +="introduction=The section provides you with performance results for each of your $type."
 	$metaInfo +="titleHeaderType=h$($headerType)"
+	$metaInfo +="table=h$($headerType)"
 	#$metaInfo +="titleHeaderType=h2"
 	#updateReportIndexer -string "$(split-path -path $objectCSVFilename -leaf)"
 	
@@ -2463,7 +2464,7 @@ function getPerformanceReport (
 				$row | Add-Member -Type NoteProperty -Name "H$filerIndex" -Value ($table | ?{$_.Measure -eq "Average"}).$monthName
 				$filerIndex++
 			}
-			$row				
+			$row
 		}
 		$bigreport[$metricName] = $finalreport
 	}
