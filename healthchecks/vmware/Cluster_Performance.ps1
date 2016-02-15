@@ -11,7 +11,7 @@
 #			\./get-Performance-Clusters.ps1 \-srvconnection $srvconnection
 #
 
-param(
+param( 
 	[object]$srvConnection="",
 	[string]$logDir="output",
 	[string]$comment="",
