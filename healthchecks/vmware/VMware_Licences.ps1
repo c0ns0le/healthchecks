@@ -52,13 +52,13 @@ $dataTable = $ReportPass1 | group Name | %{
 	$row
 }
 #$report | fl
-$metaAnalytics = " A total of $(($Report.Used | measure -sum).Sum) licenses out of $(($Report.Total | measure -sum).Sum) are used."
+
 
 ############### THIS IS WHERE THE STUFF HAPPENS
 
 if ($dataTable)
 {
-	
+	$metaAnalytics = " A total of $(($dataTable.Available | measure -sum).Sum) licenses out of $(($dataTable.Total | measure -sum).Sum) are used."
 	if ($metaAnalytics)
 	{
 		$metaInfo += "analytics=$metaAnalytics"

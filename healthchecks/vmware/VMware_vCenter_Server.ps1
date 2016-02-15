@@ -38,10 +38,14 @@ $dataTable = $srvConnection | %{
 	$row | add-member -type NoteProperty -Name "Name" -Value $vcenter.Name
 	#$lm = Get-view $vcenter.ExtensionData.Content.LicenseManager
 	$row | add-member -type NoteProperty -Name "Version" -Value "$($vcenter.ExtensionData.Content.About.FullName) ($($vcenter.ExtensionData.Content.About.osType))"
-	$row | add-member -type NoteProperty -Name "OS" -Value $srvconnection.ExtensionData.Content.About.OsType
+	$row | add-member -type NoteProperty -Name "OS" -Value $vcenter.ExtensionData.Content.About.OsType
 	$row | add-member -type NoteProperty -Name "Licence" -Value $license
 	# output
 	$row 
+	Remote-variable licenseMgr
+	Remote-variable licenseMgrAssignment
+	Remote-variable license
+
 } | Sort -Property Count
 
 ############### THIS IS WHERE THE STUFF HAPPENS

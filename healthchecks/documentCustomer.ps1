@@ -170,7 +170,7 @@ function startProcess()
 			}
 			logThis -msg "Collecting firstime infrastructure items"
 			$infrastructure = collectAllEntities -server $srvconnection -force $true
-
+			logThis -msg "Calling collector.."
 			$global:report["$type"] = & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
 		}  else {
 			logThis -msg ">>" -ForegroundColor $global:colours.Error  -logfile $logfile 
@@ -425,7 +425,7 @@ try {
 			"itoContactName"=$global:report.Runtime.Configs.itoContactName;
 			'xml'= $global:report
 		}
-		$htmlPage = generateHTMLReport @reportParamters			
+		$htmlPage = generateHTMLReport @reportParamters	
 		$htmlPage | Out-File "$htmlFile"
 		logThis -msg "---> Opening $htmlFile"
 		if ($global:report.Runtime.Configs.openReportOnCompletion)

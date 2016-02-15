@@ -30,8 +30,8 @@ $dataTable = $srvConnection | %{
 	Get-VirtualSwitch -Standard * -Server $vcenter | %{
 		$vswitch = $_		
 		# define an object to capture all the information needed
-		$row = "" | select "VMHost"
-		$row.VMHost = $vswitch.VMHost
+		$row = "" | select "Server"
+		$row.Server = $vswitch.VMHost
 		
 		$clustername = (get-cluster -Server $vcenter -vmhost $vswitch.VMhost).Name
 		$row | Add-Member -Type NoteProperty -Name "vSwitch" -Value $vswitch.Name		

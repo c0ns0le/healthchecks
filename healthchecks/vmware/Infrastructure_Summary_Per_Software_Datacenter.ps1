@@ -23,10 +23,10 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 
 # Report Meta Data
 $metaInfo = @()
-$metaInfo +="tableHeader=Total Capacity By Software Defined DataCenter"
+$metaInfo +="tableHeader=Total Capacity by Software Defined DataCenter"
 $metaInfo +="titleHeaderType=h$($headerType)"
 $metaInfo +="displayTableOrientation=list" # options are List or Table
-$metaInfo +="introduction=Find below a breakdown of your capacity by data center(SDD)."
+$metaInfo +="introduction=Find below a breakdown of your capacity by Datacenter."
 $metaInfo +="chartable=false"
 
 
@@ -76,15 +76,15 @@ $dataTable = $alldatacenters | %{
 		$FileSystemVersion = $_
 		Write-Output " | $($($Datastores | ?{$_.FileSystemVersion -eq $FileSystemVersion.FileSystemVersion}).Count) VMFS-$($FileSystemVersion.FileSystemVersion)"
 	}
-	$row | Add-Member -MemberType NoteProperty -Name "Servers" -Value "$($vmhosts.Count)"
-	$row | Add-Member -MemberType NoteProperty -Name "CPUs (Ghz)" -Value  "$(formatNumbers (($vmhosts.CpuTotalMhz | measure -Sum).Sum / 1024))"
-	$row | Add-Member -MemberType NoteProperty -Name "Total RAM (GB)" -Value  "$(formatNumbers (($vmhosts.MemoryTotalGB | measure -Sum).Sum))"
-	$row | Add-Member -MemberType NoteProperty -Name "Virtual Machines" -Value "$($vms.Count)"
+	$row | Add-Member -MemberType NoteProperty -Name "VMware Hypervisor Hosts" -Value "$($vmhosts.Count)"
+	$row | Add-Member -MemberType NoteProperty -Name "Physical CPUs (Ghz)" -Value  "$(formatNumbers (($vmhosts.CpuTotalMhz | measure -Sum).Sum / 1024))"
+	$row | Add-Member -MemberType NoteProperty -Name "Physical RAM (GB)" -Value  "$(formatNumbers (($vmhosts.MemoryTotalGB | measure -Sum).Sum))"
+	$row | Add-Member -MemberType NoteProperty -Name "Virtual Machine Servers" -Value "$($vms.Count)"
 	$row | Add-Member -MemberType NoteProperty -Name "Virtual Machines vRAM" -Value "$(formatNumbers ($vms | measure -Property MemoryGB -Sum).Sum)"
 	$row | Add-Member -MemberType NoteProperty -Name "Virtual Machines vCPU" -Value "$(($vms | measure -Property NumCPU -Sum).Sum)"
 	$row | Add-Member -MemberType NoteProperty -Name "Clusters" -Value "$($clusters.Count)"
-	$row | Add-Member -MemberType NoteProperty -Name "Clusters With HA" -Value "$($($clusters | ?{$_.HAEnabled}).Count)"
-	$row | Add-Member -MemberType NoteProperty -Name "Clusters With DRS" -Value "$($($clusters | ?{$_.DrsEnabled}).Count)"
+	$row | Add-Member -MemberType NoteProperty -Name "Clusters with HA" -Value "$($($clusters | ?{$_.HAEnabled}).Count)"
+	$row | Add-Member -MemberType NoteProperty -Name "Clusters with DRS" -Value "$($($clusters | ?{$_.DrsEnabled}).Count)"
 	#$row | Add-Member -MemberType NoteProperty -Name "Storage" -Value "$($datastores.Count)"
 	$row | Add-Member -MemberType NoteProperty -Name "Storage Capacity (TB)" -Value " $(formatNumbers $dtCapacity)"
 	$row | Add-Member -MemberType NoteProperty -Name "Free Capacity (TB)" -Value "$(formatNumbers $dtFreespace)"

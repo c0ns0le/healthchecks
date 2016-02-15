@@ -28,11 +28,11 @@ $dataTable = Get-VirtualSwitch -Distributed * -Server $srvConnection | Select -F
 	$row = "" | select "Name"
 	$row.Name = $vswitch.Name
 	$row | Add-Member -Type NoteProperty -Name "Datacenter" -Value $vswitch.Datacenter
-	$row | Add-Member -Type NoteProperty -Name "NumPorts" -Value $vswitch.NumPorts
+	$row | Add-Member -Type NoteProperty -Name "Num Ports" -Value $vswitch.NumPorts
 	$row | Add-Member -Type NoteProperty -Name "Mtu" -Value $vswitch.Mtu
 	$row | Add-Member -Type NoteProperty -Name "Version" -Value $vswitch.Version
 	$row | Add-Member -Type NoteProperty -Name "Vendor" -Value $vswitch.Vendor
-	$row | Add-Member -Type NoteProperty -Name "PortGroups" -Value $vswitch.ExtensionData.Portgroup.Count
+	$row | Add-Member -Type NoteProperty -Name "Port Groups" -Value $vswitch.ExtensionData.Portgroup.Count
 	$row | Add-Member -Type NoteProperty -Name "Created" -Value $vswitch.ExtensionData.Config.CreateTime
 	$row | Add-Member -Type NoteProperty -Name "LinkDiscoveryProtocol" -Value $vswitch.ExtensionData.Config.LinkDiscoveryProtocolConfig.Protocol
 	$row | Add-Member -Type NoteProperty -Name "LinkDiscoveryProtocolSetting" -Value $vswitch.ExtensionData.Config.LinkDiscoveryProtocolConfig.Operation

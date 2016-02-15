@@ -1,5 +1,5 @@
 ﻿############## CUSTOMER PROPERTIES DECLARATION
-Add-Type @"
+<#Add-Type @"
 Class MetaInfo
 {
 	[string]"TableHeader"
@@ -9,7 +9,7 @@ Class MetaInfo
 	[string]"ShowTableCaption"
 	#[string[]]"DisplayTableOrientation"="List","Table","None";
 }
-"@
+"@#>
 
 $global:colours = @{
 	"Information"="Yellow";

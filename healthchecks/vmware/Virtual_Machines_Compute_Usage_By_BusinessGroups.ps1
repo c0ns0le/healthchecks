@@ -23,7 +23,7 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 
 # Report Meta Data
 $metaInfo = @()
-$metaInfo +="tableHeader=By Virtual Machine & Template Folders"
+$metaInfo +="tableHeader=Virtual Machines by Business Folders"
 $metaInfo +="introduction=The table below groups Virtual Machines based on the Folder structure in the vCenter Inventory. Those folders are useful for grouping Virtual Machines based on many criterias, particularly on their production status and application tiering."
 $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
@@ -79,24 +79,26 @@ $dataTable = $folders | %{
 		$ramCountGB = [Math]::Round($(($vms | measure-object -property MemoryMB -sum).Sum / 1024),2)		
 		$vCpuCount = $(($vms | measure-object -property NumCpu -sum).Sum)
 		#Powered On State
-		$poweredOnCount = (($vms | where{$_.PowerState -eq "PoweredOn"}) | measure).Count
-		$poweredOffCount = (($vms | where{$_.PowerState -eq "PoweredOff"}) | measure).Count
-		$otherStatesCount = (($vms | where{$_.PowerState -ne "PoweredOff" -and $_.PowerState -ne "PoweredOn"}) | measure).Count
+		#$poweredOnCount = (($vms | where{$_.PowerState -eq "PoweredOn"}) | measure).Count
+		#$poweredOffCount = (($vms | where{$_.PowerState -eq "PoweredOff"}) | measure).Count
+		#$otherStatesCount = (($vms | where{$_.PowerState -ne "PoweredOff" -and $_.PowerState -ne "PoweredOn"}) | measure).Count
 	}
 	
-	$diskUsageGB = [math]::round(($vms | measure UsedSpaceGB -Sum).Sum/1024,2)
+	$diskUsageGB = ($vms | measure UsedSpaceGB -Sum).Sum
 	$row | Add-Member -Type NoteProperty -Name "Total VMs" -Value $vmCount;
 	#if ($srvConnection.Count -gt 1)
 	#{
 	#	$name = $_.Name
 	#	$row | Add-Member -Type NoteProperty -Name "Total VMs in $name" -Value ;
 	#}
-	$row | Add-Member -Type NoteProperty -Name "vCPUs" -Value $vCpuCount;
-	$row | Add-Member -Type NoteProperty -Name "RAM (GB)" -Value $ramCountGB;
-	$row | Add-Member -Type NoteProperty -Name "Size (TB)" -Value $diskUsageGB;
-	$row | Add-Member -Type NoteProperty -Name "Powered On" -Value $poweredOnCount
-	$row | Add-Member -Type NoteProperty -Name "Powered Off" -Value $poweredOffCount
-	$row | Add-Member -Type NoteProperty -Name "Other State" -Value $otherStatesCount;
+	$row | Add-Member -Type NoteProperty -Name "CPU" -Value $vCpuCount;
+	$row | Add-Member -Type NoteProperty -Name "RAM" -Value $(getSize -Unit "GB" -Val $ramCountGB);
+	$row | Add-Member -Type NoteProperty -Name "Size (TB)" -Value $(getSize -Unit "GB" -Val $diskUsageGB);
+	$vms | group "PowerState" | %{
+		$stateGroup = $_
+		#$row | Add-Member -Type NoteProperty -Name $($stateGroup.Name -replace "Powered",'') -Value $stateGroup.Count
+		Write-Host "$($stateGroup.Name -replace 'Powered','')"
+	}
 	
 	if($showExtra)
 	{
