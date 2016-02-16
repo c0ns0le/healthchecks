@@ -1,6 +1,6 @@
 #param([string]$global:logDir=".\output")
 # AUthor: teiva.rodiere-at-gmail.com
-
+# 
 function getIssues(
 	[Parameter(Mandatory=$true)][Object]$objectsArray,
 	[Parameter(Mandatory=$true)][Object]$srvconnection,

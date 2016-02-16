@@ -110,7 +110,7 @@ function startProcess()
 		{
 			$global:report.Runtime.Configs.vcCredentialsFile="$(Split-Path $inifile)\$($global:report.Runtime.Configs.vcCredentialsFile)"
 		}
-		
+
 		try 
 		{	
 			$filepath=$global:report.Runtime.Configs.vcCredentialsFile | Resolve-Path -ErrorAction Stop
