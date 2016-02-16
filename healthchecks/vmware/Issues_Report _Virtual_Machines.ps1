@@ -12,7 +12,6 @@
 #
 # ..and create Active Remediation tasks
 #
-#
 param(
 	[object]$srvConnection,
 	[string]$logDir="output",

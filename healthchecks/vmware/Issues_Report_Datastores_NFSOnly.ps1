@@ -11,7 +11,7 @@
 # - VMs without VMware tools, Errors
 #
 # ..and create Active Remediation tasks
-#
+
 #
 param(
 	[object]$srvConnection,
