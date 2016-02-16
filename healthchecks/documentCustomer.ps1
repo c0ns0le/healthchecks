@@ -163,6 +163,7 @@ function startProcess()
 				'runCapacityReports' = $global:report.Runtime.Configs.capacity;
 				'runPerformanceReports' = $global:report.runtime.Configs.perfChecks;
 				'runExtendedReports' = $global:report.Runtime.Configs.runExtendedVMwareReports;
+				'runIssuesReports' = $global:report.Runtime.Configs.healthCheck;
 				'vms' = $global:report.Runtime.Configs.vmsToCheckPerformance;
 				'showPastMonths' = [int]$global:report.Runtime.Configs.previousMonths;
 				'runJobsSequentially' = $global:report.Runtime.Configs.runJobsSequentially;
