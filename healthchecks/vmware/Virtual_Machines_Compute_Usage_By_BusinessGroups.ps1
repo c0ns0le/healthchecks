@@ -24,30 +24,31 @@ Set-Variable -Name logDir -Value $logDir -Scope Global
 # Report Meta Data
 $metaInfo = @()
 $metaInfo +="tableHeader=Virtual Machines by Business Folders"
-$metaInfo +="introduction=The table below groups Virtual Machines based on the Folder structure in the vCenter Inventory. Those folders are useful for grouping Virtual Machines based on many criterias, particularly on their production status and application tiering."
+$metaInfo +="introduction=The table below groups Virtual Machines according to their location within the vCenter VM Folder structure."
 $metaInfo +="chartable=false"
 $metaInfo +="titleHeaderType=h$($headerType)"
 
-$allVMs = GetVMs -server $srvConnection 
+$allVMs = GetVMs -server $srvConnection
+$powerStates = $allVMs.PowerState | sort -Unique
 $allfolders = GetvcFolders -Server $srvConnection 
 
 # Get the list of root folders
-logThis -msg "-> Getting List of folders from [$srvConnection\$startinFolder] (see ""Virtual Machine and Templates"" panel view)"
+logThis -msg "Getting List of folders from [$srvConnection -> $startinFolder] (see ""Virtual Machine and Templates"" panel view)"
 $defaultFolder="rootFolder"
 if ($startinFolder -eq $defaultFolder)
 {
 	$folders = $allfolders | ?{$_.Type -eq "VM" -and $_.Parent -like "vm"} | sort Name -unique
-	logThis -msg  "   --> Getting list of VMs from [$startinFolder]"
+	logThis -msg  "`t--> Getting list of VMs from [$startinFolder]"
 } else {
 	$folders = $allfolders | ?{$_.Type -eq "VM" -and $_.Parent -eq $startinFolder} | sort Name -unique
-	logThis -msg  "   --> Getting list of VMs from [$startinFolder]"
+	logThis -msg  "`t--> Getting list of VMs from [$startinFolder]"
 }
 
 if($showExtra)
 {
-	logThis -msg  "   -> Building a list of OS Types from the results"
-	$OSTypes=$allVms | %{$_.ExtensionData.Summary.Config.GuestFullName} | select -unique
-	logThis -msg  "   -> Building a list of available VM Versions"
+	logThis -msg  "`t-> Building a list of OS Types from the results"
+	$OSTypes=$allVms | %{$_.ExtensionData.Summary.Config.GuestFullName} | sort -unique 
+	logThis -msg  "`t-> Building a list of available VM Versions"
 	$vmVersions = $allVms | %{$_.Version} | select -unique
 }
 
@@ -85,25 +86,30 @@ $dataTable = $folders | %{
 	}
 	
 	$diskUsageGB = ($vms | measure UsedSpaceGB -Sum).Sum
-	$row | Add-Member -Type NoteProperty -Name "Total VMs" -Value $vmCount;
+	$row | Add-Member -Type NoteProperty -Name "VMs" -Value $vmCount;
 	#if ($srvConnection.Count -gt 1)
 	#{
 	#	$name = $_.Name
 	#	$row | Add-Member -Type NoteProperty -Name "Total VMs in $name" -Value ;
 	#}
 	$row | Add-Member -Type NoteProperty -Name "CPU" -Value $vCpuCount;
-	$row | Add-Member -Type NoteProperty -Name "RAM" -Value $(getSize -Unit "GB" -Val $ramCountGB);
-	$row | Add-Member -Type NoteProperty -Name "Size (TB)" -Value $(getSize -Unit "GB" -Val $diskUsageGB);
-	$vms | group "PowerState" | %{
-		$stateGroup = $_
-		#$row | Add-Member -Type NoteProperty -Name $($stateGroup.Name -replace "Powered",'') -Value $stateGroup.Count
-		Write-Host "$($stateGroup.Name -replace 'Powered','')"
+	$row | Add-Member -Type NoteProperty -Name "Mem" -Value $(getSize -Unit "GB" -Val $ramCountGB);
+	$row | Add-Member -Type NoteProperty -Name "Disk" -Value $(getSize -Unit "GB" -Val $diskUsageGB);
+
+	$powerStates | %{
+		$state = $_
+		Write-Host $state
+		$stateCount = ($vms.PowerState | ?{$_ -eq $state} | measure -Sum).Sum
+		$row | Add-Member -Type NoteProperty -Name $($state -replace "Powered",'') -Value $stateCount
+		#Write-Host "$($state -replace 'Powered','') $stateCount"
 	}
 	
 	if($showExtra)
 	{
 		$vmVersions | %{
 			$currVersion = $_
+			#Write-Host $currVersion
+			#pause
 			#logThis -msg  $_;
 			$vmVersionsCount=0;
 			$vmsOfcurrVersion=0;
@@ -118,7 +124,13 @@ $dataTable = $folders | %{
 					$vmVersionsCount = 1
 				}
 			}
-			$row | Add-Member -Type NoteProperty -Name "$currVersion" -Value "$vmVersionsCount"
+			if ($currVersion -eq "Unknown")
+			{
+				$row | Add-Member -Type NoteProperty -Name "v?" -Value "$vmVersionsCount"
+			} else {
+				$row | Add-Member -Type NoteProperty -Name "$currVersion" -Value "$vmVersionsCount"
+			}
+			
 			#logThis -msg  $vmVersionsCount
 		}
 		

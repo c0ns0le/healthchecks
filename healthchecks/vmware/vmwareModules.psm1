@@ -376,9 +376,15 @@ function getIssues(
 							}
 							$deviceIndex++
 						}
-						if ($dataTable)
+						if ($totalIssues -gt 0)
 						{
 							$description += " A total of $totalIssues issues were recorded.`n"
+						} else {
+							$description += " No issues recorded"
+						}
+						#if ($dataTable)
+						#{
+							#$description += " A total of $totalIssues issues were recorded.`n"
 							$objMetaInfo = @()
 							$objMetaInfo +="tableHeader=$title"
 							$objMetaInfo +="introduction=$description. "
@@ -391,13 +397,13 @@ function getIssues(
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
-								$resultsIssuesRegisterTable["$type"]["NFO"]=$objMetaInfo
+								$resultsIssuesRegisterTable["$type"]["MetaData"]=$objMetaInfo
 								$resultsIssuesRegisterTable["$type"]["DataTable"]=$dataTable
 								$resultsIssuesRegisterTable["$type"]["IssuesCount"]=$objectIssues
 								$resultsIssuesRegisterTable["$type"]["Title"]=$title
 								$resultsIssuesRegisterTable["$type"]["Introduction"]=$description
-							} 
-						}				
+							}
+						#}			
 					}
 					########################
 					"VMHost" {
@@ -592,9 +598,15 @@ function getIssues(
 							}
 							$deviceIndex++
 						}
-						if ($dataTable)
+						if ($totalIssues -gt 0)
 						{
 							$description += " A total of $totalIssues issues were recorded.`n"
+						} else {
+							$description += " No issues recorded"
+						}
+						#if ($dataTable)
+						#{
+							#$description += " A total of $totalIssues issues were recorded.`n"
 							$objMetaInfo = @()
 							$objMetaInfo +="tableHeader=$title"
 							$objMetaInfo +="introduction=$description. "
@@ -607,13 +619,13 @@ function getIssues(
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
-								$resultsIssuesRegisterTable["$type"]["NFO"]=$objMetaInfo
+								$resultsIssuesRegisterTable["$type"]["MetaData"]=$objMetaInfo
 								$resultsIssuesRegisterTable["$type"]["DataTable"]=$dataTable
 								$resultsIssuesRegisterTable["$type"]["IssuesCount"]=$objectIssues
 								$resultsIssuesRegisterTable["$type"]["Title"]=$title
 								$resultsIssuesRegisterTable["$type"]["Introduction"]=$description
-							} 					
-						}		
+							}
+						#}
 					}
 					
 					
@@ -707,7 +719,7 @@ function getIssues(
 							$orphanDisksOutput = @()
 							foreach ($folder in $searchResult)
 							{
-								echo "Searching for Folders"
+								logThis -msg "Searching for Folders"
 								foreach ($fileResult in $folder.File)
 								{
 									if ($fileResult.Path)
@@ -791,9 +803,15 @@ function getIssues(
 							}
 							$deviceIndex++
 						}
-						if ($dataTable)
+						if ($totalIssues -gt 0)
 						{
-							$description += " A total of $totalIssues issues were recorded.`n"					
+							$description += " A total of $totalIssues issues were recorded.`n"
+						} else {
+							$description += " No issues recorded"
+						}
+						#if ($dataTable)
+						#{
+							#$description += " A total of $totalIssues issues were recorded.`n"
 							$objMetaInfo = @()
 							$objMetaInfo +="tableHeader=$title"
 							$objMetaInfo +="introduction=$description. "
@@ -806,13 +824,13 @@ function getIssues(
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
-								$resultsIssuesRegisterTable["$type"]["NFO"]=$objMetaInfo
+								$resultsIssuesRegisterTable["$type"]["MetaData"]=$objMetaInfo
 								$resultsIssuesRegisterTable["$type"]["DataTable"]=$dataTable
 								$resultsIssuesRegisterTable["$type"]["IssuesCount"]=$objectIssues
 								$resultsIssuesRegisterTable["$type"]["Title"]=$title
 								$resultsIssuesRegisterTable["$type"]["Introduction"]=$description
-							} 
-						}		
+							}
+						#}
 					}
 					########################
 					"Cluster" {
@@ -1047,9 +1065,15 @@ function getIssues(
 							}
 							$deviceIndex++
 						}
-						if ($dataTable)
+						if ($totalIssues -gt 0)
 						{
-							$description += "A total of $totalIssues issues were recorded.`n"
+							$description += " A total of $totalIssues issues were recorded.`n"
+						} else {
+							$description += " No issues recorded"
+						}
+						#if ($dataTable)
+						#{
+							#$description += " A total of $totalIssues issues were recorded.`n"
 							$objMetaInfo = @()
 							$objMetaInfo +="tableHeader=$title"
 							$objMetaInfo +="introduction=$description. "
@@ -1062,13 +1086,13 @@ function getIssues(
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
-								$resultsIssuesRegisterTable["$type"]["NFO"]=$objMetaInfo
+								$resultsIssuesRegisterTable["$type"]["MetaData"]=$objMetaInfo
 								$resultsIssuesRegisterTable["$type"]["DataTable"]=$dataTable
 								$resultsIssuesRegisterTable["$type"]["IssuesCount"]=$objectIssues
 								$resultsIssuesRegisterTable["$type"]["Title"]=$title
 								$resultsIssuesRegisterTable["$type"]["Introduction"]=$description
 							}
-						}
+						#}
 					}
 					
 					########################
@@ -1135,9 +1159,15 @@ function getIssues(
 							$deviceIndex++
 						}
 						
-						if ($dataTable)
+						if ($totalIssues -gt 0)
 						{
 							$description += " A total of $totalIssues issues were recorded.`n"
+						} else {
+							$description += " No issues recorded"
+						}
+						#if ($dataTable)
+						#{
+							#$description += " A total of $totalIssues issues were recorded.`n"
 							$objMetaInfo = @()
 							$objMetaInfo +="tableHeader=$title"
 							$objMetaInfo +="introduction=$description. "
@@ -1150,17 +1180,17 @@ function getIssues(
 							if ($returnDataOnly)
 							{
 								$resultsIssuesRegisterTable["$type"] = @{}
-								$resultsIssuesRegisterTable["$type"]["NFO"]=$objMetaInfo
+								$resultsIssuesRegisterTable["$type"]["MetaData"]=$objMetaInfo
 								$resultsIssuesRegisterTable["$type"]["DataTable"]=$dataTable
 								$resultsIssuesRegisterTable["$type"]["IssuesCount"]=$objectIssues
 								$resultsIssuesRegisterTable["$type"]["Title"]=$title
 								$resultsIssuesRegisterTable["$type"]["Introduction"]=$description
 							}
-						}
+						#}
 					}
 					########################
 					default {
-						logThis -msg "This type of device is not yet supported by this health check"
+						logThis -msg "This device type is not yet supported by this health check"
 					}
 				}
 				$deviceTypeIndex++

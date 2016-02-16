@@ -172,6 +172,7 @@ function startProcess()
 			$infrastructure = collectAllEntities -server $srvconnection -force $true
 			logThis -msg "Calling collector.."
 			$global:report["$type"] = & "$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.vmwareScriptsHomeDir)\collectAll.ps1" @scriptParams
+
 		}  else {
 			logThis -msg ">>" -ForegroundColor $global:colours.Error  -logfile $logfile 
 			logThis -msg ">> Unable to connect to vCenter Server(s) ""$($global:report.Runtime.Configs.vCenterServers)""."  -ForegroundColor $global:colours.Error  -logfile $logfile 
@@ -314,6 +315,7 @@ function startProcess()
 		logThis -msg "Collecting Linux Systems Reports"  -logfile $logfile		
 		$wmiScriptsHomeDir="$($global:report.Runtime.Configs.scriptsLoc)\$($global:report.Runtime.Configs.linuxScriptsHomeDir)" # requires interacting with Windows via network 
 	}
+
 
 	# Set the location back to the original directory
 	Set-Location $($global:report.Runtime.Configs.scriptsLoc)
