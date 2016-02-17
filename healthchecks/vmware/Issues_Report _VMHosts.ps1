@@ -32,7 +32,8 @@ param(
 	#Future proofing
 	[string]$vmhostsToCheck,
 	[string]$vmhostsToExclude,	
-	[bool]$reportThinDisksAsAnIssue=$true
+	[bool]$reportThinDisksAsAnIssue=$true,
+	[bool]$returnResults=$true
 	#[Parameter(Mandatory=$true)][string]$farmName
 )
 Write-Host "Importing Module vmwareModules.psm1 (force)"

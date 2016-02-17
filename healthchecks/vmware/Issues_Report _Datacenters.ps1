@@ -30,7 +30,8 @@ param(
 	[string]$lastDayOfReportOveride,
 	[bool]$excludeThinDisks=$false,
 	[string]$datacentersToCheck,
-	[string]$datacentersToExclude
+	[string]$datacentersToExclude,
+	[bool]$returnResults=$true
 )
 Write-Host "Importing Module vmwareModules.psm1 (force)"
 $silencer = Import-Module -Name .\vmwareModules.psm1 -Force -PassThru -Verbose:$false
