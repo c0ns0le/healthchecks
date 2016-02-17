@@ -20,8 +20,6 @@ param(
 	[bool]$showDate=$false,
 	[bool]$openReportOnCompletion=$true,
 	[string]$saveReportToDirectory,
-	[Parameter(Mandatory=$true)][string]$reportHeader,
-	[Parameter(Mandatory=$true)][string]$reportIntro,
 	[Parameter(Mandatory=$true)][int]$headerType=1,
 	[int]$maxsamples = [int]::MaxValue,
 	[int]$performanceLastDays=7,
